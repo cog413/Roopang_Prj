@@ -215,6 +215,8 @@ body {
 .game-grid {
     display: grid;
     background-color: #fff;
+    border-top: 1px solid #e1dfdd;
+    border-left: 1px solid #e1dfdd;
 }
 
 /* Base cell styling to look like Excel */
@@ -390,14 +392,14 @@ body {
 }
 .sheet-layout {
     display: flex;
-    gap: 40px;
-    padding: 20px;
+    gap: 80px; /* Aligns to exactly 1 column width */
+    padding: 50px 80px; /* Aligns to exactly 2 rows down, 1 column right */
 }
 .fake-dashboard {
     display: flex;
     flex-direction: column;
-    gap: 30px;
-    width: 300px;
+    gap: 25px; /* Aligns to exactly 1 row height */
+    width: 320px; /* Aligns to exactly 4 columns (80px * 4) */
     font-family: 'Segoe UI', sans-serif;
 }
 .fake-table {
