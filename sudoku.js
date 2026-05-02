@@ -62,10 +62,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Number input (1-9)
         if (/^[1-9]$/.test(e.key)) {
             if (!selectedCell.classList.contains('fixed')) {
-                selectedCell.textContent = e.key;
-                selectedCell.classList.add('user-input');
-                formulaInput.value = e.key;
-                checkWin();
+                const r = parseInt(selectedCell.dataset.row);
+                const c = parseInt(selectedCell.dataset.col);
+                
+                if (isValidSudokuMove(r, c, e.key)) {
+                    selectedCell.textContent = e.key;
+                    selectedCell.classList.add('user-input');
+                    formulaInput.value = e.key;
+                    checkWin();
+                } else {
+                    // Show validation error modal
+                    const modal = document.getElementById('validation-modal');
+                    if (modal) modal.style.display = 'flex';
+                }
             }
         }
         
@@ -111,6 +120,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    function isValidSudokuMove(row, col, value) {
+        const cells = document.querySelectorAll('.sudoku .excel-cell');
+        for (let i = 0; i < cells.length; i++) {
+            const cell = cells[i];
+            const r = parseInt(cell.dataset.row);
+            const c = parseInt(cell.dataset.col);
+            const val = cell.textContent;
+
+            if (r === row && c === col) continue;
+            if (val === '') continue;
+
+            if (val === value) {
+                if (r === row) return false;
+                if (c === col) return false;
+                if (Math.floor(r / 3) === Math.floor(row / 3) && Math.floor(c / 3) === Math.floor(col / 3)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     // Initial progress update
     checkWin();
+
+    // Modal controls
+    const modal = document.getElementById('validation-modal');
+    const closeBtns = document.querySelectorAll('.modal-close, .modal-btn.cancel, .modal-btn.retry');
+    closeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (modal) modal.style.display = 'none';
+        });
+    });
 });
