@@ -1,4 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 0. Loading Screen Logic
+    setTimeout(() => {
+        const loadingScreen = document.getElementById('loading-screen');
+        const excelApp = document.getElementById('excel-app');
+        if (loadingScreen && excelApp) {
+            loadingScreen.style.display = 'none';
+            excelApp.style.display = 'flex';
+        }
+    }, 2500);
+
     // 1. Generate Column Headers (A to Z, AA, AB...)
     const colHeaders = document.getElementById('col-headers');
     for (let i = 0; i < 50; i++) {
@@ -49,7 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateFormulaBarForSheet(sheetId) {
         const formulaInput = document.getElementById('formula-input');
-        if (sheetId === 'sudoku') {
+        if (sheetId === 'readme') {
+            formulaInput.value = '=DECLARATION("RIGHT_TO_REST")';
+            document.getElementById('current-cell').textContent = 'A1';
+        } else if (sheetId === 'pet') {
+            formulaInput.value = '=PET.INIT()';
+            document.getElementById('current-cell').textContent = 'A1';
+        } else if (sheetId === 'sudoku') {
             formulaInput.value = '=SUDOKU.INIT(A1:I9)';
             document.getElementById('current-cell').textContent = 'A1';
         } else if (sheetId === 'game2048') {
@@ -59,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initialize formula bar for first sheet
-    updateFormulaBarForSheet('sudoku');
+    updateFormulaBarForSheet('readme');
 
     // 4. Boss Key (Esc) Implementation
     let isSafeMode = false;

@@ -7,7 +7,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="excel-app">
+    <div id="loading-screen">
+        <h1 class="logo">Refresheet</h1>
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+        <p class="momentum-text">Gathering Momentum...</p>
+    </div>
+
+    <div id="excel-app" style="display:none;">
         <!-- 상단 리본 메뉴 -->
         <header class="ribbon">
             <div class="ribbon-top">
@@ -73,8 +81,34 @@
                 <div class="row-headers" id="row-headers"></div>
                 
                 <div class="grid-content" id="grid-content">
+                    <!-- 게임 0-1: README 보드 -->
+                    <div id="readme-sheet" class="sheet-view active">
+                        <div class="sheet-layout">
+                            <div class="declaration-box">
+                                <h3>[ 제1조: 휴식의 권리 ]</h3>
+                                <p class="kr">"누구나 휴식할 권리는 있다. 설령 직장인, 대학원생일지라도..."</p>
+                                <p class="en">"Everyone has the right to rest—even for office workers and grad students..."</p>
+                                <span class="stamp">추진력 수집 인증</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 게임 0-2: My_Pet 보드 -->
+                    <div id="pet-sheet" class="sheet-view" style="display: none;">
+                        <div class="sheet-layout">
+                            <div id="pet-container">
+                                <div id="pet-avatar"> ( ◡‿◡ ) </div>
+                                <div id="pet-dialogue">추진력을 얻을 준비가 되셨나요?</div>
+                                <div class="pet-buttons">
+                                    <button class="tool-btn small" onclick="petEngine.talk('STRESS')">팀장님이 괴롭혀</button>
+                                    <button class="tool-btn small" onclick="petEngine.talk('TIRED')">너무 피곤해</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 게임 1: 스도쿠 보드 -->
-                    <div id="sudoku-sheet" class="sheet-view active">
+                    <div id="sudoku-sheet" class="sheet-view" style="display: none;">
                         <div class="sheet-layout">
                             <div class="fake-dashboard side-left">
                                 <div class="fake-table">
@@ -154,7 +188,9 @@
         <footer class="sheet-tabs">
             <div class="tab-controls">◀ ▶</div>
             <div class="tabs">
-                <div class="tab active" data-sheet="sudoku">Sheet1</div>
+                <div class="tab active" data-sheet="readme">README</div>
+                <div class="tab" data-sheet="pet">My_Pet</div>
+                <div class="tab" data-sheet="sudoku">Sheet1</div>
                 <div class="tab" data-sheet="game2048">Sheet2</div>
                 <div class="tab add-tab">+</div>
             </div>
@@ -164,6 +200,12 @@
                 <span class="zoom-slider">- [========|==] + 100%</span>
             </div>
         </footer>
+
+        <!-- 스텔스 광고 위젯 -->
+        <div id="Data_Visual_Widget" class="stealth-ad">
+            <div class="ad-header">실시간 지표 분석</div>
+            <div class="ad-content">AD AREA</div>
+        </div>
     </div>
 
     <!-- 엑셀 데이터 유효성 검사 경고창 (모달) -->
@@ -188,6 +230,7 @@
     <!-- 스크립트 로드 -->
     <script src="sudoku.js"></script>
     <script src="game2048.js"></script>
+    <script src="pet_engine.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
