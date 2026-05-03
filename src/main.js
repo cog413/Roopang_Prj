@@ -1,3 +1,4 @@
+// Main Entry Point - v1.2.5
 import { initExcelLayout } from './layout/excelLayout.js';
 import { initBossKey } from './stealth/bossKey.js';
 import { petEngine } from './pet/petEngine.js';
@@ -6,6 +7,8 @@ import { initGame2048 } from './games/game2048/index.js';
 import { initMiniPet } from './pet/miniPet.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Refresheet Project v1.2.5 Initializing...');
+
     // 0. Loading Screen Logic
     setTimeout(() => {
         const loadingScreen = document.getElementById('loading-screen');
@@ -20,13 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
     initExcelLayout();
     initBossKey();
     
-    // Initialize Pet Engine
+    // Initialize Pet Engine (My_Pet 탭)
     petEngine.init();
 
-    // Initialize Games
+    // Initialize Games (Sheet1, Sheet2 탭)
     initSudoku();
     initGame2048();
 
-    // Initialize Mini Pet (셀구리 등반 애니메이션)
+    // Initialize Mini Pet (미니미 탭: 셀구리 & 실정장표)
     initMiniPet();
 });
+

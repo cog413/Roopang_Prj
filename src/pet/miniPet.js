@@ -1,6 +1,6 @@
-// miniPet.js v5 - MutationObserver 기반 (탭 감지 100% 신뢰)
+// miniPet.js v6 - 다중 픽셀 펫 & 강화된 실정장표
 
-const SPEECHES = ['...','쉿!','( ˘ ˘ )','낑낑','영차!','냠냠','( ˘▽˘)','구경중'];
+const SPEECHES = ['...','쉿!','( ˘ ˘ )','낑낑','영차!','냠냠','( ˘▽˘)','구경중', '업무중...', '데이터 확인'];
 const BOUNDS   = { minX:50, maxX:540, minY:30, maxY:500 };
 
 const ROWS = [
@@ -35,22 +35,38 @@ const BARS = [
     {label:'합계', h:100,val:'720억', color:'#ed7d31'},
 ];
 
+// 추가 실정장표 데이터 (눈속임용 고도화)
+const PROJECT_ROWS = [
+    ['Next-Gen ERP 고도화', '85%', '진행중', '2026-12-31', '임부장'],
+    ['Global Cloud Migration', '42%', '진행중', '2027-06-30', '김차장'],
+    ['AI 챗봇 고객센터 연동', '100%', '완료', '2026-04-15', '이과장'],
+    ['보안 취약점 정기 점검', '10%', '대기', '2026-05-20', '박대리'],
+    ['전사 데이터 거버넌스 수립', '65%', '진행중', '2026-09-15', '최팀장'],
+];
+
 let active = false, domBuilt = false, wanderTimer = null;
-let cx = 100, cy = 300;
+let pets = []; // 다중 펫 지원
+
 const rand = arr => arr[Math.floor(Math.random() * arr.length)];
 
 // ── 진입점 ──────────────────────────────────────────────
 export function initMiniPet() {
     buildDOM();
 
-    // MutationObserver: display 속성 변화 감지 (click보다 100% 신뢰)
     const sheet = document.getElementById('mini-pet-sheet');
     if (!sheet) return;
-    new MutationObserver(() => {
+
+    const checkDisplay = () => {
         const shown = sheet.style.display !== 'none';
         if (shown && !active) startWander();
         if (!shown && active) stopWander();
-    }).observe(sheet, { attributes: true, attributeFilter: ['style'] });
+    };
+
+    // 초기 상태 체크
+    checkDisplay();
+
+    // MutationObserver: display 속성 변화 감지
+    new MutationObserver(checkDisplay).observe(sheet, { attributes: true, attributeFilter: ['style'] });
 }
 
 function startWander() {
@@ -58,10 +74,18 @@ function startWander() {
     // 바 입장 애니메이션
     document.querySelectorAll('#mp-bars .mp-bar').forEach((b, i) => {
         b.style.height = '0%';
-        setTimeout(() => { b.style.transition = 'height .7s ease-out'; b.style.height = b.dataset.h + '%'; }, i * 120);
+        setTimeout(() => { 
+            b.style.transition = 'height .7s ease-out'; 
+            b.style.height = b.dataset.h + '%'; 
+        }, i * 120);
     });
-    cx = 80; cy = 400;
-    setPos(cx, cy);
+    
+    pets.forEach(pet => {
+        pet.cx = 50 + Math.random() * 100;
+        pet.cy = 200 + Math.random() * 200;
+        updatePetPos(pet);
+    });
+    
     wander();
 }
 
@@ -72,12 +96,23 @@ function stopWander() {
 
 function wander() {
     if (!active) return;
-    cx = BOUNDS.minX + Math.random() * (BOUNDS.maxX - BOUNDS.minX);
-    cy = BOUNDS.minY + Math.random() * (BOUNDS.maxY - BOUNDS.minY);
-    setPos(cx, cy);
-    if (Math.random() < .5) speak(rand(SPEECHES), 900);
-    drawMap(cx, cy);
-    wanderTimer = setTimeout(wander, 1300 + Math.random() * 1700);
+    
+    pets.forEach(pet => {
+        pet.cx = BOUNDS.minX + Math.random() * (BOUNDS.maxX - BOUNDS.minX);
+        pet.cy = BOUNDS.minY + Math.random() * (BOUNDS.maxY - BOUNDS.minY);
+        updatePetPos(pet);
+        
+        if (Math.random() < 0.3) {
+            speak(pet, rand(SPEECHES), 1200);
+        }
+    });
+    
+    // 첫 번째 펫 기준으로 맵 그리기
+    if (pets.length > 0) {
+        drawMap(pets[0].cx, pets[0].cy);
+    }
+    
+    wanderTimer = setTimeout(wander, 2000 + Math.random() * 3000);
 }
 
 // ── DOM ────────────────────────────────────────────────
@@ -87,7 +122,7 @@ function buildDOM() {
     if (!h) return;
     domBuilt = true;
 
-    // 실적장표
+    // 1. 기존 실적장표 (Table 1)
     const tbl = el('div','mp-table'); tbl.id = 'mp-table';
     const hdr = el('div','mht-row mht-header');
     ['부서명','Q1','Q2','Q3','Q4'].forEach(t => { const c=el('div','mht-cell'); c.textContent=t; hdr.appendChild(c); });
@@ -98,7 +133,24 @@ function buildDOM() {
         tbl.appendChild(r);
     });
 
-    // 차트
+    // 2. 신규 프로젝트 실정장표 (Table 2 - 눈속임 강화)
+    const projTbl = el('div','mp-table proj-table');
+    const projHdr = el('div','mht-row mht-header');
+    ['주요 프로젝트명','진척률','상태','마감기한','담당자'].forEach(t => { const c=el('div','mht-cell'); c.textContent=t; projHdr.appendChild(c); });
+    projTbl.appendChild(projHdr);
+    PROJECT_ROWS.forEach((row,i) => {
+        const r = el('div','mht-row'+(i%2===0?' mht-even':''));
+        row.forEach((v,j) => { 
+            const c=el('div','mht-cell'); 
+            c.textContent=v; 
+            if (v === '완료') c.style.color = '#217346';
+            if (v === '진행중') c.style.color = '#0052cc';
+            r.appendChild(c); 
+        });
+        projTbl.appendChild(r);
+    });
+
+    // 3. 차트
     const cht = el('div','mp-chart'); cht.id = 'mp-chart';
     const ct  = el('div','mp-chart-title'); ct.textContent = '분기별 실적 현황 (억원)';
     const brs = el('div','mp-bars');  brs.id = 'mp-bars';
@@ -111,19 +163,27 @@ function buildDOM() {
     });
     cht.append(ct, brs);
 
-    // 서식지 맵
+    // 4. 서식지 맵
     const map = el('div','mp-minimap');
     map.innerHTML = `
-        <div class="mp-minimap-title">📍 서식지 맵</div>
+        <div class="mp-minimap-title">📍 실시간 분석 맵</div>
         <canvas id="mp-map-canvas" width="148" height="108"></canvas>
         <div style="font-size:9px;margin-top:4px;display:flex;flex-direction:column;gap:2px;">
-            <span style="color:#5b9bd5">■ 실적장표</span>
-            <span style="color:#ed7d31">■ 실적그래프</span>
-            <span style="color:#217346;font-weight:bold">● 셀구리</span>
+            <span style="color:#5b9bd5">■ 실적 데이터</span>
+            <span style="color:#ed7d31">■ 요약 그래프</span>
+            <span style="color:#217346;font-weight:bold">● 분석 에이전트</span>
         </div>`;
 
-    // 스프라이트
-    const spr = el('div','mp-sprite'); spr.id='mp-sprite';
+    h.append(tbl, projTbl, cht, map);
+
+    // 5. 다중 펫 생성 (3마리)
+    for (let i = 0; i < 3; i++) {
+        createPet(h, i);
+    }
+}
+
+function createPet(parent, id) {
+    const spr = el('div','mp-sprite'); spr.id=`mp-sprite-${id}`;
     spr.innerHTML = `
         <div class="mps-body">
             <div class="mps-antenna"></div>
@@ -132,44 +192,45 @@ function buildDOM() {
         </div>
         <div class="mps-feet"><div class="mps-foot"></div><div class="mps-foot"></div></div>`;
 
-    // 말풍선
-    const bub = el('div','mp-bubble'); bub.id='mp-bubble';
-
-    h.append(tbl, cht, map, spr, bub);
-    drawMap(cx, cy); // 초기 맵 그리기
+    const bub = el('div','mp-bubble'); bub.id=`mp-bubble-${id}`;
+    
+    parent.append(spr, bub);
+    
+    pets.push({
+        id,
+        element: spr,
+        bubble: bub,
+        cx: 100 + id * 50,
+        cy: 300,
+        _t: null
+    });
 }
 
 function el(tag, cls) { const e=document.createElement(tag); e.className=cls; return e; }
 
 // ── 이동 ──────────────────────────────────────────────
-function setPos(x, y) {
-    const s = document.getElementById('mp-sprite');
-    const b = document.getElementById('mp-bubble');
-    if (!s) return;
-    s.style.left = x + 'px';
-    s.style.top  = y + 'px';
-    if (b) { b.style.left=(x-8)+'px'; b.style.top=(y-26)+'px'; }
+function updatePetPos(pet) {
+    if (!pet.element) return;
+    pet.element.style.left = pet.cx + 'px';
+    pet.element.style.top  = pet.cy + 'px';
+    if (pet.bubble) { 
+        pet.bubble.style.left = (pet.cx - 8) + 'px'; 
+        pet.bubble.style.top  = (pet.cy - 26) + 'px'; 
+    }
 }
 
-function speak(text, dur=1000) {
-    const b = document.getElementById('mp-bubble');
+function speak(pet, text, dur=1000) {
+    const b = pet.bubble;
     if (!b) return;
     b.textContent = text;
     b.classList.add('visible');
-    clearTimeout(b._t);
-    b._t = setTimeout(() => b.classList.remove('visible'), dur);
+    clearTimeout(pet._t);
+    pet._t = setTimeout(() => b.classList.remove('visible'), dur);
 }
 
 // ── 서식지 맵 ─────────────────────────────────────────
-// 씬 전체 픽셀 범위: x 0~620, y 0~565
-// 캔버스: 148×108
 const MW=148, MH=108;
-const SX=MW/620, SY=MH/565;
-
-// 테이블 영역 (씬 내 실제 좌표: left=40, top=20, w=310, h=525)
-const TL=40*SX, TT=20*SY, TW=310*SX, TH=525*SY;
-// 차트 영역 (left=40+310+24=374, top=20, w=220, h=525)
-const CHL=374*SX, CHT=20*SY, CHW=220*SX, CHH=TH;
+const SX=MW/800, SY=MH/600; // 가상 캔버스 크기 조정
 
 function drawMap(px, py) {
     const canvas = document.getElementById('mp-map-canvas');
@@ -180,55 +241,20 @@ function drawMap(px, py) {
     // 배경
     ctx.fillStyle='#f0f0f0'; ctx.fillRect(0,0,MW,MH);
 
-    // ── 실적장표 ──
-    ctx.fillStyle='#fff';    ctx.fillRect(TL,TT,TW,TH);
-    // 헤더
-    const hH = 25*SY;
-    ctx.fillStyle='#dbe5f1'; ctx.fillRect(TL,TT,TW,hH);
-    // 행
-    for(let i=0;i<=20;i++){
-        const ry=TT+hH+i*25*SY;
-        ctx.fillStyle= i%2===0?'#f9f9f9':'#fff';
-        ctx.fillRect(TL+.5,ry,TW-1,25*SY);
-        ctx.strokeStyle='#ddd'; ctx.lineWidth=.3;
-        ctx.beginPath(); ctx.moveTo(TL,ry); ctx.lineTo(TL+TW,ry); ctx.stroke();
-    }
-    // 열
-    let colX=TL;
-    [110,50,50,50].forEach(w=>{ colX+=w*SX; ctx.strokeStyle='#bbb'; ctx.lineWidth=.5; ctx.beginPath(); ctx.moveTo(colX,TT); ctx.lineTo(colX,TT+TH); ctx.stroke(); });
-    // 테두리+라벨
-    ctx.strokeStyle='#888'; ctx.lineWidth=1; ctx.strokeRect(TL,TT,TW,TH);
-    ctx.fillStyle='#1f3864'; ctx.font='bold 7px sans-serif';
-    ctx.fillText('실적장표',TL+2,TT+hH-2);
+    // ── 실적영역 ──
+    ctx.fillStyle='#fff';    ctx.fillRect(10,10,60,80);
+    ctx.strokeStyle='#ddd';  ctx.strokeRect(10,10,60,80);
+    
+    // ── 그래프영역 ──
+    ctx.fillStyle='#fff';    ctx.fillRect(80,10,50,40);
+    ctx.strokeStyle='#ddd';  ctx.strokeRect(80,10,50,40);
 
-    // ── 실적그래프 ──
-    ctx.fillStyle='#fff'; ctx.fillRect(CHL,CHT,CHW,CHH);
-    // 타이틀
-    const cTH=24*SY;
-    ctx.fillStyle='#f5f5f5'; ctx.fillRect(CHL,CHT,CHW,cTH);
-    ctx.fillStyle='#1f3864'; ctx.font='bold 6px sans-serif';
-    ctx.fillText('분기별 실적',CHL+2,CHT+cTH-2);
-    // 바
-    const baTop=CHT+cTH+8*SY, baH=CHH-cTH-16*SY;
-    const bW=(CHW-8*SX)/6-1.5;
-    BARS.forEach((d,i)=>{
-        const bX=CHL+4*SX+i*(bW+1.5);
-        const bH2=baH*d.h/100;
-        ctx.fillStyle=d.color;
-        ctx.fillRect(bX, baTop+baH-bH2, bW, bH2);
-    });
-    ctx.strokeStyle='#888'; ctx.lineWidth=1; ctx.strokeRect(CHL,CHT,CHW,CHH);
-    ctx.fillStyle='#1f3864'; ctx.font='bold 7px sans-serif';
-    ctx.fillText('그래프',CHL+2,CHT+cTH-2);
-
-    // ── 셀구리 점 ──
-    const dotX=px*SX, dotY=py*SY;
-    const grd=ctx.createRadialGradient(dotX,dotY,0,dotX,dotY,7);
-    grd.addColorStop(0,'rgba(107,197,160,.9)');
-    grd.addColorStop(1,'rgba(107,197,160,0)');
-    ctx.fillStyle=grd;
-    ctx.beginPath(); ctx.arc(dotX,dotY,7,0,Math.PI*2); ctx.fill();
+    // ── 펫 위치 (첫 번째 펫) ──
+    const dotX = px * SX + 10;
+    const dotY = py * SY + 10;
+    
     ctx.fillStyle='#217346';
-    ctx.beginPath(); ctx.arc(dotX,dotY,3.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(dotX, dotY, 3, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
 }
+
