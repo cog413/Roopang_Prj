@@ -1,4 +1,4 @@
-const petEngine = {
+export const petEngine = {
     scripts: {
         STRESS: [
             "그분은 추진력을 이해하지 못합니다. 무시하세요.",
@@ -17,14 +17,27 @@ const petEngine = {
         const dialogueBox = document.getElementById('pet-dialogue');
         const avatar = document.getElementById('pet-avatar');
         
-        dialogueBox.textContent = randomMsg;
-        avatar.style.transform = "scale(1.2)";
-        setTimeout(() => avatar.style.transform = "scale(1)", 300);
+        if(dialogueBox) dialogueBox.textContent = randomMsg;
+        if(avatar) {
+            avatar.style.transform = "scale(1.2)";
+            setTimeout(() => avatar.style.transform = "scale(1)", 300);
+        }
 
         // Update the formula bar to look like an excel formula execution
         const formulaInput = document.getElementById('formula-input');
         if (formulaInput) {
             formulaInput.value = `=PET.TALK("${type}")`;
+        }
+    },
+    init: function() {
+        const btnStress = document.getElementById('btn-pet-stress');
+        const btnTired = document.getElementById('btn-pet-tired');
+
+        if (btnStress) {
+            btnStress.addEventListener('click', () => this.talk('STRESS'));
+        }
+        if (btnTired) {
+            btnTired.addEventListener('click', () => this.talk('TIRED'));
         }
     }
 };

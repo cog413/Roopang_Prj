@@ -1,0 +1,10 @@
+{
+  "name": "rfresheet_prj",
+  "version": "2.0.0",
+  "description": "Stealth productivity and rest management web app",
+  "scripts": {
+    "dev": "npx serve ."
+  },
+  "author": "",
+  "license": "ISC"
+}

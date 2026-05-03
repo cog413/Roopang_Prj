@@ -1,5 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
+export function initSudoku() {
     const grid = document.getElementById('sudoku-grid');
+    if (!grid) return;
+
     const formulaInput = document.getElementById('formula-input');
     const currentCellBox = document.getElementById('current-cell');
     
@@ -44,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.classList.add('selected');
                 
                 // Update formula bar
-                currentCellBox.textContent = getCellRef(row, col);
-                formulaInput.value = cell.textContent || '';
+                if (currentCellBox) currentCellBox.textContent = getCellRef(row, col);
+                if (formulaInput) formulaInput.value = cell.textContent || '';
             });
 
             grid.appendChild(cell);
@@ -56,7 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         // Only process if Sudoku is active and a cell is selected, and we are not in safe mode
         if (document.body.classList.contains('safe-mode')) return;
-        if (document.getElementById('sudoku-sheet').style.display === 'none') return;
+        const sheet = document.getElementById('sudoku-sheet');
+        if (!sheet || sheet.style.display === 'none') return;
         if (!selectedCell) return;
 
         // Number input (1-9)
@@ -68,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isValidSudokuMove(r, c, e.key)) {
                     selectedCell.textContent = e.key;
                     selectedCell.classList.add('user-input');
-                    formulaInput.value = e.key;
+                    if (formulaInput) formulaInput.value = e.key;
                     checkWin();
                 } else {
                     // Show validation error modal
@@ -83,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
              if (!selectedCell.classList.contains('fixed')) {
                 selectedCell.textContent = '';
                 selectedCell.classList.remove('user-input');
-                formulaInput.value = '';
+                if (formulaInput) formulaInput.value = '';
             }
         }
 
@@ -116,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (filledCount === 81) {
-            formulaInput.value = '=WIN("축하합니다! 스도쿠를 완료했습니다.")';
+            if (formulaInput) formulaInput.value = '=WIN("축하합니다! 스도쿠를 완료했습니다.")';
         }
     }
     
@@ -153,4 +156,4 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modal) modal.style.display = 'none';
         });
     });
-});
+}

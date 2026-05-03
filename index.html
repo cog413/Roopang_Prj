@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>업무용 데이터 종합 관리.xlsx - Excel</title>
+    <title>Rfresheet_Prj - Excel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,7 +21,7 @@
             <div class="ribbon-top">
                 <div class="title-bar">
                     <span class="excel-icon">📗</span>
-                    <span class="file-name">업무용 데이터 종합 관리.xlsx - Excel</span>
+                    <span class="file-name">Rfresheet_Prj - Excel</span>
                 </div>
                 <div class="window-controls">
                     <div class="theme-toggle" id="theme-toggle" title="계정 설정">JH</div>
@@ -100,8 +100,8 @@
                                 <div id="pet-avatar"> ( ◡‿◡ ) </div>
                                 <div id="pet-dialogue">추진력을 얻을 준비가 되셨나요?</div>
                                 <div class="pet-buttons">
-                                    <button class="tool-btn small" onclick="petEngine.talk('STRESS')">팀장님이 괴롭혀</button>
-                                    <button class="tool-btn small" onclick="petEngine.talk('TIRED')">너무 피곤해</button>
+                                    <button id="btn-pet-stress" class="tool-btn small">팀장님이 괴롭혀</button>
+                                    <button id="btn-pet-tired" class="tool-btn small">너무 피곤해</button>
                                 </div>
                             </div>
                         </div>
@@ -228,9 +228,6 @@
     </div>
 
     <!-- 스크립트 로드 -->
-    <script src="sudoku.js"></script>
-    <script src="game2048.js"></script>
-    <script src="pet_engine.js"></script>
-    <script src="main.js"></script>
+    <script type="module" src="src/main.js"></script>
 </body>
 </html>
