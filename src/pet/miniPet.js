@@ -1,33 +1,17 @@
-// miniPet.js v3 - 셀구리 등반 애니메이션
-// 핵심: CSS 수치와 JS 상수 완벽 일치, display:none 상태 getBoundingClientRect 금지
+// miniPet.js v4 - 랜덤 배회 + 서식지 맵
 
-// ── CSS와 반드시 일치해야 하는 상수 ──
-const ROW_H  = 25;   // .mht-cell height (px)
-const N_ROWS = 20;   // 데이터 행 수
-const N_BARS = 6;    // 차트 바 수
-const PAD_T  = 20;   // .mp-scene padding-top
-const PAD_L  = 40;   // .mp-scene padding-left
+const SPEECHES = ['...', '쉿!', '( ˘ ˘ )', '낑낑', '영차!', '조용히', '냠냠', '( ˘▽˘)', '구경중', '*..*'];
 
-// 테이블 열 너비 합: 110 + 50*4 = 310px
-const TABLE_W  = 310;
-const SCENE_GAP = 24; // flex gap
-
-const SPEECHES = {
-    idle:      ['...', '쉿!', '( ˘ ˘ )', '조용히...'],
-    climb:     ['낑낑', '영차!', '우웁..', '후우..', '힘들어!', '으쌰!'],
-    top:       ['야호!', '정상!', '( ˘▽˘)/', '드디어!'],
-    fall:      ['으악!', '미끄러!', '꺄악!', '아이고!'],
-    celebrate: ['✨', '최고야!', '( ˘▽˘)☆', '성공!'],
-};
-function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+// 배회 범위 (mp-scene 기준 px) - 테이블+차트 영역
+const BOUNDS = { minX: 44, maxX: 560, minY: 22, maxY: 510 };
 
 const TABLE_DATA = {
-    headers: ['부서명', 'Q1', 'Q2', 'Q3', 'Q4'],
+    headers: ['부서명','Q1','Q2','Q3','Q4'],
     rows: [
         ['전략기획팀','12,400','11,200','14,800','13,900'],
         ['영업1팀',  '38,200','41,500','39,800','44,200'],
         ['영업2팀',  '29,100','31,400','28,700','33,600'],
-        ['마케팅팀', '8,500', '9,200', '11,400','10,800'],
+        ['마케팅팀', '8,500', '9,200','11,400','10,800'],
         ['개발1팀',  '5,200', '5,800', '6,100', '6,700'],
         ['개발2팀',  '4,900', '5,100', '5,400', '5,900'],
         ['디자인팀', '3,800', '4,200', '4,100', '4,600'],
@@ -48,53 +32,58 @@ const TABLE_DATA = {
 };
 
 const CHART_DATA = [
-    { label:'Q1',  h:55,  val:'162억' },
-    { label:'Q2',  h:68,  val:'174억' },
-    { label:'Q3',  h:74,  val:'183억' },
-    { label:'Q4',  h:88,  val:'200억' },
-    { label:'목표', h:95, val:'210억' },
+    { label:'Q1',   h:55,  val:'162억' },
+    { label:'Q2',   h:68,  val:'174억' },
+    { label:'Q3',   h:74,  val:'183억' },
+    { label:'Q4',   h:88,  val:'200억' },
+    { label:'목표', h:95,  val:'210억' },
     { label:'합계', h:100, val:'720억' },
 ];
 
-// ── 상태 ──
-let state   = { phase:'table', row:0, barIdx:0, barProg:0 };
-let active  = false;
-let timer   = null;
+let active   = false;
 let domBuilt = false;
+let timer    = null;
+let curX = 100, curY = 200;
 
-// ── 진입점 ─────────────────────────────────────────────
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ── 진입점 ──────────────────────────────────────────────
 export function initMiniPet() {
     buildDOM();
-
-    // 탭 클릭 감지
     document.addEventListener('click', e => {
         const tab = e.target.closest('.tab');
         if (!tab) return;
         if (tab.dataset.sheet === 'mini-pet') {
-            // 두 프레임 뒤에 시작 (display:block 확정 후)
-            requestAnimationFrame(() => requestAnimationFrame(begin));
+            requestAnimationFrame(() => requestAnimationFrame(start));
         } else {
-            stop();
+            active = false;
+            clearTimeout(timer);
         }
     });
 }
 
-function begin() {
+function start() {
     if (active) return;
     active = true;
     animateBars();
-    state = { phase:'table', row:0, barIdx:0, barProg:0 };
-    moveSpriteTo(tablePos(0));
-    speak(rand(SPEECHES.idle), 1400);
-    timer = setTimeout(tick, 2000);
+    // 초기 위치: 테이블 왼쪽 아래
+    curX = 60; curY = 480;
+    moveTo(curX, curY);
+    timer = setTimeout(wander, 1000);
 }
 
-function stop() {
-    active = false;
-    clearTimeout(timer);
+// ── 배회 루프 ────────────────────────────────────────────
+function wander() {
+    if (!active) return;
+    curX = BOUNDS.minX + Math.random() * (BOUNDS.maxX - BOUNDS.minX);
+    curY = BOUNDS.minY + Math.random() * (BOUNDS.maxY - BOUNDS.minY);
+    moveTo(curX, curY);
+    if (Math.random() < 0.55) speak(rand(SPEECHES), 900);
+    drawMinimap(curX, curY);
+    timer = setTimeout(wander, 1200 + Math.random() * 1800);
 }
 
-// ── DOM 빌드 ───────────────────────────────────────────
+// ── DOM 구성 ─────────────────────────────────────────────
 function buildDOM() {
     if (domBuilt) return;
     const habitat = document.getElementById('mini-pet-habitat');
@@ -102,167 +91,88 @@ function buildDOM() {
     domBuilt = true;
 
     // 실적장표
-    const tableWrap = document.createElement('div');
-    tableWrap.id = 'mp-table';
-    tableWrap.className = 'mp-table';
-    buildTableDOM(tableWrap);
-
-    // 차트
-    const chartWrap = document.createElement('div');
-    chartWrap.id = 'mp-chart';
-    chartWrap.className = 'mp-chart';
-    buildChartDOM(chartWrap);
-
-    // 서식지 맵
-    const mapWrap = document.createElement('div');
-    mapWrap.className = 'mp-minimap';
-    mapWrap.innerHTML = `
-        <div class="mp-minimap-title">📍 서식지 맵</div>
-        <canvas id="mp-map-canvas" width="148" height="108"></canvas>
-        <div class="mp-minimap-legend">
-            <span class="mml-table">■ 실적장표</span>
-            <span class="mml-chart">■ 실적그래프</span>
-            <span class="mml-pet">● 셀구리</span>
-        </div>
-    `;
-
-    // 셀구리 스프라이트
-    const sprite = document.createElement('div');
-    sprite.id = 'mp-sprite';
-    sprite.className = 'mp-sprite';
-    sprite.innerHTML = `
-        <div class="mps-body">
-            <div class="mps-antenna"></div>
-            <div class="mps-eyes">
-                <div class="mps-eye"></div><div class="mps-eye"></div>
-            </div>
-            <div class="mps-cheeks">
-                <div class="mps-cheek"></div><div class="mps-cheek"></div>
-            </div>
-        </div>
-        <div class="mps-feet">
-            <div class="mps-foot"></div><div class="mps-foot"></div>
-        </div>`;
-
-    // 말풍선
-    const bubble = document.createElement('div');
-    bubble.id = 'mp-bubble';
-    bubble.className = 'mp-bubble';
-
-    habitat.appendChild(tableWrap);
-    habitat.appendChild(chartWrap);
-    habitat.appendChild(mapWrap);
-    habitat.appendChild(sprite);
-    habitat.appendChild(bubble);
-}
-
-function buildTableDOM(wrap) {
+    const tbl = document.createElement('div');
+    tbl.id = 'mp-table'; tbl.className = 'mp-table';
     const hdr = document.createElement('div');
     hdr.className = 'mht-row mht-header';
     TABLE_DATA.headers.forEach(h => {
         const c = document.createElement('div');
-        c.className = 'mht-cell';
-        c.textContent = h;
-        hdr.appendChild(c);
+        c.className = 'mht-cell'; c.textContent = h; hdr.appendChild(c);
     });
-    wrap.appendChild(hdr);
-
+    tbl.appendChild(hdr);
     TABLE_DATA.rows.forEach((row, i) => {
         const r = document.createElement('div');
         r.className = 'mht-row' + (i % 2 === 0 ? ' mht-even' : '');
         row.forEach((cell, j) => {
             const c = document.createElement('div');
             c.className = 'mht-cell' + (j > 0 ? ' mht-num' : '');
-            c.textContent = cell;
-            r.appendChild(c);
+            c.textContent = cell; r.appendChild(c);
         });
-        wrap.appendChild(r);
+        tbl.appendChild(r);
     });
-}
 
-function buildChartDOM(wrap) {
-    const title = document.createElement('div');
-    title.className = 'mp-chart-title';
-    title.textContent = '분기별 실적 현황 (억원)';
-
+    // 차트
+    const cht = document.createElement('div');
+    cht.id = 'mp-chart'; cht.className = 'mp-chart';
+    const ct = document.createElement('div');
+    ct.className = 'mp-chart-title'; ct.textContent = '분기별 실적 현황 (억원)';
     const bars = document.createElement('div');
-    bars.id = 'mp-bars';
-    bars.className = 'mp-bars';
-
+    bars.id = 'mp-bars'; bars.className = 'mp-bars';
     CHART_DATA.forEach((d, i) => {
         const col = document.createElement('div');
-        col.className = 'mp-col';
-        col.dataset.i = i;
-
+        col.className = 'mp-col'; col.dataset.i = i;
         const val = document.createElement('div');
-        val.className = 'mp-val';
-        val.textContent = d.val;
-
+        val.className = 'mp-val'; val.textContent = d.val;
         const bar = document.createElement('div');
-        bar.className = 'mp-bar';
-        bar.style.height = '0%';
-        bar.dataset.h = d.h;
-
+        bar.className = 'mp-bar'; bar.style.height = '0%'; bar.dataset.h = d.h;
         const lbl = document.createElement('div');
-        lbl.className = 'mp-lbl';
-        lbl.textContent = d.label;
-
-        col.appendChild(val);
-        col.appendChild(bar);
-        col.appendChild(lbl);
-        bars.appendChild(col);
+        lbl.className = 'mp-lbl'; lbl.textContent = d.label;
+        col.append(val, bar, lbl); bars.appendChild(col);
     });
+    cht.append(ct, bars);
 
-    wrap.appendChild(title);
-    wrap.appendChild(bars);
+    // 서식지 맵
+    const map = document.createElement('div');
+    map.className = 'mp-minimap';
+    map.innerHTML = `
+        <div class="mp-minimap-title">📍 서식지 맵</div>
+        <canvas id="mp-map-canvas" width="148" height="108"></canvas>
+        <div class="mp-minimap-legend">
+            <span style="color:#5b9bd5">■ 실적장표</span>
+            <span style="color:#ed7d31">■ 실적그래프</span>
+            <span style="color:#217346;font-weight:bold">● 셀구리</span>
+        </div>`;
+
+    // 스프라이트
+    const sprite = document.createElement('div');
+    sprite.id = 'mp-sprite'; sprite.className = 'mp-sprite';
+    sprite.innerHTML = `
+        <div class="mps-body">
+            <div class="mps-antenna"></div>
+            <div class="mps-eyes"><div class="mps-eye"></div><div class="mps-eye"></div></div>
+            <div class="mps-cheeks"><div class="mps-cheek"></div><div class="mps-cheek"></div></div>
+        </div>
+        <div class="mps-feet"><div class="mps-foot"></div><div class="mps-foot"></div></div>`;
+
+    // 말풍선
+    const bubble = document.createElement('div');
+    bubble.id = 'mp-bubble'; bubble.className = 'mp-bubble';
+
+    habitat.append(tbl, cht, map, sprite, bubble);
 }
 
-// ── 위치 계산 (CSS 수치와 정확히 매칭) ─────────────────
-
-// 테이블 위치: getBoundingClientRect 없이 순수 수학
-// rowFromBottom: 0=맨 아래 데이터 행, N_ROWS-1=맨 위 데이터 행
-function tablePos(rowFromBottom) {
-    // .mp-scene: padding-top=PAD_T, gap=SCENE_GAP
-    // 헤더 1행 + 데이터 N_ROWS행
-    // rowFromBottom=0 → 맨 아래 행 (행 인덱스 N_ROWS)
-    const rowIdxFromTop = N_ROWS - rowFromBottom; // 1..N_ROWS
-    return {
-        top:  PAD_T + rowIdxFromTop * ROW_H + 2,
-        left: PAD_L + 2,
-    };
+// ── 이동 ────────────────────────────────────────────────
+function moveTo(x, y) {
+    const s = document.getElementById('mp-sprite');
+    const b = document.getElementById('mp-bubble');
+    if (!s) return;
+    s.style.left = x + 'px';
+    s.style.top  = y + 'px';
+    if (b) { b.style.left = (x - 8) + 'px'; b.style.top = (y - 26) + 'px'; }
 }
 
-// 차트 위치: 탭이 보이는 상태에서만 호출되므로 getBoundingClientRect OK
-function chartPos(barIdx, progressPct) {
-    const scene = document.getElementById('mini-pet-habitat');
-    const bar   = document.querySelectorAll('#mp-bars .mp-bar')[barIdx];
-    if (!scene || !bar) return null;
-
-    const sr = scene.getBoundingClientRect();
-    const br = bar.getBoundingClientRect();
-    return {
-        top:  br.bottom - sr.top - (br.height * progressPct / 100) - 20,
-        left: br.left   - sr.left + br.width / 2 - 9,
-    };
-}
-
-// ── 스프라이트 이동 ─────────────────────────────────────
-function moveSpriteTo(pos) {
-    if (!pos) return;
-    const sprite = document.getElementById('mp-sprite');
-    const bubble = document.getElementById('mp-bubble');
-    if (!sprite) return;
-    sprite.style.top  = pos.top  + 'px';
-    sprite.style.left = pos.left + 'px';
-    if (bubble) {
-        bubble.style.top  = (pos.top  - 26) + 'px';
-        bubble.style.left = (pos.left - 8)  + 'px';
-    }
-    drawMinimap(pos);
-}
-
-// ── 말풍선 ─────────────────────────────────────────────
-function speak(text, dur = 1100) {
+// ── 말풍선 ───────────────────────────────────────────────
+function speak(text, dur = 1000) {
     const b = document.getElementById('mp-bubble');
     if (!b) return;
     b.textContent = text;
@@ -271,7 +181,7 @@ function speak(text, dur = 1100) {
     b._t = setTimeout(() => b.classList.remove('visible'), dur);
 }
 
-// ── 차트 바 등장 애니메이션 ────────────────────────────
+// ── 차트 바 등장 ─────────────────────────────────────────
 function animateBars() {
     document.querySelectorAll('#mp-bars .mp-bar').forEach((bar, i) => {
         bar.style.height = '0%';
@@ -282,170 +192,109 @@ function animateBars() {
     });
 }
 
-// ── 미니맵 캔버스 그리기 ───────────────────────────────
-function drawMinimap(spritePos) {
+// ── 서식지 맵 캔버스 ─────────────────────────────────────
+// 실제 화면 좌표 → 캔버스 좌표 스케일
+// 배회 범위: x 44~560(516px), y 22~510(488px)
+// 캔버스: 148×108px
+const MAP_W = 148, MAP_H = 108;
+const SCALE_X = MAP_W / (BOUNDS.maxX - BOUNDS.minX + 80);
+const SCALE_Y = MAP_H / (BOUNDS.maxY - BOUNDS.minY + 40);
+
+// 실적장표 캔버스 위치 (실제 px 기준 변환)
+// Table: x=44, y=22, w=310, h=525 (25px × 21행)
+const TL = (44  - BOUNDS.minX + 40) * SCALE_X;
+const TT = (22  - BOUNDS.minY + 20) * SCALE_Y;
+const TW = 310 * SCALE_X;
+const TH = 525 * SCALE_Y;
+
+// Chart: x=378(44+310+24), y=22, w=220
+const CL = (378 - BOUNDS.minX + 40) * SCALE_X;
+const CT_ = TT;
+const CW = 220 * SCALE_X;
+const CH_ = TH;
+
+function drawMinimap(px, py) {
     const canvas = document.getElementById('mp-map-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const W = canvas.width;   // 148
-    const H = canvas.height;  // 108
-
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0, 0, MAP_W, MAP_H);
 
     // 배경
-    ctx.fillStyle = '#f9f9f9';
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(0, 0, MAP_W, MAP_H);
 
-    // ─ 테이블 영역 (왼쪽) ─
-    const tLeft = 4, tTop = 4, tW = 42, tH = H - 8;
+    // ── 실적장표 ──────────────────────────────────
     // 배경
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#c8c6c4';
-    ctx.lineWidth = 0.5;
-    ctx.fillRect(tLeft, tTop, tW, tH);
-    ctx.strokeRect(tLeft, tTop, tW, tH);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(TL, TT, TW, TH);
     // 헤더
+    const hH = 25 * SCALE_Y;
     ctx.fillStyle = '#dbe5f1';
-    ctx.fillRect(tLeft, tTop, tW, 5);
-    // 행 구분선
-    const rowScale = (tH - 5) / N_ROWS;
-    for (let i = 0; i <= N_ROWS; i++) {
-        const y = tTop + 5 + i * rowScale;
-        ctx.beginPath();
-        ctx.moveTo(tLeft, y); ctx.lineTo(tLeft + tW, y);
-        ctx.strokeStyle = i % 2 === 0 ? '#e8e8e8' : '#f0f0f0';
-        ctx.stroke();
-        if (i % 2 === 0) {
-            ctx.fillStyle = '#f5f5f5';
-            ctx.fillRect(tLeft + 0.5, y, tW - 1, rowScale);
-        }
+    ctx.fillRect(TL, TT, TW, hH);
+    // 열 구분
+    const colW = [110, 50, 50, 50].map(w => w * SCALE_X);
+    let cx = TL;
+    colW.forEach(w => {
+        cx += w;
+        ctx.strokeStyle = '#c8c6c4'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(cx, TT); ctx.lineTo(cx, TT + TH); ctx.stroke();
+    });
+    // 행 구분
+    for (let i = 0; i <= 20; i++) {
+        const ry = TT + hH + i * 25 * SCALE_Y;
+        ctx.fillStyle = i % 2 === 0 ? '#f9f9f9' : '#fff';
+        ctx.fillRect(TL + 0.5, ry, TW - 1, 25 * SCALE_Y);
+        ctx.strokeStyle = '#ddd'; ctx.lineWidth = 0.3;
+        ctx.beginPath(); ctx.moveTo(TL, ry); ctx.lineTo(TL + TW, ry); ctx.stroke();
     }
+    // 테두리
+    ctx.strokeStyle = '#999'; ctx.lineWidth = 1;
+    ctx.strokeRect(TL, TT, TW, TH);
 
-    // ─ 차트 영역 (오른쪽) ─
-    const cLeft = tLeft + tW + 8, cTop = 4, cW = W - cLeft - 4, cH = H - 8;
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#c8c6c4';
-    ctx.lineWidth = 0.5;
-    ctx.fillRect(cLeft, cTop, cW, cH);
-    ctx.strokeRect(cLeft, cTop, cW, cH);
-    // 차트 바
-    const barW  = (cW - 8) / N_BARS - 2;
-    const barAreaH = cH - 16;
+    // 라벨
+    ctx.fillStyle = '#1f3864'; ctx.font = 'bold 7px sans-serif';
+    ctx.fillText('실적장표', TL + 2, TT + hH - 2);
+
+    // ── 실적그래프 ─────────────────────────────────
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(CL, CT_, CW, CH_);
+    ctx.strokeStyle = '#999'; ctx.lineWidth = 1;
+    ctx.strokeRect(CL, CT_, CW, CH_);
+
+    // 타이틀 배경
+    const ctH = 28 * SCALE_Y;
+    ctx.fillStyle = '#f5f5f5';
+    ctx.fillRect(CL, CT_, CW, ctH);
+    ctx.fillStyle = '#1f3864'; ctx.font = 'bold 6px sans-serif';
+    ctx.fillText('분기별 실적', CL + 2, CT_ + ctH - 2);
+
+    // 바
+    const barAreaTop = CT_ + ctH + 8 * SCALE_Y;
+    const barAreaH   = CH_ - ctH - 16 * SCALE_Y;
+    const bW = (CW - 10 * SCALE_X) / 6 - 1;
+    const bColors = ['#5b9bd5','#5b9bd5','#5b9bd5','#5b9bd5','#70ad47','#ed7d31'];
     CHART_DATA.forEach((d, i) => {
-        const bx = cLeft + 4 + i * (barW + 2);
-        const bh = barAreaH * d.h / 100;
-        const by = cTop + cH - 8 - bh;
-        const colors = ['#5b9bd5','#5b9bd5','#5b9bd5','#5b9bd5','#70ad47','#ed7d31'];
-        ctx.fillStyle = colors[i];
-        ctx.fillRect(bx, by, barW, bh);
+        const bX = CL + 5 * SCALE_X + i * (bW + 1);
+        const bH2 = barAreaH * d.h / 100;
+        const bY = barAreaTop + barAreaH - bH2;
+        ctx.fillStyle = bColors[i];
+        ctx.fillRect(bX, bY, bW, bH2);
     });
 
-    // ─ 셀구리 위치 ─
-    // 테이블 위치 변환
-    const tblTotalH = N_ROWS * ROW_H; // 500px
-    const tblTotalW = TABLE_W;        // 310px
-    let dotX, dotY;
+    // ── 셀구리 위치 ──────────────────────────────────
+    const dotX = (px - BOUNDS.minX + 40) * SCALE_X;
+    const dotY = (py - BOUNDS.minY + 20) * SCALE_Y;
 
-    if (state.phase === 'table' || state.phase === 'fall') {
-        const relY = (spritePos.top - PAD_T) / (tblTotalH + ROW_H); // 0~1
-        const relX = (spritePos.left - PAD_L) / tblTotalW;
-        dotX = tLeft + relX * tW;
-        dotY = tTop + 5 + relY * (tH - 5);
-    } else {
-        // 차트 위치
-        const relX = state.barIdx / N_BARS;
-        const relY = 1 - state.barProg / 100;
-        dotX = cLeft + 4 + relX * (cW - 8);
-        dotY = cTop + cH - 8 - relY * barAreaH;
-    }
-
-    // 발광 효과
-    const grd = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 5);
-    grd.addColorStop(0, 'rgba(107, 197, 160, 1)');
-    grd.addColorStop(1, 'rgba(107, 197, 160, 0)');
+    // 발광
+    const grd = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 7);
+    grd.addColorStop(0, 'rgba(107,197,160,0.9)');
+    grd.addColorStop(1, 'rgba(107,197,160,0)');
     ctx.fillStyle = grd;
-    ctx.beginPath();
-    ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
-    ctx.fill();
-    // 셀구리 점
+    ctx.beginPath(); ctx.arc(dotX, dotY, 7, 0, Math.PI * 2); ctx.fill();
+
+    // 점
     ctx.fillStyle = '#217346';
-    ctx.beginPath();
-    ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(dotX, dotY, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
     ctx.stroke();
-}
-
-// ── 등반 루프 ──────────────────────────────────────────
-function tick() {
-    if (!active) return;
-    const sprite = document.getElementById('mp-sprite');
-    if (!sprite) return;
-
-    if (state.phase === 'table') {
-        state.row++;
-        sprite.classList.add('mps-struggle');
-        speak(rand(SPEECHES.climb), 650);
-        setTimeout(() => {
-            if (!active) return;
-            moveSpriteTo(tablePos(state.row));
-            sprite.classList.remove('mps-struggle');
-            if (state.row >= N_ROWS) {
-                sprite.classList.add('mps-celebrate');
-                speak(rand(SPEECHES.top), 1200);
-                setTimeout(() => {
-                    if (!active) return;
-                    sprite.classList.remove('mps-celebrate');
-                    state.phase = 'chart'; state.barIdx = 0; state.barProg = 0;
-                    timer = setTimeout(tick, 1000);
-                }, 1500);
-                return;
-            }
-            timer = setTimeout(tick, 550 + Math.random() * 300);
-        }, 300);
-
-    } else if (state.phase === 'chart') {
-        state.barProg += 22 + Math.random() * 14;
-        sprite.classList.add('mps-struggle');
-        speak(rand(SPEECHES.climb), 600);
-        setTimeout(() => {
-            if (!active) return;
-            const pos = chartPos(state.barIdx, Math.min(state.barProg, 98));
-            if (pos) moveSpriteTo(pos);
-            sprite.classList.remove('mps-struggle');
-            if (state.barProg >= 100) {
-                if (state.barIdx < N_BARS - 1) {
-                    speak(rand(SPEECHES.top), 700);
-                    state.barIdx++; state.barProg = 0;
-                    timer = setTimeout(tick, 900);
-                } else {
-                    sprite.classList.add('mps-celebrate');
-                    speak(rand(SPEECHES.celebrate), 1500);
-                    setTimeout(() => {
-                        if (!active) return;
-                        sprite.classList.remove('mps-celebrate');
-                        fallDown();
-                    }, 1800);
-                }
-                return;
-            }
-            timer = setTimeout(tick, 480 + Math.random() * 400);
-        }, 300);
-    }
-}
-
-function fallDown() {
-    const sprite = document.getElementById('mp-sprite');
-    if (!sprite) return;
-    sprite.classList.add('mps-fall');
-    speak(rand(SPEECHES.fall), 1000);
-    setTimeout(() => moveSpriteTo(tablePos(0)), 80);
-    setTimeout(() => {
-        if (!active) return;
-        sprite.classList.remove('mps-fall');
-        speak(rand(SPEECHES.idle), 1200);
-        state = { phase:'table', row:0, barIdx:0, barProg:0 };
-        timer = setTimeout(tick, 2000);
-    }, 1200);
 }
