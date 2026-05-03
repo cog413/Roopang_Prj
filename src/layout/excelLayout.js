@@ -75,6 +75,9 @@ export function initExcelLayout() {
         } else if (sheetId === 'game2048') {
             formulaInput.value = '=SUM(A1:D4)*2048';
             currentCell.textContent = 'A1';
+        } else if (sheetId === 'mini-pet') {
+            formulaInput.value = '=MINI.PET.CLIMB(B2:F22)';
+            currentCell.textContent = 'B2';
         }
     }
 

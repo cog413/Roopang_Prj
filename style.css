@@ -650,3 +650,329 @@ body.dark-mode .stealth-ad { background: #2d2d2d; border-color: #444; }
 body.dark-mode .ad-header { background: #1a365d; border-color: #444; color: #d4d4d4; }
 body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 
+/* =====================================================
+   미니미 (셀구리) 서식지 스타일
+   엑셀 셀(80×25px) 기준: 미니미는 20×20px 이하
+   ===================================================== */
+
+/* 시트 래퍼 */
+.mini-pet-sheet-wrap {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: #fff;
+}
+
+/* 서식지 전체 컨테이너 */
+.mini-pet-habitat {
+    display: flex;
+    flex-direction: row;
+    gap: 40px;
+    padding: 25px 80px;
+    position: relative;
+    min-height: 600px;
+}
+
+/* ── 실적장표 (20행 × 5열) ─────────────────────── */
+.mini-habitat-table {
+    flex-shrink: 0;
+    border-left: 1px solid #c8c6c4;
+    border-top: 1px solid #c8c6c4;
+    font-size: 11px;
+    position: relative;
+}
+
+.mht-row {
+    display: grid;
+    grid-template-columns: 120px 60px 60px 60px 60px; /* 5열 */
+}
+
+.mht-header .mht-cell {
+    background-color: #dbe5f1;
+    font-weight: bold;
+    color: #1f3864;
+    justify-content: center;
+}
+
+.mht-cell {
+    height: 25px; /* 정확히 엑셀 셀 1행 높이 */
+    border-right: 1px solid #c8c6c4;
+    border-bottom: 1px solid #c8c6c4;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    font-size: 11px;
+    color: #333;
+    white-space: nowrap;
+}
+
+.mht-num { justify-content: flex-end; }
+
+.mht-even .mht-cell { background-color: #f9f9f9; }
+
+/* ── 막대 그래프 ───────────────────────────────── */
+.mini-habitat-chart {
+    flex-shrink: 0;
+    width: 260px;
+    border: 1px solid #c8c6c4;
+    background: #fff;
+    padding: 16px 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-self: flex-start;
+    margin-top: 0;
+}
+
+.mhc-title {
+    font-size: 11px;
+    font-weight: bold;
+    color: #1f3864;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e1dfdd;
+    padding-bottom: 6px;
+}
+
+.mhc-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 200px; /* 그래프 높이 = 미니미가 등반하는 영역 */
+    padding-top: 20px;
+    position: relative;
+}
+
+.mhc-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1;
+    height: 100%;
+    gap: 3px;
+    position: relative;
+}
+
+.mhc-bar {
+    width: 100%;
+    background: linear-gradient(to top, #2e75b6, #5b9bd5);
+    border-radius: 2px 2px 0 0;
+    transition: height 0.9s cubic-bezier(.17,.67,.4,1.1);
+    position: relative;
+}
+.mhc-col:last-child .mhc-bar { background: linear-gradient(to top, #c55a11, #ed7d31); }
+.mhc-col:nth-child(5) .mhc-bar { background: linear-gradient(to top, #375623, #70ad47); }
+
+.mhc-val {
+    font-size: 9px;
+    color: #666;
+    text-align: center;
+    min-height: 12px;
+}
+.mhc-label {
+    font-size: 10px;
+    color: #555;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* ── 미니미 캐릭터 (셀구리) ─────────────────── */
+/* 전체 크기: body 16×16 + feet 4px = 약 20px
+   엑셀 셀(80×25px) 보다 작음 ✅ */
+
+.mini-pet-sprite {
+    position: absolute;
+    width: 20px;
+    z-index: 100;
+    pointer-events: none;
+    transition: top 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+                left 0.5s ease;
+}
+
+/* 몸통 */
+.mps-body {
+    width: 18px;
+    height: 16px;
+    background: radial-gradient(ellipse at 40% 35%, #a8e6cf, #6bc5a0);
+    border-radius: 50% 50% 45% 45% / 55% 55% 45% 45%;
+    border: 1.5px solid #4a9e7a;
+    position: relative;
+    animation: mps-wiggle 0.9s ease-in-out infinite;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* 더듬이 */
+.mps-antenna {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 6px;
+    background: #4a9e7a;
+    border-radius: 2px;
+}
+.mps-antenna::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    background: #ff6b6b;
+    border-radius: 50%;
+    position: absolute;
+    top: -3px;
+    left: -1px;
+    animation: mps-antblink 2s ease-in-out infinite;
+}
+
+/* 눈 */
+.mps-eyes {
+    display: flex;
+    justify-content: space-around;
+    padding: 4px 3px 0;
+}
+.mps-eye {
+    width: 4px;
+    height: 4px;
+    background: #1a1a2e;
+    border-radius: 50%;
+    position: relative;
+    animation: mps-blink 3.5s ease-in-out infinite;
+}
+.mps-eye::after {
+    content: '';
+    width: 1.5px;
+    height: 1.5px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 0.5px;
+    left: 0.5px;
+}
+
+/* 볼 */
+.mps-cheeks {
+    display: flex;
+    justify-content: space-between;
+    padding: 1px 1px 0;
+    position: absolute;
+    bottom: 4px;
+    left: 0;
+    right: 0;
+}
+.mps-cheek {
+    width: 5px;
+    height: 3px;
+    background: rgba(255, 150, 150, 0.5);
+    border-radius: 50%;
+}
+
+/* 발 */
+.mps-feet {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1px;
+}
+.mps-foot {
+    width: 6px;
+    height: 4px;
+    background: #4a9e7a;
+    border-radius: 0 0 4px 4px;
+    animation: mps-feet-step 0.9s ease-in-out infinite alternate;
+}
+.mps-foot:last-child {
+    animation-delay: 0.45s;
+}
+
+/* ── 말풍선 ────────────────────────────────── */
+.mini-pet-bubble {
+    position: absolute;
+    background: #fffbf0;
+    border: 1px solid #c8c6c4;
+    border-radius: 6px 6px 6px 0;
+    padding: 3px 7px;
+    font-size: 10px;
+    color: #333;
+    white-space: nowrap;
+    z-index: 101;
+    opacity: 0;
+    transform: translateY(-4px) scale(0.9);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
+}
+.mini-pet-bubble.visible {
+    opacity: 1;
+    transform: translateY(-24px) scale(1);
+}
+
+/* ── 애니메이션 키프레임 ──────────────────── */
+
+/* 꼬물꼬물 기본 흔들림 */
+@keyframes mps-wiggle {
+    0%   { transform: scaleX(1)    scaleY(1)    rotate(-2deg); }
+    25%  { transform: scaleX(1.08) scaleY(0.92) rotate(0deg);  }
+    50%  { transform: scaleX(1)    scaleY(1)    rotate(2deg);  }
+    75%  { transform: scaleX(0.93) scaleY(1.07) rotate(0deg);  }
+    100% { transform: scaleX(1)    scaleY(1)    rotate(-2deg); }
+}
+
+/* 발 걷기 */
+@keyframes mps-feet-step {
+    from { transform: translateY(0) scaleX(1);   }
+    to   { transform: translateY(1px) scaleX(0.8); }
+}
+
+/* 눈 깜빡임 */
+@keyframes mps-blink {
+    0%, 90%, 100% { transform: scaleY(1); }
+    93%            { transform: scaleY(0.1); }
+}
+
+/* 더듬이 빛 */
+@keyframes mps-antblink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(1.3); }
+}
+
+/* 낑낑 투쟁 */
+.mps-struggle .mps-body {
+    animation: mps-wiggle 0.25s ease-in-out infinite,
+               mps-struggle-shake 0.25s ease-in-out infinite;
+}
+@keyframes mps-struggle-shake {
+    0%   { margin-left: 0; }
+    25%  { margin-left: -2px; }
+    50%  { margin-left: 2px; }
+    75%  { margin-left: -1px; }
+    100% { margin-left: 0; }
+}
+
+/* 축하 점프 */
+.mps-celebrate .mps-body {
+    animation: mps-celebrate-jump 0.4s ease-in-out infinite alternate;
+}
+@keyframes mps-celebrate-jump {
+    from { transform: translateY(0) scaleX(1)    scaleY(1);    }
+    to   { transform: translateY(-5px) scaleX(1.1) scaleY(0.9); }
+}
+
+/* 미끄러짐 */
+.mps-fall .mps-body {
+    animation: mps-fall-spin 0.3s linear infinite;
+}
+@keyframes mps-fall-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* 다크모드 대응 */
+body.dark-mode .mini-pet-sheet-wrap { background: #1e1e1e; }
+body.dark-mode .mini-habitat-table { border-color: #444; }
+body.dark-mode .mht-cell { border-color: #444; color: #d4d4d4; }
+body.dark-mode .mht-even .mht-cell { background-color: #2a2a2a; }
+body.dark-mode .mht-header .mht-cell { background-color: #1a365d; color: #90cdf4; }
+body.dark-mode .mini-habitat-chart { background: #2d2d2d; border-color: #444; }
+body.dark-mode .mhc-title { color: #90cdf4; border-color: #444; }
+body.dark-mode .mhc-label { color: #aaa; }
+body.dark-mode .mhc-val { color: #888; }
+body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color: #d4d4d4; }

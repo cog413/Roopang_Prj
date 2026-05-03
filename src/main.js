@@ -3,6 +3,7 @@ import { initBossKey } from './stealth/bossKey.js';
 import { petEngine } from './pet/petEngine.js';
 import { initSudoku } from './games/sudoku/sudoku.js';
 import { initGame2048 } from './games/game2048/index.js';
+import { initMiniPet } from './pet/miniPet.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // 0. Loading Screen Logic
@@ -25,4 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Games
     initSudoku();
     initGame2048();
+
+    // Initialize Mini Pet (셀구리 등반 애니메이션)
+    initMiniPet();
 });
