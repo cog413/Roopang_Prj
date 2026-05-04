@@ -21,8 +21,11 @@
  *   3. JSONL, one object per line.
  *   4. Plain text lines containing puzzle and solution as two 81-char digit strings.
  *
- * Expected target columns:
- *   puzzle_id, level, puzzle, solution, source_url, clue_count, is_active, metadata_json
+ * Expected target columns in the current Cloudflare D1 table:
+ *   puzzle_id, difficulty, puzzle, solution, is_active
+ *
+ * The source difficulty is mapped to numeric level 1-5 and stored in the
+ * existing `difficulty` column because the deployed table has no `level` column.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -30,12 +33,9 @@ import path from 'node:path';
 
 const DEFAULT_OUTPUT = './sudoku_bulk_seed.sql';
 const ID_PREFIX = 'sudoku_bulk_';
-const DEFAULT_SOURCE_URL = 'https://huggingface.co/datasets/Ritvik19/Sudoku-Dataset';
 const PUZZLE_COLUMNS = ['puzzle', 'quiz', 'question', 'givens', 'board'];
 const SOLUTION_COLUMNS = ['solution', 'answer', 'solved'];
 const DIFFICULTY_COLUMNS = ['level', 'difficulty', 'rating', 'rank'];
-const SOURCE_COLUMNS = ['source_url', 'source', 'url'];
-const CLUE_COLUMNS = ['clue_count', 'clues', 'givens_count'];
 
 const args = parseArgs(process.argv.slice(2));
 
@@ -45,7 +45,6 @@ if (!args.input) {
 
 const inputPath = path.resolve(args.input);
 const outputPath = path.resolve(args.output || DEFAULT_OUTPUT);
-const sourceUrl = args.sourceUrl || DEFAULT_SOURCE_URL;
 const raw = readFileSync(inputPath, 'utf8');
 const records = parseSource(raw, inputPath);
 
@@ -68,20 +67,11 @@ records.forEach((record, index) => {
 
   const puzzleId = `${ID_PREFIX}${String(emitted + 1).padStart(6, '0')}`;
   const level = mapDifficultyToLevel(record.difficulty);
-  const clueCount = record.clueCount ?? countClues(puzzle);
-  const rowSourceUrl = record.sourceUrl || sourceUrl;
-  const metadata = {
-    source_dataset: rowSourceUrl,
-    source_difficulty: record.difficulty ?? null,
-    original_source_difficulty: record.originalDifficulty ?? null,
-    source_row_idx: record.sourceRowIdx ?? index,
-  };
 
   lines.push(
     'INSERT OR IGNORE INTO sudoku_puzzles ' +
-      '(puzzle_id, level, puzzle, solution, source_url, clue_count, is_active, metadata_json) VALUES (' +
-      `${sqlString(puzzleId)}, ${level}, ${sqlString(puzzle)}, ${sqlString(solution)}, ` +
-      `${sqlString(rowSourceUrl)}, ${clueCount}, 1, ${sqlString(JSON.stringify(metadata))}` +
+      '(puzzle_id, difficulty, puzzle, solution, is_active) VALUES (' +
+      `${sqlString(puzzleId)}, ${sqlString(String(level))}, ${sqlString(puzzle)}, ${sqlString(solution)}, 1` +
       ');',
   );
   emitted += 1;
@@ -101,9 +91,6 @@ function parseArgs(argv) {
       index += 1;
     } else if (current === '--output' || current === '-o') {
       parsed.output = argv[index + 1];
-      index += 1;
-    } else if (current === '--source-url') {
-      parsed.sourceUrl = argv[index + 1];
       index += 1;
     } else if (current === '--help' || current === '-h') {
       printHelp();
@@ -188,10 +175,6 @@ function recordFromObject(obj) {
     puzzle: pickFirst(normalized, PUZZLE_COLUMNS),
     solution: pickFirst(normalized, SOLUTION_COLUMNS),
     difficulty: pickFirst(normalized, DIFFICULTY_COLUMNS),
-    originalDifficulty: pickFirst(normalized, ['original_difficulty', 'source_difficulty']),
-    sourceUrl: pickFirst(normalized, SOURCE_COLUMNS),
-    clueCount: toOptionalInteger(pickFirst(normalized, CLUE_COLUMNS)),
-    sourceRowIdx: toOptionalInteger(normalized.source_row_idx ?? normalized.row_idx),
   };
 }
 
@@ -229,16 +212,6 @@ function mapDifficultyToLevel(value) {
   if (['expert', 'evil', 'insane', 'extreme', 'diabolical'].includes(raw)) return 5;
 
   return 3;
-}
-
-function countClues(puzzle) {
-  return puzzle.replace(/0/g, '').length;
-}
-
-function toOptionalInteger(value) {
-  if (value === undefined || value === null || String(value).trim() === '') return undefined;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.trunc(parsed) : undefined;
 }
 
 function parseCsvLike(raw) {
@@ -298,7 +271,7 @@ function clamp(value, min, max) {
 }
 
 function printHelp() {
-  console.log(`Usage: node scripts/generate_sudoku_bank.mjs --input <source-file> [--output ./sudoku_bulk_seed.sql] [--source-url <url>]
+  console.log(`Usage: node scripts/generate_sudoku_bank.mjs --input <source-file> [--output ./sudoku_bulk_seed.sql]
 
 Creates sudoku_bulk_seed.sql with:
   INSERT OR IGNORE INTO sudoku_puzzles (...)

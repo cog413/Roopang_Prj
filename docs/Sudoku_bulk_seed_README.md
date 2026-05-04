@@ -58,7 +58,15 @@ sudoku_bulk_000002
 ...
 ```
 
-The source difficulty is mapped to level `1` through `5`. The current applied `sudoku_puzzles` table has `difficulty TEXT`, not a separate `level` column, so the script writes the mapped level into `difficulty`.
+The source difficulty is mapped to level `1` through `5`. The current deployed `sudoku_puzzles` table has `difficulty TEXT`, not a separate `level` column, so the script writes the mapped level into `difficulty`.
+
+Current seed columns:
+
+```text
+puzzle_id, difficulty, puzzle, solution, is_active
+```
+
+The source CSV keeps additional audit fields such as `source_url`, `clue_count`, and source row index, but those are not inserted unless the D1 table is migrated to include matching columns.
 
 Each generated row uses:
 
