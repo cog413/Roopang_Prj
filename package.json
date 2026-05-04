@@ -4,6 +4,7 @@
   "description": "Stealth productivity and rest management web app",
   "scripts": {
     "dev": "npx serve .",
+    "fetch:sudoku": "node scripts/fetch_sudoku_hf_bank.mjs --limit 3000 --output ./data/sudoku_bank.csv",
     "seed:sudoku": "node scripts/generate_sudoku_bank.mjs --input ./data/sudoku_bank.csv --output ./sudoku_bulk_seed.sql"
   },
   "author": "",

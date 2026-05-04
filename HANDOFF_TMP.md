@@ -1,100 +1,131 @@
 # Handoff Temporary Context
 
 ## 1. Current Status
-- Date/time: 2026-05-04 17:44:20 +09:00
+- Date/time: 2026-05-04 17:59:37 +09:00
 - Branch: `sub`
 - Git status before this handoff refresh:
+  - `docs/Sudoku_bulk_seed_README.md` modified
   - `package.json` modified
-  - `docs/Sudoku_bulk_seed_README.md` untracked
-  - `scripts/generate_sudoku_bank.mjs` untracked
+  - `scripts/generate_sudoku_bank.mjs` modified
+  - `data/sudoku_bank.csv` untracked
+  - `scripts/fetch_sudoku_hf_bank.mjs` untracked
+  - `sudoku_bulk_seed.sql` untracked
 - Repository path: `C:\Users\user\.gemini\antigravity\scratch\Refresheet_Prj`
 - Encoding note: keep this file ASCII-friendly where possible so future agents can read it reliably in PowerShell.
 
 ## 2. Latest User Request
-The user requested replacing a limited Sudoku seed generation flow with a full open-source bank conversion flow:
+The user requested actual Sudoku problem data, not only scripts:
 
-1. Remove `TARGET_PER_LEVEL = 10` style behavior.
-2. Read the full source problem-bank file and convert all problems to INSERT SQL.
-3. Generate `puzzle_id` as `sudoku_bulk_000001`.
-4. Map source difficulty to level 1-5.
-5. Ensure `puzzle` and `solution` are each 81-character strings.
-6. Use `INSERT OR IGNORE INTO sudoku_puzzles`.
-7. Output filename should be `sudoku_bulk_seed.sql`.
-8. Add D1 execute command to README or comments:
-   `npx wrangler d1 execute DB --remote --file=./sudoku_bulk_seed.sql`
+- Do not create or drop `sudoku_puzzles`.
+- Insert real problem data only.
+- Use at least 3,000 open/public-license Sudoku puzzles.
+- Generate `sudoku_bulk_seed.sql`.
+- Use `INSERT OR IGNORE INTO sudoku_puzzles`.
+- Target columns:
+  - `puzzle_id`
+  - `level`
+  - `puzzle`
+  - `solution`
+  - `source_url`
+  - `clue_count`
+  - `is_active`
+  - `metadata_json`
+- Puzzle and solution must each be 81 characters.
+- IDs must be sequential from `sudoku_bulk_000001`.
+- Execute:
+  `npx wrangler d1 execute DB --remote --file=./sudoku_bulk_seed.sql`
 
 ## 3. Completed Work
-- Confirmed there was no existing `generate_sudoku_bank.mjs` or source bank file in the repo.
-- Added `scripts/generate_sudoku_bank.mjs`.
-  - Reads all valid source records; no per-level cap.
-  - Supports CSV/TSV, JSON, JSONL/NDJSON, and plain text row formats.
-  - Generates IDs as `sudoku_bulk_000001`, `sudoku_bulk_000002`, etc.
-  - Maps source difficulty to numeric level 1-5.
-  - Writes mapped level into current schema's `difficulty` column because the applied Cloudflare table has no `level` column.
-  - Validates puzzle and solution as 81-digit strings.
-  - Emits `INSERT OR IGNORE INTO sudoku_puzzles`.
-  - Defaults output to `sudoku_bulk_seed.sql`.
-  - Includes D1 execute command in script comments/help.
-- Added `docs/Sudoku_bulk_seed_README.md`.
-  - Documents input formats, accepted column names, output format, npm command, direct node command, and D1 execute command.
+- Used public Hugging Face dataset `Ritvik19/Sudoku-Dataset`.
+  - Source URL: `https://huggingface.co/datasets/Ritvik19/Sudoku-Dataset`
+  - Dataset card declares Apache-2.0.
+  - Dataset exposes 81-character `puzzle` and `solution` fields.
+- Added `scripts/fetch_sudoku_hf_bank.mjs`.
+  - Fetches 3,000 rows from Hugging Face Datasets Server.
+  - Writes normalized source CSV to `data/sudoku_bank.csv`.
+  - Maps clue count to game level 1-5.
+- Updated `scripts/generate_sudoku_bank.mjs`.
+  - Outputs requested columns exactly.
+  - Uses `INSERT OR IGNORE INTO sudoku_puzzles`.
+  - Does not emit CREATE TABLE or DROP TABLE.
+  - Preserves source info in `metadata_json`.
+- Added actual source data file:
+  - `data/sudoku_bank.csv`
+  - 3,000 rows
+- Generated actual seed file:
+  - `sudoku_bulk_seed.sql`
+  - 3,000 INSERT rows
+  - First ID: `sudoku_bulk_000001`
+  - Last ID: `sudoku_bulk_003000`
+- Updated `docs/Sudoku_bulk_seed_README.md`.
+  - Added fetch command, seed command, D1 command, and `CLOUDFLARE_API_TOKEN` note.
 - Updated `package.json`.
-  - Added `npm run seed:sudoku`.
-- Tested the generator with a temporary 2-row CSV sample, confirmed output shape and difficulty mapping.
-- Removed temporary sample/output files.
+  - Added `fetch:sudoku`.
+- Attempted Cloudflare D1 execution.
+  - Failed because `CLOUDFLARE_API_TOKEN` is not set in this non-interactive environment.
 - Refreshed this handoff file.
 
 ## 4. Modified Files
 - `package.json`
 - `scripts/generate_sudoku_bank.mjs`
+- `scripts/fetch_sudoku_hf_bank.mjs`
 - `docs/Sudoku_bulk_seed_README.md`
+- `data/sudoku_bank.csv`
+- `sudoku_bulk_seed.sql`
 - `HANDOFF_TMP.md`
 
 ## 5. Remaining Work
 - Commit and push these changes to `sub`.
 - Cherry-pick the same commit to `main` and push `main` if keeping both branches aligned.
-- Actual full source problem-bank file is still not in the repo. To generate the real SQL, place the source at `data/sudoku_bank.csv` or pass `--input <path>`.
-- Actual Cloudflare D1 execution was not run. User-provided command:
-  `npx wrangler d1 execute DB --remote --file=./sudoku_bulk_seed.sql`
+- Cloudflare D1 remote execution must be rerun in an environment with `CLOUDFLARE_API_TOKEN`.
 
 ## 6. Important Decisions / Constraints
 - Never revert user changes unless explicitly asked.
 - Actual file state and `git status` take priority over this handoff text.
 - Always run `git status --short --branch` before editing.
 - Before finishing a task, remove any existing handoff file and create a new `HANDOFF_TMP.md` with current information.
-- The applied Cloudflare `sudoku_puzzles` schema has columns: `puzzle_id`, `difficulty`, `puzzle`, `solution`, `is_active`.
-- Because there is no `level` column yet, the generator writes mapped 1-5 level values into `difficulty`.
-- Do not edit `docs/MiniGgotchi_schema.sql` as if a migration is applied unless it has actually been applied.
-- Cloudflare DB ID: `5c560a75-93a5-4414-88fc-0bd8e9ff4e26`.
+- Do not emit table creation or table drop SQL for this task.
+- The seed SQL targets the user-provided `sudoku_puzzles` columns with `level`, `source_url`, `clue_count`, and `metadata_json`.
+- Cloudflare DB ID from prior context: `5c560a75-93a5-4414-88fc-0bd8e9ff4e26`.
 
 ## 7. Verification
 Commands run:
-- `node scripts/generate_sudoku_bank.mjs --input tmp\sudoku_sample.csv --output tmp\sudoku_bulk_seed.sql`
-  - Result: wrote 2 Sudoku puzzles.
-  - Verified IDs `sudoku_bulk_000001`, `sudoku_bulk_000002`.
-  - Verified `INSERT OR IGNORE INTO sudoku_puzzles`.
-  - Verified `easy` mapped to `2` and `expert` mapped to `5`.
+- `npm run fetch:sudoku`
+  - Result: wrote 3,000 rows to `data/sudoku_bank.csv`.
+- `npm run seed:sudoku`
+  - Result: wrote 3,000 INSERT rows to `sudoku_bulk_seed.sql`.
+- Custom Node SQL validation:
+  - `rowCount`: 3000
+  - `forbidden`: false for CREATE/DROP
+  - `bad`: 0
+  - `first`: `sudoku_bulk_000001`
+  - `last`: `sudoku_bulk_003000`
+  - level distribution: 1=375, 2=243, 3=792, 4=1546, 5=44
+  - clue count range: 28-80
 - `node --check scripts/generate_sudoku_bank.mjs`
   - Result: passed.
-- `git diff --check`
-  - Result: no whitespace errors, only CRLF warning for `package.json`.
-- Temporary `tmp` folder was removed after verification.
+- `node --check scripts/fetch_sudoku_hf_bank.mjs`
+  - Result: passed.
+- `npx wrangler d1 execute DB --remote --file=./sudoku_bulk_seed.sql`
+  - Result: failed because `CLOUDFLARE_API_TOKEN` is not set.
 
 Not verified:
-- Real open-source full-bank conversion, because no source bank file exists in this repo.
-- Cloudflare D1 remote execution.
+- Actual D1 insert completion, due missing Cloudflare token.
 
 ## 8. Recommended Next Step
 - Run `git status --short --branch`.
+- Run `git diff --check`.
 - Commit:
   - `package.json`
   - `scripts/generate_sudoku_bank.mjs`
+  - `scripts/fetch_sudoku_hf_bank.mjs`
   - `docs/Sudoku_bulk_seed_README.md`
+  - `data/sudoku_bank.csv`
+  - `sudoku_bulk_seed.sql`
   - `HANDOFF_TMP.md`
 - Push to `sub`.
 - Cherry-pick to `main` and push `main`.
-- After adding a real source file, run:
-  `npm run seed:sudoku`
-- Then execute:
+- To load D1, run with token:
   `npx wrangler d1 execute DB --remote --file=./sudoku_bulk_seed.sql`
 
 ## 9. Handoff Rule For Next LLM

@@ -1,8 +1,16 @@
 # Sudoku Bulk Seed
 
-Use `scripts/generate_sudoku_bank.mjs` to convert a full open-source Sudoku problem bank into D1 seed SQL.
+Use `scripts/fetch_sudoku_hf_bank.mjs` and `scripts/generate_sudoku_bank.mjs` to fetch an open dataset sample and convert it into D1 seed SQL.
 
-The script reads every valid puzzle in the source file. It does not cap records per difficulty level.
+The generator reads every valid puzzle in the source file. It does not cap records per difficulty level.
+
+Current source dataset:
+
+```text
+https://huggingface.co/datasets/Ritvik19/Sudoku-Dataset
+```
+
+The Hugging Face dataset card declares Apache-2.0 and provides 81-character `puzzle` and `solution` fields.
 
 ## Input
 
@@ -60,7 +68,13 @@ INSERT OR IGNORE INTO sudoku_puzzles (...)
 
 ## Generate SQL
 
-Default package script:
+Fetch the source CSV:
+
+```bash
+npm run fetch:sudoku
+```
+
+Generate the SQL:
 
 ```bash
 npm run seed:sudoku
@@ -69,6 +83,7 @@ npm run seed:sudoku
 Equivalent direct command:
 
 ```bash
+node scripts/fetch_sudoku_hf_bank.mjs --limit 3000 --output ./data/sudoku_bank.csv
 node scripts/generate_sudoku_bank.mjs --input ./data/sudoku_bank.csv --output ./sudoku_bulk_seed.sql
 ```
 
@@ -79,3 +94,10 @@ npx wrangler d1 execute DB --remote --file=./sudoku_bulk_seed.sql
 ```
 
 Replace `DB` with the configured D1 binding/database name if needed.
+
+In non-interactive environments, Wrangler requires `CLOUDFLARE_API_TOKEN`:
+
+```bash
+$env:CLOUDFLARE_API_TOKEN="..."
+npx wrangler d1 execute DB --remote --file=./sudoku_bulk_seed.sql
+```
