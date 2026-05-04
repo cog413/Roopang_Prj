@@ -3,7 +3,8 @@
   "version": "2.0.0",
   "description": "Stealth productivity and rest management web app",
   "scripts": {
-    "dev": "npx serve ."
+    "dev": "npx serve .",
+    "seed:sudoku": "node scripts/generate_sudoku_bank.mjs --input ./data/sudoku_bank.csv --output ./sudoku_bulk_seed.sql"
   },
   "author": "",
   "license": "ISC"

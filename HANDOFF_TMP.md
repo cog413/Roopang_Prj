@@ -1,94 +1,101 @@
 # Handoff Temporary Context
 
 ## 1. Current Status
-- Date/time: 2026-05-04 16:35:45 +09:00
+- Date/time: 2026-05-04 17:44:20 +09:00
 - Branch: `sub`
 - Git status before this handoff refresh:
-  - `docs/MiniGgotchi_PRD.md` modified
-  - `docs/MiniGgotchi_schema.sql` modified
-  - `docs/MiniGgotchi_data_access_policy.md` untracked
-  - `docs/migrations/001_user_content_history.sql` untracked
+  - `package.json` modified
+  - `docs/Sudoku_bulk_seed_README.md` untracked
+  - `scripts/generate_sudoku_bank.mjs` untracked
 - Repository path: `C:\Users\user\.gemini\antigravity\scratch\Refresheet_Prj`
 - Encoding note: keep this file ASCII-friendly where possible so future agents can read it reliably in PowerShell.
 
 ## 2. Latest User Request
-The user noted that, based on the created DB tables:
+The user requested replacing a limited Sudoku seed generation flow with a full open-source bank conversion flow:
 
-- Character conversation type mapping should be managed in DB and called from the app, not hardcoded in JavaScript.
-- Sudoku problem bank should also be managed in DB and fetched from the app.
-- For problem-bank selection, puzzles already solved/played by a user should be deprioritized.
+1. Remove `TARGET_PER_LEVEL = 10` style behavior.
+2. Read the full source problem-bank file and convert all problems to INSERT SQL.
+3. Generate `puzzle_id` as `sudoku_bulk_000001`.
+4. Map source difficulty to level 1-5.
+5. Ensure `puzzle` and `solution` are each 81-character strings.
+6. Use `INSERT OR IGNORE INTO sudoku_puzzles`.
+7. Output filename should be `sudoku_bulk_seed.sql`.
+8. Add D1 execute command to README or comments:
+   `npx wrangler d1 execute DB --remote --file=./sudoku_bulk_seed.sql`
 
 ## 3. Completed Work
-- Read existing `HANDOFF_TMP.md` before work.
-- Added `docs/MiniGgotchi_data_access_policy.md`.
-  - Defines DB-owned content vs frontend-owned rendering.
-  - Documents scenario node/button runtime flow.
-  - Documents Sudoku puzzle selection policy.
-  - Documents temporary baseline query using `game_results.metadata_json`.
-  - Documents recommended production query using `user_content_history`.
-  - Defines recommended API endpoints through a server/API layer such as Cloudflare Workers.
-- Added proposed migration `docs/migrations/001_user_content_history.sql`.
-  - Adds `user_content_history` for prioritizing unplayed/less-recently-used reusable content.
-  - Status is proposed/not yet applied.
-- Updated `docs/MiniGgotchi_PRD.md`.
-  - Added DB-managed content policy.
-  - Added puzzle/prompt reuse priority policy.
-  - Linked to data access policy and migration.
-- Updated `docs/MiniGgotchi_schema.sql`.
-  - Preserved applied Cloudflare baseline schema as-is.
-  - Added migration 001 as a future candidate, not applied.
+- Confirmed there was no existing `generate_sudoku_bank.mjs` or source bank file in the repo.
+- Added `scripts/generate_sudoku_bank.mjs`.
+  - Reads all valid source records; no per-level cap.
+  - Supports CSV/TSV, JSON, JSONL/NDJSON, and plain text row formats.
+  - Generates IDs as `sudoku_bulk_000001`, `sudoku_bulk_000002`, etc.
+  - Maps source difficulty to numeric level 1-5.
+  - Writes mapped level into current schema's `difficulty` column because the applied Cloudflare table has no `level` column.
+  - Validates puzzle and solution as 81-digit strings.
+  - Emits `INSERT OR IGNORE INTO sudoku_puzzles`.
+  - Defaults output to `sudoku_bulk_seed.sql`.
+  - Includes D1 execute command in script comments/help.
+- Added `docs/Sudoku_bulk_seed_README.md`.
+  - Documents input formats, accepted column names, output format, npm command, direct node command, and D1 execute command.
+- Updated `package.json`.
+  - Added `npm run seed:sudoku`.
+- Tested the generator with a temporary 2-row CSV sample, confirmed output shape and difficulty mapping.
+- Removed temporary sample/output files.
 - Refreshed this handoff file.
 
 ## 4. Modified Files
-- `docs/MiniGgotchi_PRD.md`
-- `docs/MiniGgotchi_schema.sql`
-- `docs/MiniGgotchi_data_access_policy.md`
-- `docs/migrations/001_user_content_history.sql`
+- `package.json`
+- `scripts/generate_sudoku_bank.mjs`
+- `docs/Sudoku_bulk_seed_README.md`
 - `HANDOFF_TMP.md`
 
 ## 5. Remaining Work
-- Commit and push these docs/migration-policy changes to `sub`.
+- Commit and push these changes to `sub`.
 - Cherry-pick the same commit to `main` and push `main` if keeping both branches aligned.
-- Future implementation work:
-  - Add Cloudflare Worker/API layer.
-  - Replace hardcoded `src/pet/petEngine.js` scenario mapping with API calls to `scenario_nodes` and `scenario_buttons`.
-  - Replace hardcoded Sudoku puzzle in `src/games/sudoku/sudoku.js` with API call to `sudoku_puzzles`.
-  - Apply `docs/migrations/001_user_content_history.sql` to Cloudflare DB before relying on production priority query.
+- Actual full source problem-bank file is still not in the repo. To generate the real SQL, place the source at `data/sudoku_bank.csv` or pass `--input <path>`.
+- Actual Cloudflare D1 execution was not run. User-provided command:
+  `npx wrangler d1 execute DB --remote --file=./sudoku_bulk_seed.sql`
 
 ## 6. Important Decisions / Constraints
 - Never revert user changes unless explicitly asked.
 - Actual file state and `git status` take priority over this handoff text.
 - Always run `git status --short --branch` before editing.
 - Before finishing a task, remove any existing handoff file and create a new `HANDOFF_TMP.md` with current information.
-- The applied DB schema must match what exists in Cloudflare. Do not modify `docs/MiniGgotchi_schema.sql` as if a migration is applied unless it has actually been applied.
+- The applied Cloudflare `sudoku_puzzles` schema has columns: `puzzle_id`, `difficulty`, `puzzle`, `solution`, `is_active`.
+- Because there is no `level` column yet, the generator writes mapped 1-5 level values into `difficulty`.
+- Do not edit `docs/MiniGgotchi_schema.sql` as if a migration is applied unless it has actually been applied.
 - Cloudflare DB ID: `5c560a75-93a5-4414-88fc-0bd8e9ff4e26`.
-- Frontend should not directly connect to Cloudflare DB. Use an API layer such as Cloudflare Workers.
-- JS may render/cache current state, but DB/API should be the source of truth for scenario branching, puzzle/prompt selection, rewards, and point balances.
 
 ## 7. Verification
 Commands run:
-- `git status --short --branch`
-  - Result before handoff refresh: modified PRD/schema and untracked data-access/migration docs.
+- `node scripts/generate_sudoku_bank.mjs --input tmp\sudoku_sample.csv --output tmp\sudoku_bulk_seed.sql`
+  - Result: wrote 2 Sudoku puzzles.
+  - Verified IDs `sudoku_bulk_000001`, `sudoku_bulk_000002`.
+  - Verified `INSERT OR IGNORE INTO sudoku_puzzles`.
+  - Verified `easy` mapped to `2` and `expert` mapped to `5`.
+- `node --check scripts/generate_sudoku_bank.mjs`
+  - Result: passed.
 - `git diff --check`
-  - Result before handoff refresh: no whitespace errors, only CRLF warnings.
-- `Get-Date -Format "yyyy-MM-dd HH:mm:ss zzz"`
-  - Result: `2026-05-04 16:35:45 +09:00`
+  - Result: no whitespace errors, only CRLF warning for `package.json`.
+- Temporary `tmp` folder was removed after verification.
 
-Not yet verified:
-- Final `git status` after handoff refresh.
-- Commit/push status for these changes.
+Not verified:
+- Real open-source full-bank conversion, because no source bank file exists in this repo.
+- Cloudflare D1 remote execution.
 
 ## 8. Recommended Next Step
 - Run `git status --short --branch`.
-- Run `git diff --check`.
 - Commit:
-  - `docs/MiniGgotchi_PRD.md`
-  - `docs/MiniGgotchi_schema.sql`
-  - `docs/MiniGgotchi_data_access_policy.md`
-  - `docs/migrations/001_user_content_history.sql`
+  - `package.json`
+  - `scripts/generate_sudoku_bank.mjs`
+  - `docs/Sudoku_bulk_seed_README.md`
   - `HANDOFF_TMP.md`
 - Push to `sub`.
 - Cherry-pick to `main` and push `main`.
+- After adding a real source file, run:
+  `npm run seed:sudoku`
+- Then execute:
+  `npx wrangler d1 execute DB --remote --file=./sudoku_bulk_seed.sql`
 
 ## 9. Handoff Rule For Next LLM
 
