@@ -45,3 +45,22 @@
 - `users.google_sub`를 우선 식별자로 사용하고, 기존 email-only 유저가 있으면 신규 중복 생성 대신 `google_sub`를 연결한다.
 - 신규 사용자는 `auth_events.event_type = 'signup'`, 기존 사용자는 `auth_events.event_type = 'login'`, 로그아웃은 `auth_events.event_type = 'logout'`로 기록한다.
 - 프론트 로그인 상태와 `/api/me` 응답 필드는 `user_id`, `email`, `nickname`, `avatar_url`, `last_login_at`, `is_new_user`로 맞춘다.
+
+---
+
+## ReadMe 시트 UI 규칙
+
+- ReadMe 시트는 카드형 문서 UI가 아니라 엑셀 셀에 직접 입력한 표처럼 보여야 한다.
+- KPI, SOP, 시트 안내 문구는 셀 병합/채우기/라벨 셀 패턴으로 표현하고, 문서 박스나 인증서형 장식은 사용하지 않는다.
+- ReadMe 하단에는 "마우스를 올렸을 때 반응하는 버튼만 진짜입니다. (예: 보기 탭)" 안내를 유지한다.
+- 상단 `보기` 탭은 다크모드 토글의 실제 버튼으로 동작한다.
+- 우측 계정 버튼은 비로그인 시 Google 로그인 버튼이고, 로그인 후 `/api/me`의 `nickname` 또는 `email`에서 추출한 이니셜/초성을 표시한다.
+---
+
+## Interactive/Auth Runtime Rules
+
+- Cloudflare Pages 배포에서는 `/api/*` 요청이 `functions/api/[[path]].js`를 통해 `src/worker/index.js`로 전달되어야 로그인 기능이 활성화된다.
+- 실제 동작하는 영역만 hover/outline/cursor 등 인터랙티브 피드백을 준다.
+- 리본의 붙여넣기, 자르기, 복사, 정렬, 폰트 등 가짜 Excel 컨트롤은 hover 반응을 주지 않는다.
+- 실제 동작하는 영역은 `보기` 탭, 로그인 버튼, 하단 시트 탭, 미니미 대화 버튼, 2048 그리드 크기 선택, SDK 난이도 선택이다.
+- 미니미 수동 대화가 표시되는 5초 동안 자동 말풍선은 억제하고, 새 수동 입력은 즉시 새 문구로 교체한다.

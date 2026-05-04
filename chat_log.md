@@ -1,5 +1,46 @@
 # Chat Log (Auto-Managed)
 
+### [2026-05-04 23:33] (CLI: codex)
+
+**1. 목표**
+- Google 로그인 기능이 활성화되지 않는 원인을 확인하고 수정한다.
+- 실제 활성화되는 요소만 인터랙티브 피드백을 보이게 한다.
+- 2048/SDK 선택 안내 문구와 점수 보정 로직을 추가한다.
+- 관리시트 미니미 버튼 위치, 수동/자동 말풍선 충돌, 다크모드 미니미 반전을 수정한다.
+- main/sub 양쪽에 커밋/푸시한다.
+
+**2. 현재 상태**
+- `main`에는 로그인 버튼 UI가 있었지만, Cloudflare Pages에서 `/api/auth/google/start`가 `src/worker/index.js`로 라우팅되는 Pages Function이 없었다.
+- `sub`에는 main의 일부 UI 커밋이 누락되어 있어 로그인 버튼 자체도 동기화가 필요했다.
+
+**3. 문제**
+- `src/worker/index.js`만 있으면 Cloudflare Pages 정적 배포에서 `/api/*`가 자동으로 활성화되지 않는다.
+- 가짜 리본 버튼도 hover 반응이 있어 실제 버튼처럼 보였다.
+- `.pet-interaction-panel`이 표 위쪽에 떠 있어 표를 가릴 수 있었다.
+- 자동 말풍선 타이머와 유저 버튼 반응 말풍선이 서로 덮어쓸 수 있었다.
+
+**4. 시도한 것**
+- `functions/api/[[path]].js`를 추가해 Pages의 `/api/*` 요청을 기존 Worker fetch handler로 전달하게 했다.
+- 가짜 리본 버튼 hover를 제거하고 실제 요소에만 hover/outline/cursor 피드백을 남겼다.
+- 2048 그리드 크기 선택 안내 문구와 4x4/5x5 점수 보정 multiplier를 추가했다.
+- SDK 난이도 안내 문구와 난이도/시간/실수 기반의 약한 점수 보정 로직을 조정했다.
+- 미니미 버튼 패널을 line 28~34 위치에 해당하는 하단 영역으로 이동했다.
+- 미니미 수동 말풍선 이벤트를 `refresheet:pet-say`로 분리하고, 수동 대화 5초 동안 자동 말풍선을 억제했다.
+- 다크모드에서 미니미 본체/눈/입/발 색상이 반전되도록 CSS를 추가했다.
+
+**5. 해결 / 인사이트**
+- 로그인 비활성의 핵심 원인은 Google/D1 로직 부재가 아니라 Pages 배포에서 API route가 Worker에 연결되지 않은 점이었다.
+- `functions/api/[[path]].js`가 추가되어 Pages 환경에서도 `/api/auth/google/start`, `/api/me`, `/api/auth/logout`가 기존 D1 Worker 로직을 사용한다.
+- DB 적재 대상은 기존과 동일하게 D1 `db_game_info`의 `users`, `user_profiles`, `auth_events`, `auth_sessions`다.
+
+**6. 반영 필요 사항 (중요)**
+- Pages 배포에서 인증 API는 `functions/api/[[path]].js` 라우터를 유지해야 한다.
+- 실제 동작하는 컨트롤에만 인터랙티브 피드백을 준다.
+- 2048과 SDK 점수는 난이도/크기 차이를 보정해 기대 점수 범위를 맞춘다.
+- 미니미 수동 대화 중에는 자동 말풍선을 억제한다.
+
+---
+
 이 파일은 모든 AI CLI(Gemini, Claude, Codex, GPT)의 대화 요약을 누적 관리한다.
 
 ## 📌 기록 규칙 (내재 프롬프트)
@@ -242,6 +283,66 @@ AI는 아래를 판단해야 한다:
 **6. 반영 필요 사항 (중요)**
 - D1 migration 파일 위치가 `docs/migrations`인 경우 `wrangler.toml`의 `[[d1_databases]]`에 `migrations_dir = "docs/migrations"`를 반드시 유지한다.
 - D1 명령은 database name보다 binding 이름 `DB` 기준으로 실행한다.
+
+---
+
+### [2026-05-04 22:41] (CLI: codex)
+
+**1. 목표**
+- 사용자가 제공한 `[오늘의 KPI]`, `[SOP]`, `[시트 안내]` 내용을 ReadMe 시트에 반영한다.
+- 현재처럼 문서 UI/카드처럼 보이지 않고, 엑셀에 직접 입력한 느낌으로 표시한다.
+
+**2. 현재 상태**
+- `index.html`의 ReadMe 시트는 기존 `declaration-box` 카드형 문서 UI로 구성되어 있었다.
+
+**3. 문제**
+- 카드형 선언문 UI는 사용자가 원하는 엑셀 입력형 ReadMe 시트 패턴과 맞지 않았다.
+
+**4. 시도한 것**
+- `declaration-box` DOM을 제거하고 `readme-grid` 기반 셀형 콘텐츠로 교체했다.
+- KPI/SOP/시트 안내를 라벨 셀, 본문 셀, 섹션 헤더 셀로 배치했다.
+- `style.css`에서 선언문 카드 CSS를 제거하고 ReadMe 전용 셀 CSS 및 다크모드 스타일을 추가했다.
+
+**5. 해결 / 인사이트**
+- ReadMe 시트가 문서 박스가 아니라 엑셀 셀에 입력된 안내 표처럼 보이도록 변경됐다.
+
+**6. 반영 필요 사항 (중요)**
+- ReadMe 시트는 카드/문서 UI가 아니라 셀 병합과 채우기 색을 활용한 엑셀 입력형 UI 패턴을 유지한다.
+
+---
+
+### [2026-05-04 22:47] (CLI: codex)
+
+**1. 목표**
+- ReadMe 하단에 "마우스를 올렸을 때 반응하는 버튼만 진짜입니다. (예: 보기 탭)" 문장을 추가한다.
+- 상단 `보기` 탭에 다크모드 기능을 넣는다.
+- 기존 `JH` 버튼을 Google 로그인 버튼으로 바꾸고, 로그인 성공 후 Office 365처럼 초성/이니셜을 표시한다.
+- 로그인/회원가입 정보가 어떤 DB에 쌓이는지 확인하고 기존 인증 흐름과 연결한다.
+
+**2. 현재 상태**
+- Google OAuth Worker는 Cloudflare D1 `db_game_info`에 연결되어 있으며 binding은 `DB`이다.
+- 인증 데이터는 `users`, `user_profiles`, `auth_events`, `auth_sessions`에 기록되는 구조다.
+
+**3. 문제**
+- 기존 `JH` 버튼은 다크모드 토글 역할이어서 로그인 버튼 역할과 충돌했다.
+- 다크모드는 사용자가 기대한 `보기` 탭이 아니라 우측 계정 버튼에 연결되어 있었다.
+
+**4. 시도한 것**
+- `index.html`에서 `JH` 영역을 `login-button`으로 교체했다.
+- `보기` 메뉴 탭에 `view-menu-tab` ID를 부여하고 다크모드 토글로 연결했다.
+- `src/auth/authState.js`에서 비로그인 시 Google OAuth 시작 URL로 이동하고, 로그인 상태면 `/api/me`의 `nickname`/`email` 기반 초성 또는 이니셜을 표시하도록 구현했다.
+- `style.css`에 Office 계정 배지 느낌의 `account-button` 스타일을 추가했다.
+- `node --check`로 `authState.js`, `excelLayout.js` 구문을 확인했다.
+
+**5. 해결 / 인사이트**
+- 비로그인 상태에서는 우측 버튼이 `로그인`으로 보이고 `/api/auth/google/start`로 이동한다.
+- 로그인 성공 후 `/api/me`가 반환하는 사용자 정보 기준으로 버튼에 초성/이니셜이 표시된다.
+- DB 적재 대상은 Cloudflare D1 `db_game_info`의 `users`, `user_profiles`, `auth_events`, `auth_sessions`로 명확하다.
+
+**6. 반영 필요 사항 (중요)**
+- 다크모드는 `보기` 탭에서 토글한다.
+- 우측 계정 버튼은 Google 로그인 진입점이며 로그인 후 사용자 초성/이니셜을 표시한다.
+- 인증 데이터는 D1 `db_game_info`의 `users`, `user_profiles`, `auth_events`, `auth_sessions`에 누적한다.
 
 ---
 

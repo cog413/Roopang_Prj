@@ -10,7 +10,8 @@
 
 const DIFFICULTY_LABEL = { '1': '쉬움', '2': '쉬움+', '3': '보통', '4': '어려움', '5': '최고난도' };
 
-const DIFFICULTY_MULT = { '1': 0.8, '2': 1.0, '3': 1.3, '4': 1.6, '5': 2.0 };
+const DIFFICULTY_MULT = { '1': 0.85, '2': 1.0, '3': 1.15, '4': 1.32, '5': 1.55 };
+const EXPECTED_SECONDS = { '1': 240, '2': 360, '3': 480, '4': 660, '5': 840 };
 
 // Offline fallback — same shape as a sudoku_puzzles row
 const FALLBACK = {
@@ -122,7 +123,18 @@ export async function initSudoku() {
             table.appendChild(valueCell);
         });
 
+        appendNote(table, '난이도를 선택할 수 있습니다.');
+        appendNote(table, '더 높은 난이도의 문제를 풀면 더 높은 점수를 받을 수 있어요.');
+        appendNote(table, '더 빠른 시간 안에 정확히 풀면 더 높은 점수를 받을 수 있어요.');
+
         return table;
+    }
+
+    function appendNote(table, text) {
+        const note = document.createElement('div');
+        note.className = 'fake-table-cell note';
+        note.textContent = text;
+        table.appendChild(note);
     }
 
     function buildScorePanel() {
@@ -314,11 +326,13 @@ export async function initSudoku() {
 
     function calculateScore() {
         const elapsed = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
-        const base = 10000;
-        const timeDeduction = Math.min(elapsed * 5, 8000);
-        const mistakePenalty = mistakeCount * 200;
+        const base = 11000;
+        const expected = EXPECTED_SECONDS[currentDifficulty] || 360;
+        const timeRatio = Math.max(-0.12, Math.min(0.12, (expected - elapsed) / expected));
+        const timeAdjustment = Math.round(base * timeRatio);
+        const mistakePenalty = mistakeCount * 80;
         const mult = DIFFICULTY_MULT[currentDifficulty] || 1.0;
-        return Math.max(500, Math.round((base - timeDeduction - mistakePenalty) * mult));
+        return Math.max(1000, Math.round((base + timeAdjustment - mistakePenalty) * mult));
     }
 
     function resetScoreUI() {
@@ -333,7 +347,7 @@ export async function initSudoku() {
     }
 
     function updateScoreUI(finalScore) {
-        const MAX_SCORE = 16000;
+        const MAX_SCORE = 18000;
         const scoreDisplay = document.getElementById('sudoku-score-display');
         if (scoreDisplay) scoreDisplay.textContent = finalScore.toLocaleString();
 

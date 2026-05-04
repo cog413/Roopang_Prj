@@ -39,11 +39,13 @@ let active    = false;
 let domBuilt  = false;
 let wanderTimer = null;
 let pet       = null;
+let externalSpeechBound = false;
 
 const rand = arr => arr[Math.floor(Math.random() * arr.length)];
 
 export function initMiniPet() {
     buildDOM();
+    bindExternalSpeech();
 
     const sheet = document.getElementById('mini-pet-sheet');
     if (!sheet) return;
@@ -103,6 +105,17 @@ function wander() {
     }
 
     wanderTimer = setTimeout(wander, 8000 + Math.random() * 5000);
+}
+
+function bindExternalSpeech() {
+    if (externalSpeechBound) return;
+    externalSpeechBound = true;
+    document.addEventListener('refresheet:pet-say', event => {
+        if (!pet) return;
+        const { text, duration = 5000, manual = false } = event.detail || {};
+        if (!text) return;
+        speak(pet, text, duration, { manual });
+    });
 }
 
 function isPetOverData(cx, cy) {
@@ -267,10 +280,14 @@ function updatePetPos(p) {
     p.bubble.style.top   = `${p.cy - 30}px`;
 }
 
-function speak(p, text, duration = 1800) {
-    p.bubble.textContent = text;
-    p.bubble.classList.add('visible');
+function speak(p, text, duration = 1800, options = {}) {
+    const manualSpeechUntil = window.refresheetManualPetSpeechUntil || 0;
+    if (!options.manual && Date.now() < manualSpeechUntil) return;
+
     clearTimeout(p._t);
+    p.bubble.classList.remove('visible');
+    p.bubble.textContent = text;
+    requestAnimationFrame(() => p.bubble.classList.add('visible'));
     p._t = setTimeout(() => p.bubble.classList.remove('visible'), duration);
 }
 

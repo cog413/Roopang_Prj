@@ -1,6 +1,7 @@
 export async function initAuthState() {
     const authState = await fetchAuthState();
     window.refresheetAuth = authState;
+    bindLoginButton(authState);
     document.dispatchEvent(new CustomEvent('refresheet:auth', { detail: authState }));
     return authState;
 }
@@ -33,7 +34,66 @@ export async function logout() {
         credentials: 'include',
     });
     window.refresheetAuth = anonymousState();
+    const button = document.getElementById('login-button');
+    if (button) updateLoginButton(button, window.refresheetAuth);
     document.dispatchEvent(new CustomEvent('refresheet:auth', { detail: window.refresheetAuth }));
+}
+
+function bindLoginButton(authState) {
+    const button = document.getElementById('login-button');
+    if (!button) return;
+
+    updateLoginButton(button, authState);
+    button.addEventListener('click', () => {
+        if (window.refresheetAuth?.authenticated) return;
+
+        const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        window.location.href = `/api/auth/google/start?return_to=${encodeURIComponent(returnTo || '/')}`;
+    });
+}
+
+function updateLoginButton(button, authState) {
+    if (authState.authenticated) {
+        button.textContent = getInitials(authState.nickname || authState.email || '');
+        button.classList.add('authenticated');
+        button.title = `${authState.nickname || authState.email} 로그인됨`;
+        return;
+    }
+
+    button.textContent = '로그인';
+    button.classList.remove('authenticated');
+    button.title = 'Google 로그인';
+}
+
+function getInitials(value) {
+    const source = value.trim();
+    if (!source) return 'U';
+
+    const koreanInitials = Array.from(source)
+        .filter((char) => /[가-힣]/.test(char))
+        .map(getKoreanInitial)
+        .filter(Boolean)
+        .slice(0, 2)
+        .join('');
+
+    if (koreanInitials) return koreanInitials;
+
+    const asciiInitials = source
+        .split(/[\s@._-]+/)
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+
+    return asciiInitials || 'U';
+}
+
+function getKoreanInitial(char) {
+    const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+    const code = char.charCodeAt(0) - 0xac00;
+    if (code < 0 || code > 11171) return '';
+    return initials[Math.floor(code / 588)] || '';
 }
 
 function anonymousState() {

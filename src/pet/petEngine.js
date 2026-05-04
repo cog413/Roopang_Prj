@@ -69,15 +69,18 @@ export const petEngine = {
     talk(type) {
         const pool = this.scripts[type] || this.scripts.GREETING;
         const randomMsg = pool[Math.floor(Math.random() * pool.length)];
-        const bubble = document.getElementById('mp-bubble-0');
         const sprite = document.getElementById('mp-sprite-0');
+        const isManual = type !== 'GREETING';
 
-        if (bubble) {
-            bubble.textContent = randomMsg;
-            bubble.classList.add('visible');
-            clearTimeout(this._bubbleTimer);
-            this._bubbleTimer = setTimeout(() => bubble.classList.remove('visible'), 4200);
-        }
+        if (isManual) window.refresheetManualPetSpeechUntil = Date.now() + 5000;
+        clearTimeout(this._bubbleTimer);
+        this._bubbleTimer = setTimeout(() => {
+            if (isManual) window.refresheetManualPetSpeechUntil = 0;
+        }, isManual ? 5000 : 0);
+
+        document.dispatchEvent(new CustomEvent('refresheet:pet-say', {
+            detail: { text: randomMsg, duration: isManual ? 5000 : 4200, manual: isManual },
+        }));
 
         if (sprite) {
             sprite.classList.add('mps-listen');

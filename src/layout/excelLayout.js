@@ -27,11 +27,12 @@ export function initExcelLayout() {
         }
     }
 
-    // 3. Theme Toggle
-    const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
+    // 3. View tab toggles dark mode.
+    const viewMenuTab = document.getElementById('view-menu-tab');
+    if (viewMenuTab) {
+        viewMenuTab.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
+            viewMenuTab.classList.toggle('active', document.body.classList.contains('dark-mode'));
         });
     }
 
