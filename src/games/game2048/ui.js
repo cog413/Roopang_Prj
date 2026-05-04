@@ -14,9 +14,9 @@ export function initGame2048UI() {
     let score = 0;
     let gameOver = false;
 
-    // Inject board size selector into left panel
+    // Inject board size selector at top of left panel
     const leftPanel = document.querySelector('#game2048-sheet .side-left');
-    if (leftPanel) leftPanel.appendChild(buildSizeSelector());
+    if (leftPanel) leftPanel.prepend(buildSizeSelector());
 
     initBoard();
 
