@@ -70,9 +70,9 @@ export async function initSudoku() {
     let mistakeCount = 0;
     let currentPuzzleId = null;
 
-    // Inject difficulty selector into left panel
+    // Inject difficulty selector at top of left panel
     const leftPanel = document.querySelector('#sudoku-sheet .side-left');
-    if (leftPanel) leftPanel.appendChild(buildDifficultySelector());
+    if (leftPanel) leftPanel.prepend(buildDifficultySelector());
 
     // Inject score bar into right panel
     buildScorePanel();
