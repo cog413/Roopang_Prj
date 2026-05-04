@@ -1,4 +1,4 @@
-* {
+﻿* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -299,7 +299,36 @@ body {
 .val-2048 { background-color: #c6e0b4; font-weight: bold;}
 
 
-/* Bottom Tabs */
+/* Mini Pet UI Overlay */
+.mini-pet-ui-overlay {
+    position: absolute;
+    top: 20px;
+    left: 30px;
+    z-index: 100;
+    pointer-events: none; /* Let clicks pass through if not on a button */
+}
+
+.pet-interaction-panel {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #d2d0ce;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    pointer-events: auto; /* Buttons are clickable */
+}
+
+.pet-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    max-width: 300px;
+}
+
+body.dark-mode .pet-interaction-panel {
+    background: rgba(45, 45, 45, 0.9);
+    border-color: #444;
+}
+
 .sheet-tabs {
     display: flex;
     flex-direction: column;
@@ -599,7 +628,7 @@ body.dark-mode .modal-btn:hover { background-color: #555; border-color: #888; }
 /* -------------------
    V2.0 STYLES
    ------------------- */
-/* 로딩 화면 */
+/* 濡쒕뵫 ?붾㈃ */
 #loading-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f3f2f1; }
 .logo { font-size: 24px; color: #217346; margin-bottom: 20px; font-weight: 600; }
 .progress-container { width: 300px; height: 4px; background: #d2d0ce; margin-top: 20px; }
@@ -607,7 +636,7 @@ body.dark-mode .modal-btn:hover { background-color: #555; border-color: #888; }
 @keyframes load { 0% { width: 0%; } 20% { width: 10%; } 50% { width: 60%; } 80% { width: 80%; } 100% { width: 100%; } }
 .momentum-text { font-size: 12px; color: #666; margin-top: 10px; }
 
-/* 선언문 박스 (README) - 640px x 350px (8x14 cells) */
+/* ?좎뼵臾?諛뺤뒪 (README) - 640px x 350px (8x14 cells) */
 .declaration-box { 
     margin: 50px 80px; padding: 50px; border: 1px solid #d2d0ce; background: #fffdf0; 
     box-shadow: 3px 3px 0px #ccc; width: 640px; height: 350px; 
@@ -619,18 +648,7 @@ body.dark-mode .modal-btn:hover { background-color: #555; border-color: #888; }
 .declaration-box .en { font-style: italic; color: #666; font-size: 13px; line-height: 1.5; }
 .declaration-box .stamp { position: absolute; bottom: 30px; right: 30px; border: 2px solid #b00; color: #b00; padding: 5px 10px; transform: rotate(-15deg); font-weight: bold; font-family: serif; letter-spacing: 2px; }
 
-/* 다마고찌 UI (My_Pet) - 480px x 300px (6x12 cells) */
-#pet-container { 
-    margin: 50px 80px; padding: 40px; text-align: center; border: 1px solid #c8c6c4; background: #fff;
-    width: 480px; height: 300px; 
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-}
-#pet-avatar { font-size: 60px; margin-bottom: 30px; transition: transform 0.3s; }
-#pet-dialogue { background: #f3f2f1; border: 1px solid #e1dfdd; padding: 20px; min-height: 80px; margin-bottom: 30px; border-radius: 4px; width: 100%; display: flex; align-items: center; justify-content: center; }
-.pet-buttons { display: flex; justify-content: center; gap: 10px; }
-
-/* 스텔스 광고 위젯 */
+/* ?ㅽ뀛??愿묎퀬 ?꾩젽 */
 .stealth-ad { position: fixed; bottom: 50px; right: 20px; width: 240px; height: 150px; border: 1px solid #2b6cb0; background: #fff; font-size: 11px; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 .ad-header { background: #dbe5f1; padding: 5px 10px; font-weight: bold; border-bottom: 1px solid #2b6cb0; display: flex; justify-content: space-between; align-items: center; color: #333; }
 .ad-header::after { content: 'i'; display: inline-block; width: 14px; height: 14px; border: 1px solid #2b6cb0; border-radius: 50%; text-align: center; line-height: 12px; font-size: 10px; color: #2b6cb0; cursor: pointer; }
@@ -644,345 +662,21 @@ body.dark-mode .declaration-box { background: #2d2d2d; border-color: #444; box-s
 body.dark-mode .declaration-box h3 { color: #4CAF50; }
 body.dark-mode .declaration-box .en { color: #888; }
 body.dark-mode .declaration-box .stamp { border-color: #e57373; color: #e57373; }
-body.dark-mode #pet-container { background: #2d2d2d; border-color: #444; }
-body.dark-mode #pet-dialogue { background: #1e1e1e; border-color: #444; color: #d4d4d4; }
 body.dark-mode .stealth-ad { background: #2d2d2d; border-color: #444; }
 body.dark-mode .ad-header { background: #1a365d; border-color: #444; color: #d4d4d4; }
 body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 
 /* =====================================================
-   미니미 (셀구리) 서식지 스타일
-   엑셀 셀(80×25px) 기준: 미니미는 20×20px 이하
+   誘몃땲誘?(?援щ━) ?쒖떇吏 ?ㅽ???
+   ?묒? ?(80횞25px) 湲곗?: 誘몃땲誘몃뒗 20횞20px ?댄븯
    ===================================================== */
 
-/* 시트 래퍼 */
-.mini-pet-sheet-wrap {
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background: #fff;
-}
-
-/* 서식지 전체 컨테이너 */
-.mini-pet-habitat {
-    display: flex;
-    flex-direction: row;
-    gap: 40px;
-    padding: 25px 80px;
-    position: relative;
-    min-height: 600px;
-}
-
-/* ── 실적장표 (20행 × 5열) ─────────────────────── */
-.mini-habitat-table {
-    flex-shrink: 0;
-    border-left: 1px solid #c8c6c4;
-    border-top: 1px solid #c8c6c4;
-    font-size: 11px;
-    position: relative;
-}
-
-.mht-row {
-    display: grid;
-    grid-template-columns: 120px 60px 60px 60px 60px; /* 5열 */
-}
-
-.mht-header .mht-cell {
-    background-color: #dbe5f1;
-    font-weight: bold;
-    color: #1f3864;
-    justify-content: center;
-}
-
-.mht-cell {
-    height: 25px; /* 정확히 엑셀 셀 1행 높이 */
-    border-right: 1px solid #c8c6c4;
-    border-bottom: 1px solid #c8c6c4;
-    display: flex;
-    align-items: center;
-    padding: 0 4px;
-    font-size: 11px;
-    color: #333;
-    white-space: nowrap;
-}
-
-.mht-num { justify-content: flex-end; }
-
-.mht-even .mht-cell { background-color: #f9f9f9; }
-
-/* ── 막대 그래프 ───────────────────────────────── */
-.mini-habitat-chart {
-    flex-shrink: 0;
-    width: 260px;
-    border: 1px solid #c8c6c4;
-    background: #fff;
-    padding: 16px 12px 8px;
-    display: flex;
-    flex-direction: column;
-    align-self: flex-start;
-    margin-top: 0;
-}
-
-.mhc-title {
-    font-size: 11px;
-    font-weight: bold;
-    color: #1f3864;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #e1dfdd;
-    padding-bottom: 6px;
-}
-
-.mhc-bars {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    height: 200px; /* 그래프 높이 = 미니미가 등반하는 영역 */
-    padding-top: 20px;
-    position: relative;
-}
-
-.mhc-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    flex: 1;
-    height: 100%;
-    gap: 3px;
-    position: relative;
-}
-
-.mhc-bar {
-    width: 100%;
-    background: linear-gradient(to top, #2e75b6, #5b9bd5);
-    border-radius: 2px 2px 0 0;
-    transition: height 0.9s cubic-bezier(.17,.67,.4,1.1);
-    position: relative;
-}
-.mhc-col:last-child .mhc-bar { background: linear-gradient(to top, #c55a11, #ed7d31); }
-.mhc-col:nth-child(5) .mhc-bar { background: linear-gradient(to top, #375623, #70ad47); }
-
-.mhc-val {
-    font-size: 9px;
-    color: #666;
-    text-align: center;
-    min-height: 12px;
-}
-.mhc-label {
-    font-size: 10px;
-    color: #555;
-    font-weight: bold;
-    text-align: center;
-}
-
-/* ── 미니미 캐릭터 (셀구리) ─────────────────── */
-/* 전체 크기: body 16×16 + feet 4px = 약 20px
-   엑셀 셀(80×25px) 보다 작음 ✅ */
-
-.mini-pet-sprite {
-    position: absolute;
-    width: 20px;
-    z-index: 100;
-    pointer-events: none;
-    transition: top 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
-                left 0.5s ease;
-}
-
-/* 몸통 */
-.mps-body {
-    width: 18px;
-    height: 16px;
-    background: radial-gradient(ellipse at 40% 35%, #a8e6cf, #6bc5a0);
-    border-radius: 50% 50% 45% 45% / 55% 55% 45% 45%;
-    border: 1.5px solid #4a9e7a;
-    position: relative;
-    animation: mps-wiggle 0.9s ease-in-out infinite;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-}
-
-/* 더듬이 */
-.mps-antenna {
-    position: absolute;
-    top: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 2px;
-    height: 6px;
-    background: #4a9e7a;
-    border-radius: 2px;
-}
-.mps-antenna::after {
-    content: '';
-    display: block;
-    width: 4px;
-    height: 4px;
-    background: #ff6b6b;
-    border-radius: 50%;
-    position: absolute;
-    top: -3px;
-    left: -1px;
-    animation: mps-antblink 2s ease-in-out infinite;
-}
-
-/* 눈 */
-.mps-eyes {
-    display: flex;
-    justify-content: space-around;
-    padding: 4px 3px 0;
-}
-.mps-eye {
-    width: 4px;
-    height: 4px;
-    background: #1a1a2e;
-    border-radius: 50%;
-    position: relative;
-    animation: mps-blink 3.5s ease-in-out infinite;
-}
-.mps-eye::after {
-    content: '';
-    width: 1.5px;
-    height: 1.5px;
-    background: #fff;
-    border-radius: 50%;
-    position: absolute;
-    top: 0.5px;
-    left: 0.5px;
-}
-
-/* 볼 */
-.mps-cheeks {
-    display: flex;
-    justify-content: space-between;
-    padding: 1px 1px 0;
-    position: absolute;
-    bottom: 4px;
-    left: 0;
-    right: 0;
-}
-.mps-cheek {
-    width: 5px;
-    height: 3px;
-    background: rgba(255, 150, 150, 0.5);
-    border-radius: 50%;
-}
-
-/* 발 */
-.mps-feet {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 1px;
-}
-.mps-foot {
-    width: 6px;
-    height: 4px;
-    background: #4a9e7a;
-    border-radius: 0 0 4px 4px;
-    animation: mps-feet-step 0.9s ease-in-out infinite alternate;
-}
-.mps-foot:last-child {
-    animation-delay: 0.45s;
-}
-
-/* ── 말풍선 ────────────────────────────────── */
-.mini-pet-bubble {
-    position: absolute;
-    background: #fffbf0;
-    border: 1px solid #c8c6c4;
-    border-radius: 6px 6px 6px 0;
-    padding: 3px 7px;
-    font-size: 10px;
-    color: #333;
-    white-space: nowrap;
-    z-index: 101;
-    opacity: 0;
-    transform: translateY(-4px) scale(0.9);
-    transition: opacity 0.2s, transform 0.2s;
-    pointer-events: none;
-    box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
-}
-.mini-pet-bubble.visible {
-    opacity: 1;
-    transform: translateY(-24px) scale(1);
-}
-
-/* ── 애니메이션 키프레임 ──────────────────── */
-
-/* 꼬물꼬물 기본 흔들림 */
-@keyframes mps-wiggle {
-    0%   { transform: scaleX(1)    scaleY(1)    rotate(-2deg); }
-    25%  { transform: scaleX(1.08) scaleY(0.92) rotate(0deg);  }
-    50%  { transform: scaleX(1)    scaleY(1)    rotate(2deg);  }
-    75%  { transform: scaleX(0.93) scaleY(1.07) rotate(0deg);  }
-    100% { transform: scaleX(1)    scaleY(1)    rotate(-2deg); }
-}
-
-/* 발 걷기 */
-@keyframes mps-feet-step {
-    from { transform: translateY(0) scaleX(1);   }
-    to   { transform: translateY(1px) scaleX(0.8); }
-}
-
-/* 눈 깜빡임 */
-@keyframes mps-blink {
-    0%, 90%, 100% { transform: scaleY(1); }
-    93%            { transform: scaleY(0.1); }
-}
-
-/* 더듬이 빛 */
-@keyframes mps-antblink {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(1.3); }
-}
-
-/* 낑낑 투쟁 */
-.mps-struggle .mps-body {
-    animation: mps-wiggle 0.25s ease-in-out infinite,
-               mps-struggle-shake 0.25s ease-in-out infinite;
-}
-@keyframes mps-struggle-shake {
-    0%   { margin-left: 0; }
-    25%  { margin-left: -2px; }
-    50%  { margin-left: 2px; }
-    75%  { margin-left: -1px; }
-    100% { margin-left: 0; }
-}
-
-/* 축하 점프 */
-.mps-celebrate .mps-body {
-    animation: mps-celebrate-jump 0.4s ease-in-out infinite alternate;
-}
-@keyframes mps-celebrate-jump {
-    from { transform: translateY(0) scaleX(1)    scaleY(1);    }
-    to   { transform: translateY(-5px) scaleX(1.1) scaleY(0.9); }
-}
-
-/* 미끄러짐 */
-.mps-fall .mps-body {
-    animation: mps-fall-spin 0.3s linear infinite;
-}
-@keyframes mps-fall-spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-}
-
-/* 다크모드 대응 */
-body.dark-mode .mini-pet-sheet-wrap { background: #1e1e1e; }
-body.dark-mode .mini-habitat-table { border-color: #444; }
-body.dark-mode .mht-cell { border-color: #444; color: #d4d4d4; }
-body.dark-mode .mht-even .mht-cell { background-color: #2a2a2a; }
-body.dark-mode .mht-header .mht-cell { background-color: #1a365d; color: #90cdf4; }
-body.dark-mode .mini-habitat-chart { background: #2d2d2d; border-color: #444; }
-body.dark-mode .mhc-title { color: #90cdf4; border-color: #444; }
-body.dark-mode .mhc-label { color: #aaa; }
-body.dark-mode .mhc-val { color: #888; }
-body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color: #d4d4d4; }
-
 /* =====================================================
-   mp-* : 미니미 v3 신규 스타일 (CSS 수치 = JS 상수)
+   mp-* : 誘몃땲誘?v3 ?좉퇋 ?ㅽ???(CSS ?섏튂 = JS ?곸닔)
    PAD_T=20, PAD_L=40, ROW_H=25, TABLE_W=310, GAP=24
    ===================================================== */
 
-/* 씬 컨테이너 - position:relative 필수 (스프라이트 절대 위치 기준) */
+/* ??而⑦뀒?대꼫 - position:relative ?꾩닔 (?ㅽ봽?쇱씠???덈? ?꾩튂 湲곗?) */
 .mp-scene {
     position: relative;
     display: flex;
@@ -994,7 +688,7 @@ body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color
     overflow: auto;
 }
 
-/* ── 실적장표 ─────────────────────────────────────── */
+/* ?? ?ㅼ쟻?ν몴 ??????????????????????????????????????? */
 .mp-table {
     flex-shrink: 0;
     border-left: 1px solid #c8c6c4;
@@ -1003,7 +697,7 @@ body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color
 
 .mht-row {
     display: grid;
-    grid-template-columns: 110px 50px 50px 50px 50px; /* 합계 = 310px = JS TABLE_W */
+    grid-template-columns: 110px 50px 50px 50px 50px; /* ?⑷퀎 = 310px = JS TABLE_W */
 }
 
 .mht-header .mht-cell {
@@ -1014,7 +708,7 @@ body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color
 }
 
 .mht-cell {
-    height: 25px;           /* JS: ROW_H=25 - 반드시 일치 */
+    height: 25px;           /* JS: ROW_H=25 - 諛섎뱶???쇱튂 */
     border-right:  1px solid #c8c6c4;
     border-bottom: 1px solid #c8c6c4;
     display: flex;
@@ -1027,7 +721,7 @@ body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color
 .mht-num { justify-content: flex-end; }
 .mht-even .mht-cell { background: #f9f9f9; }
 
-/* ── 차트 ─────────────────────────────────────────── */
+/* ?? 李⑦듃 ??????????????????????????????????????????? */
 .mp-chart {
     flex-shrink: 0;
     width: 220px;
@@ -1051,7 +745,7 @@ body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color
     display: flex;
     align-items: flex-end;
     gap: 4px;
-    height: 180px;  /* JS: BAR_AREA_H (getBoundingClientRect 기준) */
+    height: 180px;  /* JS: BAR_AREA_H (getBoundingClientRect 湲곗?) */
     padding-top: 16px;
     flex: 1;
 }
@@ -1078,7 +772,7 @@ body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color
 .mp-val { font-size: 9px; color: #666; text-align: center; min-height: 11px; }
 .mp-lbl { font-size: 10px; font-weight: bold; color: #555; }
 
-/* ── 서식지 맵 ────────────────────────────────────── */
+/* ?? ?쒖떇吏 留??????????????????????????????????????? */
 .mp-minimap {
     flex-shrink: 0;
     width: 160px;
@@ -1106,7 +800,8 @@ body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color
     display: block;
 }
 
-.mp-minimap-legend {
+.mp-minimap-legend,
+.mp-map-legend {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -1117,65 +812,55 @@ body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color
 .mml-chart  { color: #ed7d31; }
 .mml-pet    { color: #217346; font-weight: bold; }
 
-/* ── 셀구리 스프라이트 ────────────────────────────── */
+/* ?? ?援щ━ ?ㅽ봽?쇱씠???????????????????????????????? */
 .mp-sprite {
-    position: absolute;   /* .mp-scene 기준 */
+    position: absolute;
     width: 20px;
     z-index: 100;
     pointer-events: none;
-    transition: top  0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
-                left 0.45s ease;
+    transition: top 5.8s ease-in-out, left 6.4s ease-in-out;
 }
 
 .mps-body {
     width: 18px;
     height: 16px;
-    background: radial-gradient(ellipse at 40% 35%, #a8e6cf, #6bc5a0);
-    border-radius: 50% 50% 45% 45% / 55% 55% 45% 45%;
-    border: 1.5px solid #4a9e7a;
+    background:
+        radial-gradient(circle at 4px 4px, #fff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 12px 9px, #fff 0 1px, transparent 1.5px),
+        #111;
+    background-size: 6px 6px, 7px 7px, auto;
+    border-radius: 3px;
+    border: 1px solid #000;
     position: relative;
-    animation: mps-wiggle 0.9s ease-in-out infinite;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-}
-.mps-antenna {
-    position: absolute; top: -6px; left: 50%;
-    transform: translateX(-50%);
-    width: 2px; height: 6px;
-    background: #4a9e7a; border-radius: 2px;
-}
-.mps-antenna::after {
-    content: ''; display: block;
-    width: 4px; height: 4px;
-    background: #ff6b6b; border-radius: 50%;
-    position: absolute; top: -3px; left: -1px;
-    animation: mps-antblink 2s ease-in-out infinite;
+    animation: mps-wiggle 3.2s ease-in-out infinite;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
 .mps-eyes { display: flex; justify-content: space-around; padding: 4px 3px 0; }
 .mps-eye  {
-    width: 4px; height: 4px;
-    background: #1a1a2e; border-radius: 50%;
-    animation: mps-blink 3.5s ease-in-out infinite;
-}
-.mps-eye::after {
-    content: ''; width: 1.5px; height: 1.5px;
+    width: 3px; height: 3px;
     background: #fff; border-radius: 50%;
-    position: absolute; top: 0.5px; left: 0.5px;
+    animation: mps-blink 5s ease-in-out infinite;
 }
-.mps-cheeks {
-    display: flex; justify-content: space-between;
-    padding: 1px 1px 0;
-    position: absolute; bottom: 4px; left: 0; right: 0;
+.mps-mouth {
+    width: 6px;
+    height: 2px;
+    margin: 4px auto 0;
+    background: #fff;
 }
-.mps-cheek { width: 5px; height: 3px; background: rgba(255,150,150,.5); border-radius: 50%; }
 .mps-feet  { display: flex; justify-content: space-around; margin-top: 1px; }
 .mps-foot  {
     width: 6px; height: 4px;
-    background: #4a9e7a; border-radius: 0 0 4px 4px;
-    animation: mps-feet-step 0.9s ease-in-out infinite alternate;
+    background: #111; border-radius: 0 0 2px 2px;
+    animation: mps-feet-step 3.2s ease-in-out infinite alternate;
 }
-.mps-foot:last-child { animation-delay: 0.45s; }
+.mps-foot:last-child { animation-delay: 1.6s; }
 
-/* ── 말풍선 ─────────────────────────────────────── */
+.mps-listen .mps-body {
+    outline: 1px dotted #111;
+    outline-offset: 2px;
+}
+
+/* ?? 留먰뭾????????????????????????????????????????? */
 .mp-bubble {
     position: absolute;
     background: #fffbf0;
@@ -1193,54 +878,21 @@ body.dark-mode .mini-pet-bubble { background: #2d2d2d; border-color: #555; color
 }
 .mp-bubble.visible { opacity: 1; transform: scale(1); }
 
-/* ── 키프레임 ────────────────────────────────────── */
+/* ?? ?ㅽ봽?덉엫 ?????????????????????????????????????? */
 @keyframes mps-wiggle {
-    0%  { transform: scaleX(1)    scaleY(1)    rotate(-2deg); }
-    25% { transform: scaleX(1.08) scaleY(0.92) rotate(0deg);  }
-    50% { transform: scaleX(1)    scaleY(1)    rotate(2deg);  }
-    75% { transform: scaleX(0.93) scaleY(1.07) rotate(0deg);  }
-    100%{ transform: scaleX(1)    scaleY(1)    rotate(-2deg); }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(1px); }
 }
 @keyframes mps-feet-step {
-    from { transform: translateY(0)   scaleX(1);   }
-    to   { transform: translateY(1px) scaleX(0.8); }
+    from { transform: translateY(0); }
+    to   { transform: translateY(1px); }
 }
 @keyframes mps-blink {
     0%,90%,100% { transform: scaleY(1); }
     93%          { transform: scaleY(0.1); }
 }
-@keyframes mps-antblink {
-    0%,100% { opacity:1; transform:scale(1);   }
-    50%      { opacity:.4; transform:scale(1.3); }
-}
 
-.mps-struggle .mps-body {
-    animation: mps-wiggle .22s ease-in-out infinite,
-               mps-struggle-shake .22s ease-in-out infinite;
-}
-@keyframes mps-struggle-shake {
-    0%  { margin-left: 0;  }
-    25% { margin-left: -2px; }
-    50% { margin-left: 2px; }
-    75% { margin-left: -1px; }
-    100%{ margin-left: 0;  }
-}
-.mps-celebrate .mps-body {
-    animation: mps-celebrate-jump .4s ease-in-out infinite alternate;
-}
-@keyframes mps-celebrate-jump {
-    from { transform: translateY(0)    scaleX(1)   scaleY(1);   }
-    to   { transform: translateY(-5px) scaleX(1.1) scaleY(0.9); }
-}
-.mps-fall .mps-body {
-    animation: mps-fall-spin .3s linear infinite;
-}
-@keyframes mps-fall-spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-}
-
-/* ── 다크모드 ─────────────────────────────────────── */
+/* ?? ?ㅽ겕紐⑤뱶 ??????????????????????????????????????? */
 body.dark-mode .mp-scene { background: #1e1e1e; }
 body.dark-mode .mp-table { border-color: #444; }
 body.dark-mode .mht-cell { border-color: #444; color: #d4d4d4; }

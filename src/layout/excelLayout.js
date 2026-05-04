@@ -66,9 +66,6 @@ export function initExcelLayout() {
         if (sheetId === 'readme') {
             formulaInput.value = '=DECLARATION("RIGHT_TO_REST")';
             currentCell.textContent = 'A1';
-        } else if (sheetId === 'pet') {
-            formulaInput.value = '=PET.INIT()';
-            currentCell.textContent = 'A1';
         } else if (sheetId === 'sudoku') {
             formulaInput.value = '=SUDOKU.INIT(A1:I9)';
             currentCell.textContent = 'A1';
@@ -76,7 +73,7 @@ export function initExcelLayout() {
             formulaInput.value = '=SUM(A1:D4)*2048';
             currentCell.textContent = 'A1';
         } else if (sheetId === 'mini-pet') {
-            formulaInput.value = '=MINI.PET.CLIMB(B2:F22)';
+            formulaInput.value = '=MANAGE.PET.STATUS(B2:F22)';
             currentCell.textContent = 'B2';
         }
     }

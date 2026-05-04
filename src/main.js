@@ -23,14 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
     initExcelLayout();
     initBossKey();
     
-    // Initialize Pet Engine (My_Pet 탭)
+    // Initialize Pet Engine (관리시트 대화)
     petEngine.init();
 
     // Initialize Games (Sheet1, Sheet2 탭)
     initSudoku();
     initGame2048();
 
-    // Initialize Mini Pet (미니미 탭: 셀구리 & 실정장표)
+    // Initialize Mini Pet (관리시트: 단일 셀구리 & 실적 장표)
     initMiniPet();
 });
 

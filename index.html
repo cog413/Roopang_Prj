@@ -16,7 +16,6 @@
     </div>
 
     <div id="excel-app" style="display:none;">
-        <!-- 상단 리본 메뉴 -->
         <header class="ribbon">
             <div class="ribbon-top">
                 <div class="title-bar">
@@ -65,14 +64,12 @@
             </div>
         </header>
 
-        <!-- 수식 입력줄 -->
         <div class="formula-bar">
             <div class="name-box" id="current-cell">A1</div>
             <div class="fx-icon">fx</div>
             <input type="text" class="formula-input" id="formula-input" readonly value="">
         </div>
 
-        <!-- 메인 스프레드시트 영역 -->
         <div class="spreadsheet-container">
             <div class="corner-header">◢</div>
             <div class="column-headers" id="col-headers"></div>
@@ -81,33 +78,33 @@
                 <div class="row-headers" id="row-headers"></div>
                 
                 <div class="grid-content" id="grid-content">
-                    <!-- 게임 0-1: README 보드 -->
                     <div id="readme-sheet" class="sheet-view active">
                         <div class="sheet-layout">
                             <div class="declaration-box">
                                 <h3>[ 제1조: 휴식의 권리 ]</h3>
                                 <p class="kr">"누구나 휴식할 권리는 있다. 설령 직장인, 대학원생일지라도..."</p>
-                                <p class="en">"Everyone has the right to rest—even for office workers and grad students..."</p>
+                                <p class="en">"Everyone has the right to rest-even for office workers and grad students..."</p>
                                 <span class="stamp">추진력 수집 인증</span>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- 게임 0-2: My_Pet 보드 -->
-                    <div id="pet-sheet" class="sheet-view" style="display: none;">
-                        <div class="sheet-layout">
-                            <div id="pet-container">
-                                <div id="pet-avatar"> ( ◡‿◡ ) </div>
-                                <div id="pet-dialogue">추진력을 얻을 준비가 되셨나요?</div>
+
+                    <div id="mini-pet-sheet" class="sheet-view" style="display: none;">
+                        <div class="mini-pet-ui-overlay">
+                            <div class="pet-interaction-panel">
                                 <div class="pet-buttons">
                                     <button id="btn-pet-stress" class="tool-btn small">팀장님이 괴롭혀</button>
+                                    <button id="btn-pet-manager" class="tool-btn small">팀장님이 힘들게 해</button>
                                     <button id="btn-pet-tired" class="tool-btn small">너무 피곤해</button>
+                                    <button id="btn-pet-hard" class="tool-btn small">너무 힘들어</button>
+                                    <button id="btn-pet-encourage" class="tool-btn small">응원해줘</button>
+                                    <button id="btn-pet-secret" class="tool-btn small">비밀작전</button>
                                 </div>
                             </div>
                         </div>
+                        <div id="mini-pet-habitat" class="mp-scene"></div>
                     </div>
 
-                    <!-- 게임 1: 스도쿠 보드 -->
                     <div id="sudoku-sheet" class="sheet-view" style="display: none;">
                         <div class="sheet-layout">
                             <div class="fake-dashboard side-left">
@@ -138,7 +135,6 @@
                         </div>
                     </div>
                     
-                    <!-- 게임 2: 2048 보드 -->
                     <div id="game2048-sheet" class="sheet-view" style="display: none;">
                         <div class="sheet-layout">
                             <div class="fake-dashboard side-left">
@@ -178,28 +174,16 @@
                         </div>
                     </div>
 
-
-                    <!-- 미니미 (셀구리) 서식지 -->
-                    <div id="mini-pet-sheet" class="sheet-view" style="display: none;">
-                        <div id="mini-pet-habitat" class="mp-scene">
-                            <!-- JS로 동적 생성: 실적장표, 차트, 서식지 맵, 셀구리 -->
-                        </div>
-                    </div>
-
-
-                    <!-- 더미 데이터 (위장용) -->
                     <div id="dummy-cells" class="dummy-grid"></div>
                 </div>
             </div>
         </div>
 
-        <!-- 하단 시트 탭 -->
         <footer class="sheet-tabs">
             <div class="tab-controls">◀ ▶</div>
             <div class="tabs">
                 <div class="tab active" data-sheet="readme">README</div>
-                <div class="tab" data-sheet="pet">My_Pet</div>
-                <div class="tab" data-sheet="mini-pet">미니미</div>
+                <div class="tab" data-sheet="mini-pet">관리시트</div>
                 <div class="tab" data-sheet="sudoku">Sheet1</div>
                 <div class="tab" data-sheet="game2048">Sheet2</div>
                 <div class="tab add-tab">+</div>
@@ -211,14 +195,12 @@
             </div>
         </footer>
 
-        <!-- 스텔스 광고 위젯 -->
         <div id="Data_Visual_Widget" class="stealth-ad">
             <div class="ad-header">실시간 지표 분석</div>
             <div class="ad-content">AD AREA</div>
         </div>
     </div>
 
-    <!-- 엑셀 데이터 유효성 검사 경고창 (모달) -->
     <div id="validation-modal" class="modal-overlay" style="display: none;">
         <div class="excel-modal">
             <div class="modal-header">
@@ -237,7 +219,6 @@
         </div>
     </div>
 
-    <!-- 스크립트 로드 -->
     <script type="module" src="src/main.js"></script>
 </body>
 </html>
