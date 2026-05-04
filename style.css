@@ -1144,12 +1144,10 @@ body.dark-mode .g2048-size-btn.active { background-color: #1a365d !important; co
 
 /* ── SOP ─────────────────────────────────────────── */
 .rm-sop {
-    border: 1px solid #e1dfdd;
-    border-top: none;
+    background: #fff;
 }
 .rm-sop-item {
     padding: 7px 10px;
-    border-bottom: 1px solid #e1dfdd;
 }
 .rm-sop-item:last-child { border-bottom: none; }
 .rm-sop-title {
@@ -1168,33 +1166,28 @@ body.dark-mode .g2048-size-btn.active { background-color: #1a365d !important; co
 
 /* ── 시트 안내 ────────────────────────────────────── */
 .rm-guide {
-    border: 1px solid #e1dfdd;
-    border-top: none;
+    background: #fff;
 }
 .rm-guide-item {
     display: grid;
     grid-template-columns: 72px 18px 1fr;
     height: 25px;
     align-items: center;
-    border-bottom: 1px solid #e1dfdd;
 }
 .rm-guide-item:last-child { border-bottom: none; }
 .rm-guide-label {
-    background: #f2f2f2;
     font-weight: 600;
     color: #1f3864;
     padding: 0 6px;
     height: 100%;
     display: flex;
     align-items: center;
-    border-right: 1px solid #e1dfdd;
     font-size: 12px;
 }
 .rm-guide-sep {
     text-align: center;
     color: #888;
     font-size: 12px;
-    border-right: 1px solid #e1dfdd;
     height: 100%;
     display: flex;
     align-items: center;
@@ -1238,14 +1231,12 @@ body.dark-mode .rm-kpi-mid  { color: #90cdf4; }
 body.dark-mode .rm-kpi-good { color: #b7e1c0; }
 body.dark-mode .rm-kpi-desc { color: #ccc; }
 body.dark-mode .rm-kpi-sub  { color: #888; }
-body.dark-mode .rm-sop { border-color: #444; }
-body.dark-mode .rm-sop-item { border-color: #444; }
+body.dark-mode .rm-sop { background: #2d2d2d; }
 body.dark-mode .rm-sop-title { color: #90cdf4; }
 body.dark-mode .rm-sop-body { color: #bbb; }
-body.dark-mode .rm-guide { border-color: #444; }
-body.dark-mode .rm-guide-item { border-color: #444; }
-body.dark-mode .rm-guide-label { background: #333; color: #90cdf4; border-color: #444; }
-body.dark-mode .rm-guide-sep { color: #666; border-color: #444; }
+body.dark-mode .rm-guide { background: #2d2d2d; }
+body.dark-mode .rm-guide-label { color: #90cdf4; }
+body.dark-mode .rm-guide-sep { color: #666; }
 body.dark-mode .rm-guide-text { color: #ccc; }
 body.dark-mode .rm-notes { background: #2f2a16; border-color: #b8860b; }
 body.dark-mode .rm-note-item { color: #ffe699; border-color: #b8860b; }
