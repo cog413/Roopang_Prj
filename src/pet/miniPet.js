@@ -1,18 +1,19 @@
-const SPEECHES = ['...', '쉿', '천천히 순찰중', '업무중...', '데이터 확인', '휴식 승인'];
-const BOUNDS = { minX: 50, maxX: 540, minY: 80, maxY: 500 };
+const SPEECHES   = ['...', '쉿', '천천히 순찰중', '업무중...', '데이터 확인', '휴식 승인'];
+const STRAIN_MSG = ['으... 무거워', '낑낑...', '데이터 장벽!', '이쪽은 데이터 지대', '비켜요 비켜'];
+const BOUNDS     = { minX: 50, maxX: 540, minY: 80, maxY: 500 };
 
 const ROWS = [
     ['전략기획팀', '12,400', '11,200', '14,800', '13,900'],
-    ['영업1팀', '38,200', '41,500', '39,800', '44,200'],
-    ['영업2팀', '29,100', '31,400', '28,700', '33,600'],
-    ['마케팅팀', '8,500', '9,200', '11,400', '10,800'],
-    ['개발1팀', '5,200', '5,800', '6,100', '6,700'],
-    ['개발2팀', '4,900', '5,100', '5,400', '5,900'],
-    ['디자인팀', '3,800', '4,200', '4,100', '4,600'],
-    ['인사팀', '2,100', '2,300', '2,200', '2,400'],
-    ['재무팀', '1,800', '1,900', '2,100', '2,000'],
-    ['구매팀', '6,700', '7,100', '6,800', '7,500'],
-    ['물류팀', '9,300', '9,800', '10,200', '11,100'],
+    ['영업1팀',   '38,200', '41,500', '39,800', '44,200'],
+    ['영업2팀',   '29,100', '31,400', '28,700', '33,600'],
+    ['마케팅팀',  '8,500',  '9,200',  '11,400', '10,800'],
+    ['개발1팀',   '5,200',  '5,800',  '6,100',  '6,700'],
+    ['개발2팀',   '4,900',  '5,100',  '5,400',  '5,900'],
+    ['디자인팀',  '3,800',  '4,200',  '4,100',  '4,600'],
+    ['인사팀',    '2,100',  '2,300',  '2,200',  '2,400'],
+    ['재무팀',    '1,800',  '1,900',  '2,100',  '2,000'],
+    ['구매팀',    '6,700',  '7,100',  '6,800',  '7,500'],
+    ['물류팀',    '9,300',  '9,800',  '10,200', '11,100'],
 ];
 
 const BARS = [
@@ -24,16 +25,20 @@ const BARS = [
 ];
 
 const PROJECT_ROWS = [
-    ['Next-Gen ERP 고도화', '85%', '진행중', '2026-12-31', '임부장'],
+    ['Next-Gen ERP 고도화',    '85%', '진행중', '2026-12-31', '임부장'],
     ['Global Cloud Migration', '42%', '진행중', '2027-06-30', '김차장'],
-    ['AI 챗봇 고객센터 연동', '100%', '완료', '2026-04-15', '이과장'],
-    ['보안 취약점 정기 점검', '10%', '대기', '2026-05-20', '박대리'],
+    ['AI 챗봇 고객센터 연동',  '100%', '완료',  '2026-04-15', '이과장'],
+    ['보안 취약점 정기 점검',  '10%', '대기',   '2026-05-20', '박대리'],
 ];
 
-let active = false;
-let domBuilt = false;
+// Trend data: [목표달성률, 실적달성률] per month (Jan-Jun)
+const TREND_TARGET = [72, 75, 78, 80, 83, 86];
+const TREND_ACTUAL = [68, 71, 73, 82, 79, 85];
+
+let active    = false;
+let domBuilt  = false;
 let wanderTimer = null;
-let pet = null;
+let pet       = null;
 
 const rand = arr => arr[Math.floor(Math.random() * arr.length)];
 
@@ -55,12 +60,12 @@ export function initMiniPet() {
 
 function startWander() {
     active = true;
-    document.querySelectorAll('#mp-bars .mp-bar').forEach((bar, index) => {
+    document.querySelectorAll('#mp-bars .mp-bar').forEach((bar, i) => {
         bar.style.height = '0%';
         setTimeout(() => {
             bar.style.transition = 'height .7s ease-out';
             bar.style.height = `${bar.dataset.h}%`;
-        }, index * 120);
+        }, i * 120);
     });
 
     if (pet) {
@@ -88,11 +93,31 @@ function wander() {
     updatePetPos(pet);
     drawMap(pet.cx, pet.cy);
 
-    if (Math.random() < 0.25) {
+    // Check if pet is on top of a data row → strain animation
+    if (isPetOverData(pet.cx, pet.cy)) {
+        pet.element.classList.add('mps-strain');
+        speak(pet, rand(STRAIN_MSG), 2200);
+        setTimeout(() => pet.element.classList.remove('mps-strain'), 1200);
+    } else if (Math.random() < 0.25) {
         speak(pet, rand(SPEECHES), 2600);
     }
 
     wanderTimer = setTimeout(wander, 8000 + Math.random() * 5000);
+}
+
+function isPetOverData(cx, cy) {
+    const habitat = document.getElementById('mini-pet-habitat');
+    if (!habitat) return false;
+    const habitatRect = habitat.getBoundingClientRect();
+    const petX = habitatRect.left + cx;
+    const petY = habitatRect.top  + cy;
+
+    for (const row of habitat.querySelectorAll('.mht-row:not(.mht-header)')) {
+        const rect = row.getBoundingClientRect();
+        if (petX >= rect.left && petX <= rect.right &&
+            petY >= rect.top  && petY <= rect.bottom) return true;
+    }
+    return false;
 }
 
 function buildDOM() {
@@ -101,6 +126,7 @@ function buildDOM() {
     if (!habitat) return;
     domBuilt = true;
 
+    // Main performance table
     const table = el('div', 'mp-table');
     table.id = 'mp-table';
     const header = el('div', 'mht-row mht-header');
@@ -110,16 +136,17 @@ function buildDOM() {
         header.appendChild(cell);
     });
     table.appendChild(header);
-    ROWS.forEach((row, index) => {
-        const tableRow = el('div', `mht-row${index % 2 === 0 ? ' mht-even' : ''}`);
-        row.forEach((value, valueIndex) => {
-            const cell = el('div', `mht-cell${valueIndex > 0 ? ' mht-num' : ''}`);
+    ROWS.forEach((row, idx) => {
+        const tableRow = el('div', `mht-row${idx % 2 === 0 ? ' mht-even' : ''}`);
+        row.forEach((value, vi) => {
+            const cell = el('div', `mht-cell${vi > 0 ? ' mht-num' : ''}`);
             cell.textContent = value;
             tableRow.appendChild(cell);
         });
         table.appendChild(tableRow);
     });
 
+    // Project table
     const projectTable = el('div', 'mp-table proj-table');
     const projectHeader = el('div', 'mht-row mht-header');
     ['주요 프로젝트명', '진척률', '상태', '마감기한', '담당자'].forEach(text => {
@@ -128,18 +155,19 @@ function buildDOM() {
         projectHeader.appendChild(cell);
     });
     projectTable.appendChild(projectHeader);
-    PROJECT_ROWS.forEach((row, index) => {
-        const tableRow = el('div', `mht-row${index % 2 === 0 ? ' mht-even' : ''}`);
+    PROJECT_ROWS.forEach((row, idx) => {
+        const tableRow = el('div', `mht-row${idx % 2 === 0 ? ' mht-even' : ''}`);
         row.forEach(value => {
             const cell = el('div', 'mht-cell');
             cell.textContent = value;
-            if (value === '완료') cell.style.color = '#217346';
+            if (value === '완료')  cell.style.color = '#217346';
             if (value === '진행중') cell.style.color = '#0052cc';
             tableRow.appendChild(cell);
         });
         projectTable.appendChild(tableRow);
     });
 
+    // Bar chart
     const chart = el('div', 'mp-chart');
     chart.id = 'mp-chart';
     const chartTitle = el('div', 'mp-chart-title');
@@ -148,19 +176,23 @@ function buildDOM() {
     bars.id = 'mp-bars';
     BARS.forEach(data => {
         const column = el('div', 'mp-col');
-        const value = el('div', 'mp-val');
-        const bar = el('div', 'mp-bar');
-        const label = el('div', 'mp-lbl');
-        value.textContent = data.val;
-        bar.style.height = '0%';
+        const value  = el('div', 'mp-val');
+        const bar    = el('div', 'mp-bar');
+        const label  = el('div', 'mp-lbl');
+        value.textContent   = data.val;
+        bar.style.height    = '0%';
         bar.style.background = data.color;
-        bar.dataset.h = data.h;
-        label.textContent = data.label;
+        bar.dataset.h       = data.h;
+        label.textContent   = data.label;
         column.append(value, bar, label);
         bars.appendChild(column);
     });
     chart.append(chartTitle, bars);
 
+    // Trend line chart (SVG)
+    const trend = buildTrendChart();
+
+    // Minimap
     const map = el('div', 'mp-minimap');
     map.innerHTML = `
         <div class="mp-minimap-title">실시간 분석 맵</div>
@@ -171,8 +203,44 @@ function buildDOM() {
             <span style="color:#111;font-weight:bold">● 분석 포인트</span>
         </div>`;
 
-    habitat.append(table, projectTable, chart, map);
+    habitat.append(table, projectTable, chart, trend, map);
     createPet(habitat);
+}
+
+function buildTrendChart() {
+    const W = 148, H = 60;
+    const padX = 10, padY = 6;
+    const innerW = W - padX * 2;
+    const innerH = H - padY * 2;
+    const n = TREND_TARGET.length;
+
+    function toSVGPoints(data) {
+        return data.map((v, i) => {
+            const x = padX + (i / (n - 1)) * innerW;
+            const y = padY + (1 - (v - 60) / 40) * innerH;
+            return `${x.toFixed(1)},${y.toFixed(1)}`;
+        }).join(' ');
+    }
+
+    const wrap = el('div', 'mp-trend');
+    wrap.innerHTML = `
+        <div class="mp-minimap-title">월별 성과 트렌드</div>
+        <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="mp-trend-svg">
+            <line x1="${padX}" y1="${padY}" x2="${padX}" y2="${H - padY}" stroke="#e0e0e0" stroke-width="1"/>
+            <line x1="${padX}" y1="${H - padY}" x2="${W - padX}" y2="${H - padY}" stroke="#e0e0e0" stroke-width="1"/>
+            <polyline points="${toSVGPoints(TREND_TARGET)}" fill="none" stroke="#5b9bd5" stroke-width="1.8"/>
+            <polyline points="${toSVGPoints(TREND_ACTUAL)}" fill="none" stroke="#ed7d31" stroke-width="1.5" stroke-dasharray="3,2"/>
+            ${TREND_ACTUAL.map((v, i) => {
+                const x = padX + (i / (n - 1)) * innerW;
+                const y = padY + (1 - (v - 60) / 40) * innerH;
+                return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2" fill="#ed7d31"/>`;
+            }).join('')}
+        </svg>
+        <div class="mp-map-legend">
+            <span style="color:#5b9bd5">■ 목표</span>
+            <span style="color:#ed7d31">■ 실적</span>
+        </div>`;
+    return wrap;
 }
 
 function createPet(parent) {
@@ -192,52 +260,40 @@ function createPet(parent) {
     pet = { element: sprite, bubble, cx: 100, cy: 300, _t: null };
 }
 
-function updatePetPos(currentPet) {
-    currentPet.element.style.left = `${currentPet.cx}px`;
-    currentPet.element.style.top = `${currentPet.cy}px`;
-    currentPet.bubble.style.left = `${currentPet.cx - 8}px`;
-    currentPet.bubble.style.top = `${currentPet.cy - 30}px`;
+function updatePetPos(p) {
+    p.element.style.left = `${p.cx}px`;
+    p.element.style.top  = `${p.cy}px`;
+    p.bubble.style.left  = `${p.cx - 8}px`;
+    p.bubble.style.top   = `${p.cy - 30}px`;
 }
 
-function speak(currentPet, text, duration = 1800) {
-    currentPet.bubble.textContent = text;
-    currentPet.bubble.classList.add('visible');
-    clearTimeout(currentPet._t);
-    currentPet._t = setTimeout(() => currentPet.bubble.classList.remove('visible'), duration);
+function speak(p, text, duration = 1800) {
+    p.bubble.textContent = text;
+    p.bubble.classList.add('visible');
+    clearTimeout(p._t);
+    p._t = setTimeout(() => p.bubble.classList.remove('visible'), duration);
 }
 
 function drawMap(px, py) {
     const canvas = document.getElementById('mp-map-canvas');
     if (!canvas) return;
-
-    const width = 148;
-    const height = 108;
+    const W = 148, H = 108;
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, width, height);
-
-    ctx.fillStyle = '#f7f7f7';
-    ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#d0d0d0';
-    ctx.fillRect(10, 10, 60, 80);
-    ctx.strokeRect(10, 10, 60, 80);
-    ctx.fillRect(80, 10, 50, 40);
-    ctx.strokeRect(80, 10, 50, 40);
-
-    const dotX = px * (width / 800) + 10;
-    const dotY = py * (height / 600) + 10;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#f7f7f7'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#d0d0d0';
+    ctx.fillRect(10, 10, 60, 80); ctx.strokeRect(10, 10, 60, 80);
+    ctx.fillRect(80, 10, 50, 40); ctx.strokeRect(80, 10, 50, 40);
+    const dotX = px * (W / 800) + 10;
+    const dotY = py * (H / 600) + 10;
     ctx.fillStyle = '#111';
-    ctx.beginPath();
-    ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(dotX, dotY, 3, 0, Math.PI * 2); ctx.fill();
 }
 
 function el(tag, className) {
-    const element = document.createElement(tag);
-    element.className = className;
-    return element;
+    const e = document.createElement(tag);
+    e.className = className;
+    return e;
 }
 
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
