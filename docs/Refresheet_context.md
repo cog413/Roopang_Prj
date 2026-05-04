@@ -79,7 +79,7 @@ Formula bar states:
 
 ## Games
 
-Sudoku remains in `src/games/sudoku/sudoku.js` and uses `#sudoku-grid` plus the validation modal for invalid moves.
+Sudoku lives in `src/games/sudoku/sudoku.js` (async `initSudoku()`). On load it fetches `GET /api/games/sudoku/next?difficulty=normal` (Cloudflare Worker, not yet deployed). If the API returns a puzzle, the 81-character `puzzle` and `solution` strings are parsed into 9×9 arrays. If the API is unavailable a hardcoded offline fallback puzzle is used. Win detection compares the full board to `solutionBoard` when available, otherwise checks that all 81 cells are filled. Invalid moves show the validation modal.
 
 2048 remains split into:
 
