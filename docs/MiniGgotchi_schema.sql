@@ -124,7 +124,8 @@ CREATE TABLE event_logs (
 
 -- Future migration candidates, not yet applied:
 -- 1. Apply docs/migrations/001_user_content_history.sql to prioritize unplayed/less-recently-used puzzle and prompt bank content.
--- 2. Add uniqueness and indexes for frequently queried fields.
--- 3. Add report/hidden state to company_tags or model tag reports as event_logs.
--- 4. Add CHECK constraints for performance_score 0-1, hunger 0-100, supported game_type, and supported difficulty.
--- 5. Add foreign keys to point_wallets, point_ledger, scenario_buttons, and user_company_tags if Cloudflare runtime behavior supports the desired enforcement.
+-- 2. Apply docs/migrations/002_google_auth.sql to add Google OAuth identity columns, auth event logging, and session tracking.
+-- 3. Add uniqueness and indexes for frequently queried fields not covered by existing migrations.
+-- 4. Add report/hidden state to company_tags or model tag reports as event_logs.
+-- 5. Add CHECK constraints for performance_score 0-1, hunger 0-100, supported game_type, and supported difficulty.
+-- 6. Add foreign keys to point_wallets, point_ledger, scenario_buttons, and user_company_tags if Cloudflare runtime behavior supports the desired enforcement.

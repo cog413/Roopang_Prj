@@ -35,3 +35,12 @@
 
 - 2048, SDK 등 게임 탭의 빈 영역도 흰 화면으로 남기지 않고 엑셀 격자 배경이 계속 보여야 한다.
 - 실제 게임/대시보드 콘텐츠는 배경 격자보다 위 레이어에 배치하고, 배경 격자는 클릭이나 키보드 상호작용을 막지 않아야 한다.
+
+---
+
+## Google OAuth / D1 인증 정책
+
+- Google OAuth 성공 후 Worker는 Google userinfo의 `sub`, `email`, `name`, `picture`를 기준으로 D1 사용자 상태를 갱신한다.
+- `users.google_sub`를 우선 식별자로 사용하고, 기존 email-only 유저가 있으면 신규 중복 생성 대신 `google_sub`를 연결한다.
+- 신규 사용자는 `auth_events.event_type = 'signup'`, 기존 사용자는 `auth_events.event_type = 'login'`, 로그아웃은 `auth_events.event_type = 'logout'`로 기록한다.
+- 프론트 로그인 상태와 `/api/me` 응답 필드는 `user_id`, `email`, `nickname`, `avatar_url`, `last_login_at`, `is_new_user`로 맞춘다.

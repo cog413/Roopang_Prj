@@ -172,12 +172,46 @@ Recommended endpoints:
 
 | Endpoint | Purpose |
 | --- | --- |
+| `GET /api/auth/google/start` | Start Google OAuth login. |
+| `GET /api/auth/google/callback` | Exchange Google OAuth code, upsert D1 user/profile, create session. |
+| `GET /api/me` | Return current login state with `user_id`, `email`, `nickname`, `avatar_url`, `last_login_at`, `is_new_user`. |
+| `POST /api/auth/logout` | Revoke session and write a logout auth event. |
 | `GET /api/scenarios/:scenarioId/start` | Load start node and buttons. |
 | `POST /api/scenarios/buttons/:buttonId/select` | Execute button action and return next node. |
 | `GET /api/games/sudoku/next?difficulty=normal` | Return next prioritized puzzle for the current user. |
 | `GET /api/games/typing/next?difficulty=normal` | Return next prioritized prompt for the current user. |
 | `POST /api/game-results` | Store result, update reward, update content history. |
 | `POST /api/pets/:petId/feed` | Spend points and update pet hunger. |
+
+### 6.1 Google Auth Write Policy
+
+Google OAuth writes must use the same field names returned to the frontend.
+
+On successful Google callback:
+
+1. Read `sub`, `email`, `name`, and `picture` from Google userinfo.
+2. Look up `users.google_sub`; if absent, link an existing email-only user before creating a new user.
+3. Insert only when the user does not exist.
+4. Ensure `user_profiles` exists with `nickname` and `avatar_url`.
+5. Update `user_profiles.last_login_at` on every successful login.
+6. Insert `auth_events.event_type = 'signup'` for new users and `auth_events.event_type = 'login'` for existing users.
+7. Insert `auth_events.event_type = 'logout'` when the session is revoked.
+
+The `/api/me` response contract is:
+
+```json
+{
+  "authenticated": true,
+  "user": {
+    "user_id": "usr_...",
+    "email": "person@example.com",
+    "nickname": "Person",
+    "avatar_url": "https://...",
+    "last_login_at": "2026-05-04T12:00:00.000Z",
+    "is_new_user": false
+  }
+}
+```
 
 ## 7. Game Result Write Policy
 

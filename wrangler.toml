@@ -1,0 +1,8 @@
+name = "refresheet-prj"
+main = "src/worker/index.js"
+compatibility_date = "2026-05-04"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "db_game_info"
+database_id = "5c560a75-93a5-4414-88fc-0bd8e9ff4e26"

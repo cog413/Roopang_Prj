@@ -143,3 +143,32 @@ AI는 아래를 판단해야 한다:
 
 **6. 반영 필요 사항 (중요)**
 - 엑셀 UI 패턴상 게임 탭에서도 빈 영역은 흰 배경이 아니라 엑셀 격자 배경이 유지되어야 한다.
+
+---
+
+### [2026-05-04 21:59] (CLI: codex)
+
+**1. 목표**
+- Google OAuth 로그인 후 Cloudflare D1의 `users`, `user_profiles`, 인증 이벤트 테이블에 회원가입/로그인/로그아웃 이력이 남도록 구현한다.
+- 변경사항을 `main`과 `sub` 양쪽에 커밋/푸시한다.
+
+**2. 현재 상태**
+- Worker 소스가 없던 상태에서 `src/worker/index.js`를 추가했다.
+- D1 무손실 확장 마이그레이션 `docs/migrations/002_google_auth.sql`을 추가했다.
+- 프론트 로그인 상태 초기화 모듈 `src/auth/authState.js`를 추가하고 `src/main.js`에 연결했다.
+
+**3. 문제**
+- 원격 D1 마이그레이션 실행 시 Cloudflare API 인증 오류(code 10000)로 실제 DB 적용이 차단됐다.
+
+**4. 시도한 것**
+- `npx.cmd wrangler --version`으로 Wrangler 실행 가능 여부를 확인했다.
+- `npx.cmd wrangler d1 execute db_game_info --remote --file=./docs/migrations/002_google_auth.sql`을 실행했으나 인증 오류가 발생했다.
+- JS 구문 검증을 `node --check`로 수행했다.
+
+**5. 해결 / 인사이트**
+- Worker는 Google userinfo의 `sub`, `email`, `name`, `picture`를 받아 `users`/`user_profiles`를 upsert하고 `auth_events`에 `signup`, `login`, `logout`을 기록하도록 구현됐다.
+- `/api/me`는 `user_id`, `email`, `nickname`, `avatar_url`, `last_login_at`, `is_new_user`를 반환한다.
+- 실제 D1 적용은 Cloudflare 인증 문제 해결 후 같은 migration 명령을 재실행해야 한다.
+
+**6. 반영 필요 사항 (중요)**
+- Google OAuth/D1 인증 정책: `users.google_sub` 우선 식별, email-only 기존 유저 연결, `auth_events` 기반 signup/login/logout 기록, 프론트와 Worker 필드명 일치.

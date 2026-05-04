@@ -4,6 +4,8 @@ Updated: 2026-05-04
 
 Refresheet is a browser-based Excel disguise app with hidden game/rest features. The app starts from `index.html`, loads `src/main.js` as an ES module, and uses `style.css` for the Excel shell, game boards, dark mode, and pet UI.
 
+Authentication API work lives in `src/worker/index.js`. It is a Cloudflare Worker that handles Google OAuth, D1 user/profile upsert, auth event logging, session cookies, `/api/me`, and logout. The D1 migration for this auth layer is `docs/migrations/002_google_auth.sql`.
+
 ## Current Structure
 
 ```text

@@ -4,6 +4,8 @@
   "description": "Stealth productivity and rest management web app",
   "scripts": {
     "dev": "npx serve .",
+    "worker:deploy": "wrangler deploy",
+    "db:migrate:google-auth": "wrangler d1 execute db_game_info --remote --file=./docs/migrations/002_google_auth.sql",
     "fetch:sudoku": "node scripts/fetch_sudoku_hf_bank.mjs --limit 3000 --output ./data/sudoku_bank.csv",
     "seed:sudoku": "node scripts/generate_sudoku_bank.mjs --input ./data/sudoku_bank.csv --output ./sudoku_bulk_seed.sql"
   },

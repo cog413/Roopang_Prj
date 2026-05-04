@@ -5,6 +5,7 @@ import { petEngine } from './pet/petEngine.js';
 import { initSudoku } from './games/sudoku/sudoku.js';
 import { initGame2048 } from './games/game2048/index.js';
 import { initMiniPet } from './pet/miniPet.js';
+import { initAuthState } from './auth/authState.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Refresheet Project v1.2.5 Initializing...');
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2500);
 
     // Initialize Layout and Stealth Modules
+    initAuthState();
     initExcelLayout();
     initBossKey();
     
