@@ -910,3 +910,39 @@ body.dark-mode .mp-val  { color: #888; }
 body.dark-mode .mp-minimap { background: #2d2d2d; border-color: #444; }
 body.dark-mode .mp-bubble  { background: #2d2d2d; border-color: #555; color: #d4d4d4; }
 body.dark-mode #mp-map-canvas { border-color: #444; }
+
+/* Pet strain animation (낑낑 모션) */
+@keyframes strain {
+    0%,100% { transform: scaleY(1) translateY(0); }
+    25%      { transform: scaleY(0.78) translateY(4px); }
+    50%      { transform: scaleY(1.12) translateY(-2px); }
+    75%      { transform: scaleY(0.85) translateY(3px); }
+}
+.mps-strain .mps-body { animation: strain 0.4s ease-in-out 2; }
+
+/* Trend chart panel */
+.mp-trend {
+    flex-shrink: 0;
+    width: 160px;
+    border: 1px solid #c8c6c4;
+    background: #fff;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.08);
+}
+.mp-trend-svg { display: block; }
+body.dark-mode .mp-trend { background: #2d2d2d; border-color: #444; }
+
+/* Sudoku — same number highlight */
+.sudoku .excel-cell.same-number {
+    background-color: #e8f0fe;
+    font-weight: bold;
+}
+body.dark-mode .sudoku .excel-cell.same-number { background-color: #1a2a4a; }
+
+/* 2048 grid size selector active state */
+.g2048-size-btn { cursor: pointer; }
+.g2048-size-btn.active { background-color: #dbe5f1 !important; font-weight: bold; color: #1a365d; }
+body.dark-mode .g2048-size-btn.active { background-color: #1a365d !important; color: #90cdf4; }
