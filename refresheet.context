@@ -44,3 +44,10 @@
 - `users.google_sub`를 우선 식별자로 사용하고, 기존 email-only 유저가 있으면 신규 중복 생성 대신 `google_sub`를 연결한다.
 - 신규 사용자는 `auth_events.event_type = 'signup'`, 기존 사용자는 `auth_events.event_type = 'login'`, 로그아웃은 `auth_events.event_type = 'logout'`로 기록한다.
 - 프론트 로그인 상태와 `/api/me` 응답 필드는 `user_id`, `email`, `nickname`, `avatar_url`, `last_login_at`, `is_new_user`로 맞춘다.
+
+---
+
+## ReadMe 시트 UI 규칙
+
+- ReadMe 시트는 카드형 문서 UI가 아니라 엑셀 셀에 직접 입력한 표처럼 보여야 한다.
+- KPI, SOP, 시트 안내 문구는 셀 병합/채우기/라벨 셀 패턴으로 표현하고, 문서 박스나 인증서형 장식은 사용하지 않는다.

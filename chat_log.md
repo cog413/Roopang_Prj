@@ -242,3 +242,28 @@ AI는 아래를 판단해야 한다:
 **6. 반영 필요 사항 (중요)**
 - D1 migration 파일 위치가 `docs/migrations`인 경우 `wrangler.toml`의 `[[d1_databases]]`에 `migrations_dir = "docs/migrations"`를 반드시 유지한다.
 - D1 명령은 database name보다 binding 이름 `DB` 기준으로 실행한다.
+
+---
+
+### [2026-05-04 22:41] (CLI: codex)
+
+**1. 목표**
+- 사용자가 제공한 `[오늘의 KPI]`, `[SOP]`, `[시트 안내]` 내용을 ReadMe 시트에 반영한다.
+- 현재처럼 문서 UI/카드처럼 보이지 않고, 엑셀에 직접 입력한 느낌으로 표시한다.
+
+**2. 현재 상태**
+- `index.html`의 ReadMe 시트는 기존 `declaration-box` 카드형 문서 UI로 구성되어 있었다.
+
+**3. 문제**
+- 카드형 선언문 UI는 사용자가 원하는 엑셀 입력형 ReadMe 시트 패턴과 맞지 않았다.
+
+**4. 시도한 것**
+- `declaration-box` DOM을 제거하고 `readme-grid` 기반 셀형 콘텐츠로 교체했다.
+- KPI/SOP/시트 안내를 라벨 셀, 본문 셀, 섹션 헤더 셀로 배치했다.
+- `style.css`에서 선언문 카드 CSS를 제거하고 ReadMe 전용 셀 CSS 및 다크모드 스타일을 추가했다.
+
+**5. 해결 / 인사이트**
+- ReadMe 시트가 문서 박스가 아니라 엑셀 셀에 입력된 안내 표처럼 보이도록 변경됐다.
+
+**6. 반영 필요 사항 (중요)**
+- ReadMe 시트는 카드/문서 UI가 아니라 셀 병합과 채우기 색을 활용한 엑셀 입력형 UI 패턴을 유지한다.
