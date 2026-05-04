@@ -73,3 +73,12 @@
 - Google 로그인 활성화에는 Pages production secret `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`이 필요하다.
 - 필요 시 `GOOGLE_REDIRECT_URI`도 Pages production secret 또는 env var로 등록한다.
 - secret이 없으면 Worker는 `auth_config_missing` 503을 반환해야 하며 raw `internal_error`로 노출하지 않는다.
+
+---
+
+## OAuth Runtime Verification Rules
+
+- Cloudflare Wrangler 인증 성공과 Google OAuth 앱 secret 등록은 별개로 본다.
+- Google 로그인 장애 점검 시 `npx.cmd wrangler whoami`가 성공하더라도 Pages production secret `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 존재 여부를 따로 확인한다.
+- `refresheet-prj` production에서 `/api/auth/google/start`가 `auth_config_missing`을 반환하면 코드 문제가 아니라 런타임 OAuth secret 누락을 우선 의심한다.
+- `refresheetkr.com`과 `refresheet.com`은 서로 다른 Pages 프로젝트 상태일 수 있으므로 API 라우터 반영 여부를 도메인별로 확인한다.

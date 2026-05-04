@@ -399,3 +399,35 @@ AI는 아래를 판단해야 한다:
 **6. 반영 필요 사항 (중요)**
 - 이 프로젝트는 Pages 배포 기준이므로 `wrangler.toml`에 `pages_build_output_dir = "."`를 유지하고 Worker용 `main`과 혼용하지 않는다.
 - Google 로그인 활성화 전 `refresheet-prj` Pages production 환경에 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`을 반드시 설정한다.
+
+---
+
+### [2026-05-05 00:27] (CLI: codex)
+
+**1. 목표**
+- Cloudflare 토큰 업데이트 후 Google OAuth 로그인 설정을 다시 확인하고 main/sub 양쪽에 기록을 반영한다.
+
+**2. 현재 상태**
+- `npx.cmd wrangler whoami` 성공: 계정 `jhchae9080@gmail.com`, account_id `6c58daf51e3d34cdfd6cb85bd1f158ae`, Pages/D1 write 권한 확인.
+- 현재 셸의 `$env:CLOUDFLARE_API_TOKEN`은 비어 있지만 Wrangler OAuth 로그인 세션으로 Cloudflare API 접근은 정상 동작한다.
+- `refresheet-prj` 및 `refresheet-prj-global-prod` production Pages secrets 목록은 비어 있다.
+
+**3. 문제**
+- `https://refresheetkr.com/api/auth/google/start`가 503을 반환한다.
+- 실제 응답: `{"error":"auth_config_missing","message":"Google login is not configured. Missing: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET","missing":["GOOGLE_CLIENT_ID","GOOGLE_CLIENT_SECRET"]}`.
+- `https://refresheet.com/api/auth/google/start`는 API JSON이 아니라 예전 정적 HTML을 반환하여 글로벌 Pages 프로젝트는 최신 Functions 라우터가 반영되지 않은 상태로 보인다.
+
+**4. 시도한 것**
+- `wrangler whoami`로 토큰/세션 권한 확인.
+- `wrangler pages secret list --project-name refresheet-prj` 확인.
+- `wrangler pages secret list --project-name refresheet-prj-global-prod` 확인.
+- production OAuth start endpoint를 `curl.exe -i`로 직접 확인.
+
+**5. 해결 / 인사이트**
+- 이번 오류는 Cloudflare 토큰 인증 실패가 아니라 Pages production 런타임에 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`이 없는 문제다.
+- Google OAuth secret 값은 코드나 Cloudflare 토큰에서 추론할 수 없으므로 실제 Google OAuth Client ID/Secret을 Pages production secret으로 등록해야 로그인 활성화가 가능하다.
+
+**6. 반영 필요 사항 (중요)**
+- Cloudflare Wrangler 인증 성공과 Google OAuth 앱 secret 등록은 별개로 판단한다.
+- OAuth 로그인 장애 점검 시 `whoami` 성공 후에도 반드시 `wrangler pages secret list` 및 production `/api/auth/google/start` 응답을 확인한다.
+- `refresheetkr.com`은 `refresheet-prj`의 최신 API 라우터를 사용하고, `refresheet.com`은 글로벌 프로젝트 배포 상태를 별도 확인해야 한다.
