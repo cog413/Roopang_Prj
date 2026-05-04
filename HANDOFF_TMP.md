@@ -1,95 +1,55 @@
 # Handoff Temporary Context
 
 ## 1. Current Status
-- Date/time: 2026-05-04 18:43:08 +09:00
-- Branch: `sub`
-- Git status before this handoff refresh:
-  - `docs/Sudoku_bulk_seed_README.md` modified
-  - `scripts/generate_sudoku_bank.mjs` modified
-  - `sudoku_bulk_seed.sql` modified
-- Repository path: `C:\Users\user\.gemini\antigravity\scratch\Refresheet_Prj`
-- Encoding note: keep this file ASCII-friendly where possible so future agents can read it reliably in PowerShell.
+- Date/time: 2026-05-04 (Asia/Seoul)
+- Branch: `sub` (commits to be cherry-picked to `main`)
+- Git status: clean after commit
+- Workspace notes: ASCII-friendly file for reliable PowerShell reads.
 
 ## 2. Latest User Request
-The user retried D1 seed execution and got:
-
-`table sudoku_puzzles has no column named level: SQLITE_ERROR`
-
-This means the deployed D1 table does not have the extended requested columns. The seed must match the actual deployed table.
+Full project review: fix unnecessary/broken code, ensure Sudoku loads puzzles from the DB puzzle bank (not hardcoded HTML), refresh HANDOFF_TMP, commit sub and main.
 
 ## 3. Completed Work
-- Updated `scripts/generate_sudoku_bank.mjs` to target current deployed columns:
-  - `puzzle_id`
-  - `difficulty`
-  - `puzzle`
-  - `solution`
-  - `is_active`
-- Regenerated `sudoku_bulk_seed.sql`.
-- Stored mapped level 1-5 values in the existing `difficulty` column.
-- Removed seed references to non-existent deployed columns:
-  - `level`
-  - `source_url`
-  - `clue_count`
-  - `metadata_json`
-- Updated `docs/Sudoku_bulk_seed_README.md` to document current seed columns.
-- Refreshed this handoff file.
+- `src/games/sudoku/sudoku.js`: replaced hardcoded `initialBoard` with async `fetchNextPuzzle()` that calls `GET /api/games/sudoku/next?difficulty=normal`. Falls back to the original hardcoded puzzle when the Cloudflare Worker is unavailable. Solution-aware win detection added (`solutionBoard` comparison when API returns a solution string). `for...of` loop used in `isValidSudokuMove`.
+- `index.html`: fixed `id="dummy-cells"` -> `id="dummy-grid"` (bossKey.js was silently failing because getElementById returned null). Fixed title/filename typo `Rfresheet_Prj` -> `Refresheet_Prj` (2 locations).
+- `docs/Refresheet_context.md`: updated Games section to document the async DB-fetch pattern for Sudoku.
+- `HANDOFF_TMP.md`: refreshed (this file).
 
 ## 4. Modified Files
-- `docs/Sudoku_bulk_seed_README.md`
-- `scripts/generate_sudoku_bank.mjs`
-- `sudoku_bulk_seed.sql`
+- `src/games/sudoku/sudoku.js`
+- `index.html`
+- `docs/Refresheet_context.md`
 - `HANDOFF_TMP.md`
 
 ## 5. Remaining Work
-- Commit and push this actual-schema-compatible seed fix to `sub`.
-- Cherry-pick the same commit to `main` and push `main`.
-- User should rerun:
-  `npx wrangler d1 execute db_game_info --remote --file=.\sudoku_bulk_seed.sql`
-- Then verify:
-  `npx wrangler d1 execute db_game_info --remote --command="SELECT COUNT(*) AS count FROM sudoku_puzzles WHERE puzzle_id LIKE 'sudoku_bulk_%';"`
+- Deploy Cloudflare Worker with `GET /api/games/sudoku/next?difficulty=<level>` endpoint so the frontend actually queries the DB puzzle bank at runtime.
+- Worker should query `sudoku_puzzles` using the selection policy in `docs/MiniGgotchi_data_access_policy.md` section 4.
+- Apply `docs/migrations/001_user_content_history.sql` to Cloudflare D1, then switch Worker to the production query (section 4.4 of the data access policy).
+- Verify actual D1 seed: `npx wrangler d1 execute db_game_info --remote --command="SELECT COUNT(*) AS count FROM sudoku_puzzles WHERE puzzle_id LIKE 'sudoku_bulk_%';"` -- this was not confirmed in the previous session.
 
 ## 6. Important Decisions / Constraints
 - Never revert user changes unless explicitly asked.
-- Actual D1 schema takes priority over previous requested seed columns.
-- Current seed SQL must not include table creation/drop, transaction statements, or non-existent columns.
-- Current deployed `sudoku_puzzles` target columns are treated as:
-  - `puzzle_id`
-  - `difficulty`
-  - `puzzle`
-  - `solution`
-  - `is_active`
-- Difficulty column stores mapped level string values `1` through `5`.
-- Cloudflare DB name: `db_game_info`.
-- Cloudflare DB ID: `5c560a75-93a5-4414-88fc-0bd8e9ff4e26`.
-- Before finishing any future task, remove existing handoff and create a fresh `HANDOFF_TMP.md`.
+- Actual file state takes priority over handoff text.
+- Run `git status --short --branch` before work.
+- Sudoku `initSudoku()` is now async; `main.js` calls it without await (intentional -- grid renders after fetch resolves, other modules initialize in parallel).
+- Fallback hardcoded puzzle is intentional: lets the app run locally and in staging without a deployed Worker.
+- DB columns for `sudoku_puzzles`: `puzzle_id`, `difficulty`, `puzzle` (81-char), `solution` (81-char), `is_active`.
+- Cloudflare DB name: `db_game_info`. DB ID: `5c560a75-93a5-4414-88fc-0bd8e9ff4e26`.
+- Before ending work, delete old handoff and create a fresh `HANDOFF_TMP.md`.
 
 ## 7. Verification
-Commands run:
-- `npm run seed:sudoku`
-  - Result: regenerated `sudoku_bulk_seed.sql` with 3,000 inserts.
-- Custom Node SQL validation:
-  - `rowCount`: 3000
-  - `forbidden`: false for CREATE/DROP/BEGIN/COMMIT/level/source_url/clue_count/metadata_json
-  - `bad`: 0
-  - `first`: `sudoku_bulk_000001`
-  - `last`: `sudoku_bulk_003000`
-  - difficulty distribution: 1=375, 2=243, 3=792, 4=1546, 5=44
+Verified (static analysis):
+- `sudoku.js` no longer contains a hardcoded `initialBoard` literal array at startup.
+- `index.html` `dummy-grid` ID now matches `bossKey.js` getElementById call.
+- `index.html` title typo fixed in both `<title>` and `.file-name` span.
 
 Not verified:
-- Actual D1 insert completion after changing seed columns.
+- Live browser test of Sudoku fallback (Worker not deployed yet; expected 404 -> fallback).
+- Actual D1 seed row count after the schema-aligned seed was generated.
 
 ## 8. Recommended Next Step
-- Run `git status --short --branch`.
-- Run `git diff --check`.
-- Commit:
-  - `docs/Sudoku_bulk_seed_README.md`
-  - `scripts/generate_sudoku_bank.mjs`
-  - `sudoku_bulk_seed.sql`
-  - `HANDOFF_TMP.md`
-- Push to `sub`.
-- Cherry-pick to `main` and push `main`.
-- Tell user to rerun:
-  `npx wrangler d1 execute db_game_info --remote --file=.\sudoku_bulk_seed.sql`
+- Build and deploy the Cloudflare Worker with `GET /api/games/sudoku/next`.
+- Run seed verification: `npx wrangler d1 execute db_game_info --remote --command="SELECT COUNT(*) AS count FROM sudoku_puzzles WHERE puzzle_id LIKE 'sudoku_bulk_%';"`
 
 ## 9. Handoff Rule For Next LLM
 
