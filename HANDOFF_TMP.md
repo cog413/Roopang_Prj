@@ -1,74 +1,94 @@
 # Handoff Temporary Context
 
 ## 1. Current Status
-- Date/time: 2026-05-04 16:28:22 +09:00
+- Date/time: 2026-05-04 16:35:45 +09:00
 - Branch: `sub`
 - Git status before this handoff refresh:
   - `docs/MiniGgotchi_PRD.md` modified
-  - `docs/MiniGgotchi_schema.sql` untracked
+  - `docs/MiniGgotchi_schema.sql` modified
+  - `docs/MiniGgotchi_data_access_policy.md` untracked
+  - `docs/migrations/001_user_content_history.sql` untracked
 - Repository path: `C:\Users\user\.gemini\antigravity\scratch\Refresheet_Prj`
 - Encoding note: keep this file ASCII-friendly where possible so future agents can read it reliably in PowerShell.
 
 ## 2. Latest User Request
-The user provided a baseline SQL schema and then clarified:
+The user noted that, based on the created DB tables:
 
-- Cloudflare DB has already been created.
-- Cloudflare DB ID: `5c560a75-93a5-4414-88fc-0bd8e9ff4e26`
-- The tables have already been created using the user-provided SQL.
-
-The correct repo response is to document the applied Cloudflare baseline schema as-is, not to silently replace it with a stronger recommended schema.
+- Character conversation type mapping should be managed in DB and called from the app, not hardcoded in JavaScript.
+- Sudoku problem bank should also be managed in DB and fetched from the app.
+- For problem-bank selection, puzzles already solved/played by a user should be deprioritized.
 
 ## 3. Completed Work
 - Read existing `HANDOFF_TMP.md` before work.
-- Created `docs/MiniGgotchi_schema.sql`.
-- Adjusted `docs/MiniGgotchi_schema.sql` to match the exact applied user-provided baseline schema.
-- Added Cloudflare DB ID and baseline schema status to `docs/MiniGgotchi_PRD.md` section 8.
-- Documented future migration candidates separately in the SQL file comments.
-- Refreshed this handoff file with the latest state and instructions.
+- Added `docs/MiniGgotchi_data_access_policy.md`.
+  - Defines DB-owned content vs frontend-owned rendering.
+  - Documents scenario node/button runtime flow.
+  - Documents Sudoku puzzle selection policy.
+  - Documents temporary baseline query using `game_results.metadata_json`.
+  - Documents recommended production query using `user_content_history`.
+  - Defines recommended API endpoints through a server/API layer such as Cloudflare Workers.
+- Added proposed migration `docs/migrations/001_user_content_history.sql`.
+  - Adds `user_content_history` for prioritizing unplayed/less-recently-used reusable content.
+  - Status is proposed/not yet applied.
+- Updated `docs/MiniGgotchi_PRD.md`.
+  - Added DB-managed content policy.
+  - Added puzzle/prompt reuse priority policy.
+  - Linked to data access policy and migration.
+- Updated `docs/MiniGgotchi_schema.sql`.
+  - Preserved applied Cloudflare baseline schema as-is.
+  - Added migration 001 as a future candidate, not applied.
+- Refreshed this handoff file.
 
 ## 4. Modified Files
 - `docs/MiniGgotchi_PRD.md`
 - `docs/MiniGgotchi_schema.sql`
+- `docs/MiniGgotchi_data_access_policy.md`
+- `docs/migrations/001_user_content_history.sql`
 - `HANDOFF_TMP.md`
 
 ## 5. Remaining Work
-- Commit and push these changes to `sub`.
-- Apply the same commit to `main` if the user wants both branches kept aligned, consistent with prior workflow.
-- Optional future work: create explicit migration files for indexes, CHECK constraints, report/hidden fields for company tags, and additional foreign keys.
+- Commit and push these docs/migration-policy changes to `sub`.
+- Cherry-pick the same commit to `main` and push `main` if keeping both branches aligned.
+- Future implementation work:
+  - Add Cloudflare Worker/API layer.
+  - Replace hardcoded `src/pet/petEngine.js` scenario mapping with API calls to `scenario_nodes` and `scenario_buttons`.
+  - Replace hardcoded Sudoku puzzle in `src/games/sudoku/sudoku.js` with API call to `sudoku_puzzles`.
+  - Apply `docs/migrations/001_user_content_history.sql` to Cloudflare DB before relying on production priority query.
 
 ## 6. Important Decisions / Constraints
 - Never revert user changes unless explicitly asked.
 - Actual file state and `git status` take priority over this handoff text.
 - Always run `git status --short --branch` before editing.
 - Before finishing a task, remove any existing handoff file and create a new `HANDOFF_TMP.md` with current information.
-- Treat these names as possible existing handoff files:
-  - `HANDOFF_TMP.md`
-  - `.handoff_tmp.md`
-  - `tmp_handoff.md`
-- The applied DB schema must match what exists in Cloudflare. Do not add constraints or columns to `docs/MiniGgotchi_schema.sql` unless a migration has actually been applied.
-- Cloudflare DB ID to preserve in docs: `5c560a75-93a5-4414-88fc-0bd8e9ff4e26`.
+- The applied DB schema must match what exists in Cloudflare. Do not modify `docs/MiniGgotchi_schema.sql` as if a migration is applied unless it has actually been applied.
+- Cloudflare DB ID: `5c560a75-93a5-4414-88fc-0bd8e9ff4e26`.
+- Frontend should not directly connect to Cloudflare DB. Use an API layer such as Cloudflare Workers.
+- JS may render/cache current state, but DB/API should be the source of truth for scenario branching, puzzle/prompt selection, rewards, and point balances.
 
 ## 7. Verification
 Commands run:
 - `git status --short --branch`
-  - Result at start: `## sub...origin/sub`
-- `Get-Content -Raw HANDOFF_TMP.md`
-  - Result: existing handoff read successfully.
-- `Get-Date -Format "yyyy-MM-dd HH:mm:ss zzz"`
-  - Result: `2026-05-04 16:28:22 +09:00`
+  - Result before handoff refresh: modified PRD/schema and untracked data-access/migration docs.
 - `git diff --check`
-  - Result before handoff refresh: no whitespace errors, only CRLF warnings for Markdown.
+  - Result before handoff refresh: no whitespace errors, only CRLF warnings.
+- `Get-Date -Format "yyyy-MM-dd HH:mm:ss zzz"`
+  - Result: `2026-05-04 16:35:45 +09:00`
 
 Not yet verified:
-- Final `git status` after this handoff refresh.
-- Commit/push status for the schema documentation changes.
+- Final `git status` after handoff refresh.
+- Commit/push status for these changes.
 
 ## 8. Recommended Next Step
 - Run `git status --short --branch`.
 - Run `git diff --check`.
-- Commit `docs/MiniGgotchi_PRD.md`, `docs/MiniGgotchi_schema.sql`, and `HANDOFF_TMP.md`.
+- Commit:
+  - `docs/MiniGgotchi_PRD.md`
+  - `docs/MiniGgotchi_schema.sql`
+  - `docs/MiniGgotchi_data_access_policy.md`
+  - `docs/migrations/001_user_content_history.sql`
+  - `HANDOFF_TMP.md`
 - Push to `sub`.
-- Cherry-pick the commit to `main` and push `main` if keeping both branches aligned.
+- Cherry-pick to `main` and push `main`.
 
 ## 9. Handoff Rule For Next LLM
 

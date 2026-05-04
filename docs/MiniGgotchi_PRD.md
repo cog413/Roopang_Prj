@@ -332,7 +332,43 @@ The baseline schema covers users, profiles, pets, game results, point wallets, p
 
 Implementation note: the applied schema is intentionally documented as-is. Additional constraints, indexes, hidden/report fields for company tags, and stricter foreign keys should be handled as explicit future migrations rather than silently changing the baseline schema document.
 
-### 8.2 Logging Structure
+### 8.2 DB-Managed Content Policy
+
+Gameplay content should be loaded from the database through an API layer, not hardcoded in JavaScript.
+
+| Content | Source of Truth | Client Responsibility |
+| --- | --- | --- |
+| Pet conversation messages | `scenario_nodes` | Render active message. |
+| Pet conversation buttons | `scenario_buttons` | Render available choices and send selected button ID. |
+| Sudoku puzzle bank | `sudoku_puzzles` | Render puzzle returned by API. |
+| Typing prompt bank | `typing_prompts` | Render prompt returned by API. |
+| Game rewards/history | `game_results`, `point_ledger`, `point_wallets` | Submit result and render returned reward state. |
+
+The frontend may cache the current response for rendering, but it must not be the source of truth for scenario branching, puzzle selection, prompt selection, rewards, or point balance.
+
+Detailed runtime and query policy is documented in `docs/MiniGgotchi_data_access_policy.md`.
+
+### 8.3 Puzzle/Prompt Reuse Priority
+
+Problem-bank content must account for each user's prior exposure.
+
+Required Sudoku selection priority:
+
+1. Puzzles the user has never attempted.
+2. Puzzles attempted but not solved.
+3. Puzzles solved fewer times.
+4. Puzzles least recently played.
+5. Random tie-breaker within the same priority bucket.
+
+The current baseline schema can temporarily store `puzzle_id` in `game_results.metadata_json`, but production selection should use a dedicated content-history table for reliable filtering and ranking.
+
+Recommended migration:
+
+- `docs/migrations/001_user_content_history.sql`
+
+This migration adds `user_content_history`, which supports Sudoku puzzles, typing prompts, and future reusable content types.
+
+### 8.4 Logging Structure
 
 Core events:
 
@@ -349,7 +385,7 @@ Core events:
 | `tag_reported` | reporterId, tagId, reason |
 | `ranking_updated` | userId, rankingType, score, period |
 
-### 8.3 Performance Tracking
+### 8.5 Performance Tracking
 
 Track performance by:
 
@@ -361,7 +397,7 @@ Track performance by:
 - Session duration.
 - Completion and abandonment rate.
 
-### 8.4 Optimization Hooks
+### 8.6 Optimization Hooks
 
 Use analytics to tune:
 
