@@ -210,6 +210,7 @@ body {
     top: 0;
     left: 0;
     /* We align the games inside the dummy grid by just rendering them as grids */
+    z-index: 1;
 }
 
 .game-grid {
@@ -397,9 +398,10 @@ body.dark-mode .pet-interaction-panel {
     position: absolute;
     top: 0;
     left: 0; /* Offset removed since row-headers are outside */
-    z-index: -1;
+    z-index: 0;
     width: 2000px;
     height: 1000px;
+    pointer-events: none;
     background-image: 
         linear-gradient(to right, #e1dfdd 1px, transparent 1px),
         linear-gradient(to bottom, #e1dfdd 1px, transparent 1px);
