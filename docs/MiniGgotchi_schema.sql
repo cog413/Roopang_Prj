@@ -123,7 +123,8 @@ CREATE TABLE event_logs (
 );
 
 -- Future migration candidates, not yet applied:
--- 1. Add uniqueness and indexes for frequently queried fields.
--- 2. Add report/hidden state to company_tags or model tag reports as event_logs.
--- 3. Add CHECK constraints for performance_score 0-1, hunger 0-100, supported game_type, and supported difficulty.
--- 4. Add foreign keys to point_wallets, point_ledger, scenario_buttons, and user_company_tags if Cloudflare runtime behavior supports the desired enforcement.
+-- 1. Apply docs/migrations/001_user_content_history.sql to prioritize unplayed/less-recently-used puzzle and prompt bank content.
+-- 2. Add uniqueness and indexes for frequently queried fields.
+-- 3. Add report/hidden state to company_tags or model tag reports as event_logs.
+-- 4. Add CHECK constraints for performance_score 0-1, hunger 0-100, supported game_type, and supported difficulty.
+-- 5. Add foreign keys to point_wallets, point_ledger, scenario_buttons, and user_company_tags if Cloudflare runtime behavior supports the desired enforcement.
