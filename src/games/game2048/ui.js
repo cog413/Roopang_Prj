@@ -1,6 +1,7 @@
 import { operate, addRandomTile, isGameOver } from './logic.js';
 
 const SIZE_OPTIONS = [4, 5];
+const SCORE_MULTIPLIER = { 4: 1.15, 5: 0.68 };
 
 export function initGame2048UI() {
     const grid = document.getElementById('game2048-grid');
@@ -66,7 +67,17 @@ export function initGame2048UI() {
             table.appendChild(valueCell);
         });
 
+        appendNote(table, '그리드 크기(4x4 / 5x5)는 선택할 수 있습니다.');
+        appendNote(table, '같은 매출을 달성해도 4x4가 더 높은 점수를 받습니다.');
+
         return table;
+    }
+
+    function appendNote(table, text) {
+        const note = document.createElement('div');
+        note.className = 'fake-table-cell note';
+        note.textContent = text;
+        table.appendChild(note);
     }
 
     function initBoard() {
@@ -118,18 +129,23 @@ export function initGame2048UI() {
     }
 
     function updateScoreUI() {
+        const adjustedScore = getAdjustedScore();
         const sheet = document.getElementById('game2048-sheet');
         if (sheet && sheet.style.display !== 'none' && formulaInput) {
-            formulaInput.value = `=SUM(A1:${String.fromCharCode(64 + boardSize)}${boardSize})*${score}`;
+            formulaInput.value = `=SCORE.NORMALIZE(${score},GRID=${boardSize})=${adjustedScore}`;
         }
 
         const scoreDisplay = document.getElementById('fake-score-display');
         const scoreBar     = document.getElementById('fake-score-bar');
-        if (scoreDisplay) scoreDisplay.textContent = score.toLocaleString();
+        if (scoreDisplay) scoreDisplay.textContent = adjustedScore.toLocaleString();
         if (scoreBar) {
-            const maxRef = boardSize === 5 ? 40000 : 20000;
-            scoreBar.style.height = `${Math.min(100, Math.max(5, (score / maxRef) * 100))}%`;
+            const maxRef = 18000;
+            scoreBar.style.height = `${Math.min(100, Math.max(5, (adjustedScore / maxRef) * 100))}%`;
         }
+    }
+
+    function getAdjustedScore() {
+        return Math.max(0, Math.round(score * (SCORE_MULTIPLIER[boardSize] || 1)));
     }
 
     function onKeyDown(e) {

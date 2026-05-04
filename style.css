@@ -48,9 +48,19 @@ body {
 .menu-tab {
     padding: 4px 15px;
     font-size: 13px;
-    cursor: pointer;
+    cursor: default;
     border: 1px solid transparent;
     border-bottom: none;
+}
+
+#view-menu-tab {
+    cursor: pointer;
+}
+
+#view-menu-tab:hover {
+    background-color: #fff;
+    border-color: #d2d0ce;
+    color: #217346;
 }
 
 .menu-tab.active {
@@ -83,11 +93,16 @@ body {
     background: transparent;
     border: 1px solid transparent;
     padding: 4px 8px;
-    cursor: pointer;
+    cursor: default;
     border-radius: 2px;
 }
 
-.tool-btn:hover {
+.pet-buttons .tool-btn,
+.modal-btn {
+    cursor: pointer;
+}
+
+.pet-buttons .tool-btn:hover {
     background-color: #f3f2f1;
     border-color: #c8c6c4;
 }
@@ -267,6 +282,7 @@ body {
 /* Difficulty selector active state */
 .sudoku-diff-btn { cursor: pointer; }
 .sudoku-diff-btn.active { background-color: #dbe5f1 !important; font-weight: bold; color: #1a365d; }
+.sudoku-diff-btn:hover { outline: 2px solid #70ad47; outline-offset: -2px; background-color: #e2f0d9 !important; }
 
 /* Thicker borders for 3x3 blocks */
 .sudoku .excel-cell:nth-child(3n) { border-right: 2px solid #a19f9d; }
@@ -308,8 +324,8 @@ body {
 /* Mini Pet UI Overlay */
 .mini-pet-ui-overlay {
     position: absolute;
-    top: 20px;
-    left: 30px;
+    top: 675px;
+    left: 40px;
     z-index: 100;
     pointer-events: none; /* Let clicks pass through if not on a button */
 }
@@ -366,6 +382,12 @@ body.dark-mode .pet-interaction-panel {
     border-right: 1px solid #c8c6c4;
     background-color: #e1dfdd;
     color: #333;
+}
+
+.tab:not(.add-tab):hover {
+    outline: 1px solid rgba(33, 115, 70, 0.35);
+    outline-offset: -2px;
+    background-color: #f8fbf8;
 }
 
 .tab.active {
@@ -489,6 +511,17 @@ body.dark-mode .pet-interaction-panel {
     background-color: #dbe5f1;
     border-top: 1px solid #95b3d7;
 }
+.fake-table-cell.note {
+    grid-column: span 2;
+    height: auto;
+    min-height: 25px;
+    align-items: flex-start;
+    white-space: normal;
+    line-height: 1.35;
+    font-size: 11px;
+    color: #666;
+    background-color: #fffef2;
+}
 
 .fake-chart {
     background-color: #fff;
@@ -610,6 +643,11 @@ body.dark-mode .menu-tab.active {
     color: #4CAF50;
     border-color: #444;
 }
+body.dark-mode #view-menu-tab:hover {
+    background-color: #1e1e1e;
+    border-color: #555;
+    color: #4CAF50;
+}
 body.dark-mode .excel-cell, body.dark-mode .col-header, body.dark-mode .row-header {
     border-color: #444;
     color: #d4d4d4;
@@ -634,6 +672,7 @@ body.dark-mode .fake-table, body.dark-mode .fake-chart { background-color: trans
 body.dark-mode .fake-table-header { background-color: #1a365d; border-color: #444; color: #d4d4d4; }
 body.dark-mode .fake-table-cell { border-color: #444; background-color: #2d2d2d; color: #d4d4d4; }
 body.dark-mode .fake-table-cell.label { background-color: #333; }
+body.dark-mode .fake-table-cell.note { background-color: #2f2a16; color: #ffe699; }
 body.dark-mode .sudoku-diff-btn.active { background-color: #1a365d !important; color: #90cdf4; }
 body.dark-mode .fake-table-cell.total { background-color: #1a365d; border-top: 1px solid #2b6cb0; }
 body.dark-mode .excel-modal { background-color: #2d2d2d; border-color: #555; }
@@ -740,7 +779,7 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
     align-items: flex-start;
     gap: 24px;              /* JS: SCENE_GAP=24 */
     padding: 20px 40px;     /* JS: PAD_T=20, PAD_L=40 */
-    min-height: 600px;
+    min-height: 850px;
     background: #fff;
     overflow: auto;
 }
@@ -892,6 +931,20 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
     animation: mps-wiggle 3.2s ease-in-out infinite;
     box-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
+body.dark-mode .mps-body {
+    background:
+        radial-gradient(circle at 4px 4px, #111 0 1px, transparent 1.5px),
+        radial-gradient(circle at 12px 9px, #111 0 1px, transparent 1.5px),
+        #f5f5f5;
+    border-color: #f5f5f5;
+}
+body.dark-mode .mps-eye,
+body.dark-mode .mps-mouth {
+    background: #111;
+}
+body.dark-mode .mps-foot {
+    background: #f5f5f5;
+}
 .mps-eyes { display: flex; justify-content: space-around; padding: 4px 3px 0; }
 .mps-eye  {
     width: 3px; height: 3px;
@@ -997,4 +1050,5 @@ body.dark-mode .sudoku .excel-cell.same-number { background-color: #1a2a4a; }
 /* 2048 grid size selector active state */
 .g2048-size-btn { cursor: pointer; }
 .g2048-size-btn.active { background-color: #dbe5f1 !important; font-weight: bold; color: #1a365d; }
+.g2048-size-btn:hover { outline: 2px solid #70ad47; outline-offset: -2px; background-color: #e2f0d9 !important; }
 body.dark-mode .g2048-size-btn.active { background-color: #1a365d !important; color: #90cdf4; }

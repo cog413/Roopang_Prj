@@ -1,5 +1,46 @@
 # Chat Log (Auto-Managed)
 
+### [2026-05-04 23:33] (CLI: codex)
+
+**1. 목표**
+- Google 로그인 기능이 활성화되지 않는 원인을 확인하고 수정한다.
+- 실제 활성화되는 요소만 인터랙티브 피드백을 보이게 한다.
+- 2048/SDK 선택 안내 문구와 점수 보정 로직을 추가한다.
+- 관리시트 미니미 버튼 위치, 수동/자동 말풍선 충돌, 다크모드 미니미 반전을 수정한다.
+- main/sub 양쪽에 커밋/푸시한다.
+
+**2. 현재 상태**
+- `main`에는 로그인 버튼 UI가 있었지만, Cloudflare Pages에서 `/api/auth/google/start`가 `src/worker/index.js`로 라우팅되는 Pages Function이 없었다.
+- `sub`에는 main의 일부 UI 커밋이 누락되어 있어 로그인 버튼 자체도 동기화가 필요했다.
+
+**3. 문제**
+- `src/worker/index.js`만 있으면 Cloudflare Pages 정적 배포에서 `/api/*`가 자동으로 활성화되지 않는다.
+- 가짜 리본 버튼도 hover 반응이 있어 실제 버튼처럼 보였다.
+- `.pet-interaction-panel`이 표 위쪽에 떠 있어 표를 가릴 수 있었다.
+- 자동 말풍선 타이머와 유저 버튼 반응 말풍선이 서로 덮어쓸 수 있었다.
+
+**4. 시도한 것**
+- `functions/api/[[path]].js`를 추가해 Pages의 `/api/*` 요청을 기존 Worker fetch handler로 전달하게 했다.
+- 가짜 리본 버튼 hover를 제거하고 실제 요소에만 hover/outline/cursor 피드백을 남겼다.
+- 2048 그리드 크기 선택 안내 문구와 4x4/5x5 점수 보정 multiplier를 추가했다.
+- SDK 난이도 안내 문구와 난이도/시간/실수 기반의 약한 점수 보정 로직을 조정했다.
+- 미니미 버튼 패널을 line 28~34 위치에 해당하는 하단 영역으로 이동했다.
+- 미니미 수동 말풍선 이벤트를 `refresheet:pet-say`로 분리하고, 수동 대화 5초 동안 자동 말풍선을 억제했다.
+- 다크모드에서 미니미 본체/눈/입/발 색상이 반전되도록 CSS를 추가했다.
+
+**5. 해결 / 인사이트**
+- 로그인 비활성의 핵심 원인은 Google/D1 로직 부재가 아니라 Pages 배포에서 API route가 Worker에 연결되지 않은 점이었다.
+- `functions/api/[[path]].js`가 추가되어 Pages 환경에서도 `/api/auth/google/start`, `/api/me`, `/api/auth/logout`가 기존 D1 Worker 로직을 사용한다.
+- DB 적재 대상은 기존과 동일하게 D1 `db_game_info`의 `users`, `user_profiles`, `auth_events`, `auth_sessions`다.
+
+**6. 반영 필요 사항 (중요)**
+- Pages 배포에서 인증 API는 `functions/api/[[path]].js` 라우터를 유지해야 한다.
+- 실제 동작하는 컨트롤에만 인터랙티브 피드백을 준다.
+- 2048과 SDK 점수는 난이도/크기 차이를 보정해 기대 점수 범위를 맞춘다.
+- 미니미 수동 대화 중에는 자동 말풍선을 억제한다.
+
+---
+
 이 파일은 모든 AI CLI(Gemini, Claude, Codex, GPT)의 대화 요약을 누적 관리한다.
 
 ## 📌 기록 규칙 (내재 프롬프트)
