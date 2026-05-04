@@ -95,7 +95,13 @@ export const petEngine = {
     init() {
         document.addEventListener('click', event => {
             const type = BUTTON_TYPES[event.target.id];
-            if (type) this.talk(type);
+            if (type) {
+                this.talk(type);
+                if (window.refresheetAuth?.authenticated) {
+                    fetch('/api/minime/interact', { method: 'POST', credentials: 'include' }).catch(() => {});
+                    document.dispatchEvent(new CustomEvent('refresheet:score-saved'));
+                }
+            }
         });
 
         document.querySelectorAll('.tab[data-sheet]').forEach(tab => {

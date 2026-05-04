@@ -14,6 +14,8 @@ export function initGame2048UI() {
     let board = [];
     let score = 0;
     let gameOver = false;
+    let gameStartTime = null;
+    let loginPopupShown = false;
 
     // Inject board size selector at top of left panel
     const leftPanel = document.querySelector('#game2048-sheet .side-left');
@@ -31,6 +33,27 @@ export function initGame2048UI() {
     document.getElementById('game-over-cancel')?.addEventListener('click', () => {
         if (gameOverModal) gameOverModal.style.display = 'none';
     });
+
+    // Show login popup when 2048 tab is first visited
+    const tab2048 = document.querySelector('.tab[data-sheet="game2048"]');
+    if (tab2048) {
+        tab2048.addEventListener('click', () => {
+            if (loginPopupShown) return;
+            loginPopupShown = true;
+            setTimeout(() => {
+                if (!window.refresheetAuth?.authenticated) {
+                    const { showLoginPopup, goToLogin } = window.loginPopupModule || {};
+                    if (showLoginPopup) {
+                        showLoginPopup({
+                            message: '로그인해야 게임 기록이 저장됩니다.\nGoogle 로그인을 하시겠습니까?',
+                            onLogin: goToLogin,
+                            onSkip: () => {},
+                        });
+                    }
+                }
+            }, 300);
+        }, { once: false });
+    }
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -83,6 +106,7 @@ export function initGame2048UI() {
     function initBoard() {
         score = 0;
         gameOver = false;
+        gameStartTime = Date.now();
         board = Array.from({ length: boardSize }, () => Array(boardSize).fill(0));
         addRandomTile(board);
         addRandomTile(board);
@@ -199,6 +223,21 @@ export function initGame2048UI() {
                 gameOver = true;
                 const modal = document.getElementById('game-over-modal');
                 if (modal) modal.style.display = 'flex';
+                if (window.refresheetAuth?.authenticated) {
+                    const elapsed = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 1000) : null;
+                    fetch('/api/scores', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            game_type: '2048',
+                            score: getAdjustedScore(),
+                            duration_seconds: elapsed,
+                            extra: { board_size: boardSize, raw_score: score },
+                        }),
+                    }).then(() => document.dispatchEvent(new CustomEvent('refresheet:score-saved')))
+                      .catch(() => {});
+                }
             }
         }
     }

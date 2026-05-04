@@ -6,6 +6,14 @@ export async function initAuthState() {
     return authState;
 }
 
+export async function refreshAuthState() {
+    const authState = await fetchAuthState();
+    window.refresheetAuth = authState;
+    bindLoginButton(authState);
+    document.dispatchEvent(new CustomEvent('refresheet:auth', { detail: authState }));
+    return authState;
+}
+
 export async function fetchAuthState() {
     try {
         const res = await fetch('/api/me', { credentials: 'include' });
@@ -22,6 +30,10 @@ export async function fetchAuthState() {
             avatar_url: data.user.avatar_url,
             last_login_at: data.user.last_login_at,
             is_new_user: Boolean(data.user.is_new_user),
+            company: data.user.company || null,
+            commute_start: data.user.commute_start || '09:00',
+            commute_end: data.user.commute_end || '18:00',
+            onboarding_done: Boolean(data.user.onboarding_done),
         };
     } catch {
         return anonymousState();

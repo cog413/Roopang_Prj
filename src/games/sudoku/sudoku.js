@@ -70,6 +70,7 @@ export async function initSudoku() {
     let startTime = null;
     let mistakeCount = 0;
     let currentPuzzleId = null;
+    let loginPopupShown = false;
 
     // Inject difficulty selector at top of left panel
     const leftPanel = document.querySelector('#sudoku-sheet .side-left');
@@ -80,6 +81,27 @@ export async function initSudoku() {
 
     // Keyboard (registered once)
     document.addEventListener('keydown', onKeyDown);
+
+    // Show login popup when SDK tab is first visited
+    const sudokuTab = document.querySelector('.tab[data-sheet="sudoku"]');
+    if (sudokuTab) {
+        sudokuTab.addEventListener('click', () => {
+            if (loginPopupShown) return;
+            loginPopupShown = true;
+            setTimeout(() => {
+                if (!window.refresheetAuth?.authenticated) {
+                    const { showLoginPopup, goToLogin } = window.loginPopupModule || {};
+                    if (showLoginPopup) {
+                        showLoginPopup({
+                            message: '로그인해야 게임 기록이 저장됩니다.\nGoogle 로그인을 하시겠습니까?',
+                            onLogin: goToLogin,
+                            onSkip: () => {},
+                        });
+                    }
+                }
+            }, 300);
+        }, { once: false });
+    }
 
     // Validation modal close: click buttons or press Enter/Escape
     document.querySelectorAll('.modal-close, .modal-btn.cancel, .modal-btn.retry').forEach(btn => {
@@ -322,6 +344,22 @@ export async function initSudoku() {
 
         if (formulaInput) formulaInput.value = `=WIN.SCORE(${finalScore.toLocaleString()})`;
         updateScoreUI(finalScore);
+
+        if (window.refresheetAuth?.authenticated) {
+            const elapsed = startTime ? Math.floor((Date.now() - startTime) / 1000) : null;
+            fetch('/api/scores', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    game_type: 'sudoku',
+                    score: finalScore,
+                    duration_seconds: elapsed,
+                    extra: { difficulty: currentDifficulty, puzzle_id: currentPuzzleId, mistakes: mistakeCount },
+                }),
+            }).then(() => document.dispatchEvent(new CustomEvent('refresheet:score-saved')))
+              .catch(() => {});
+        }
     }
 
     function calculateScore() {

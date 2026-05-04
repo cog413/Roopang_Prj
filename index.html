@@ -81,12 +81,38 @@
                     <div id="readme-sheet" class="sheet-view active">
                         <div class="readme-grid" aria-label="Refresheet 안내 시트">
                             <div class="readme-cell readme-title" style="grid-column: 2 / span 7;">오늘의 KPI</div>
-                            <div class="readme-cell readme-label" style="grid-column: 2 / span 2;">집중 Index</div>
-                            <div class="readme-cell readme-text" style="grid-column: 4 / span 6;">짧은 휴식으로 집중력을 회복한 정도 (게임 1판 완료 시 +33%, 최대 100%)</div>
-                            <div class="readme-cell readme-label" style="grid-column: 2 / span 2;">존버 Index</div>
-                            <div class="readme-cell readme-text" style="grid-column: 4 / span 6;">근무 시간 대비 버틴 진행률 (퇴근까지 실시간으로 반영됩니다)</div>
-                            <div class="readme-cell readme-label" style="grid-column: 2 / span 2;">케어 Index</div>
-                            <div class="readme-cell readme-text" style="grid-column: 4 / span 6;">미니미를 챙긴 정도 (말걸기 / 먹이주기 / 꾸미기 중 1회 이상)</div>
+
+                            <!-- 로그인 전: 정의 표시 -->
+                            <div id="kpi-def-row" style="display: contents;">
+                                <div class="readme-cell readme-label" style="grid-column: 2 / span 2;">집중 Index</div>
+                                <div class="readme-cell readme-text" style="grid-column: 4 / span 6;">짧은 휴식으로 집중력을 회복한 정도 (게임 1판 완료 시 +33%, 최대 100%)</div>
+                                <div class="readme-cell readme-label" style="grid-column: 2 / span 2;">존버 Index</div>
+                                <div class="readme-cell readme-text" style="grid-column: 4 / span 6;">근무 시간 대비 버틴 진행률 (퇴근까지 실시간으로 반영됩니다)</div>
+                                <div class="readme-cell readme-label" style="grid-column: 2 / span 2;">케어 Index</div>
+                                <div class="readme-cell readme-text" style="grid-column: 4 / span 6;">미니미를 챙긴 정도 (말걸기 / 먹이주기 / 꾸미기 중 1회 이상)</div>
+                            </div>
+
+                            <!-- 로그인 후: 실제 값 표시 -->
+                            <div id="kpi-values-row" style="display: none; contents: unset;">
+                                <div class="readme-cell readme-label" style="grid-column: 2 / span 2;">집중 Index</div>
+                                <div class="readme-cell readme-kpi-row" style="grid-column: 4 / span 2;">
+                                    <span id="kpi-focus-val" class="readme-kpi-value kpi-status-zero">0%</span>
+                                </div>
+                                <div class="readme-cell readme-text readme-kpi-desc" style="grid-column: 6 / span 4;">게임 1판 +33%, 최대 100%</div>
+                                <div class="readme-cell readme-label" style="grid-column: 2 / span 2;">존버 Index</div>
+                                <div class="readme-cell readme-kpi-row" style="grid-column: 4 / span 2;">
+                                    <span id="kpi-endurance-val" class="readme-kpi-value kpi-status-zero">0%</span>
+                                </div>
+                                <div class="readme-cell readme-text readme-kpi-desc" style="grid-column: 6 / span 4;">퇴근까지 실시간 반영</div>
+                                <div class="readme-cell readme-label" style="grid-column: 2 / span 2;">케어 Index</div>
+                                <div class="readme-cell readme-kpi-row" style="grid-column: 4 / span 2;">
+                                    <span id="kpi-care-val" class="readme-kpi-value kpi-status-pending">미완료</span>
+                                </div>
+                                <div class="readme-cell readme-text readme-kpi-desc" style="grid-column: 6 / span 4;">말걸기 / 먹이주기 / 꾸미기</div>
+                                <div class="readme-cell readme-kpi-game" style="grid-column: 2 / span 7;">
+                                    <span id="kpi-game-list">오늘 플레이 기록 없음</span>
+                                </div>
+                            </div>
 
                             <div class="readme-cell readme-section" style="grid-column: 2 / span 7;">SOP</div>
                             <div class="readme-cell readme-article" style="grid-column: 2 / span 1;">제1조</div>

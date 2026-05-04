@@ -28,6 +28,27 @@ export default {
             if (url.pathname === '/api/me' && request.method === 'GET') {
                 return handleMe(request, env);
             }
+            if (url.pathname === '/api/companies' && request.method === 'GET') {
+                return handleGetCompanies(request, env);
+            }
+            if (url.pathname === '/api/onboarding' && request.method === 'POST') {
+                return handleOnboarding(request, env);
+            }
+            if (url.pathname === '/api/avatar' && request.method === 'GET') {
+                return handleGetAvatar(request, env);
+            }
+            if (url.pathname === '/api/avatar' && request.method === 'POST') {
+                return handleSaveAvatar(request, env);
+            }
+            if (url.pathname === '/api/minime/interact' && request.method === 'POST') {
+                return handleMinimeInteract(request, env);
+            }
+            if (url.pathname === '/api/scores' && request.method === 'POST') {
+                return handleSaveScore(request, env);
+            }
+            if (url.pathname === '/api/scores/today' && request.method === 'GET') {
+                return handleTodayScores(request, env);
+            }
 
             return withCors(json({ error: 'not_found' }, 404));
         } catch (error) {
@@ -176,7 +197,156 @@ async function handleMe(request, env) {
             avatar_url: session.avatar_url,
             last_login_at: session.last_login_at,
             is_new_user: Boolean(session.is_new_user),
+            company: session.company || null,
+            commute_start: session.commute_start || '09:00',
+            commute_end: session.commute_end || '18:00',
+            onboarding_done: Boolean(session.onboarding_done),
         },
+    }));
+}
+
+async function handleGetCompanies(request, env) {
+    const db = getDb(env);
+    const rows = await db.prepare(
+        `SELECT c.name,
+                COUNT(u.user_id) AS user_count
+         FROM companies c
+         LEFT JOIN users u ON u.company = c.name
+         GROUP BY c.name
+         ORDER BY user_count DESC, c.name ASC
+         LIMIT 50`
+    ).all();
+    return withCors(json({ companies: rows.results || [] }));
+}
+
+async function handleOnboarding(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
+
+    const body = await request.json().catch(() => ({}));
+    const company = typeof body.company === 'string' ? body.company.trim().slice(0, 100) : null;
+    const commuteStart = /^\d{2}:\d{2}$/.test(body.commute_start) ? body.commute_start : '09:00';
+    const commuteEnd = /^\d{2}:\d{2}$/.test(body.commute_end) ? body.commute_end : '18:00';
+
+    const db = getDb(env);
+    const now = new Date().toISOString();
+    const stmts = [
+        db.prepare(
+            `UPDATE users SET company=?, commute_start=?, commute_end=?, onboarding_done=1, updated_at=? WHERE user_id=?`
+        ).bind(company || null, commuteStart, commuteEnd, now, session.user_id),
+    ];
+
+    if (company) {
+        stmts.push(
+            db.prepare(
+                `INSERT OR IGNORE INTO companies (id, name, created_at) VALUES (?, ?, ?)`
+            ).bind(makeId('cmp'), company, now)
+        );
+    }
+
+    await db.batch(stmts);
+    return withCors(json({ ok: true, company, commute_start: commuteStart, commute_end: commuteEnd }));
+}
+
+async function handleGetAvatar(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ authenticated: false, avatar: null }));
+
+    const avatar = await getDb(env).prepare(
+        `SELECT nickname, character_type, last_minime_at FROM avatars WHERE user_id=?`
+    ).bind(session.user_id).first();
+
+    return withCors(json({ authenticated: true, avatar: avatar || null }));
+}
+
+async function handleSaveAvatar(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
+
+    const body = await request.json().catch(() => ({}));
+    const nickname = typeof body.nickname === 'string' ? body.nickname.trim().slice(0, 20) : null;
+    const characterType = ['type_a', 'type_b'].includes(body.character_type) ? body.character_type : 'type_a';
+
+    if (!nickname) return withCors(json({ error: 'nickname required' }, 400));
+
+    const now = new Date().toISOString();
+    await getDb(env).prepare(
+        `INSERT INTO avatars (user_id, nickname, character_type, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(user_id) DO UPDATE SET
+           nickname=excluded.nickname,
+           character_type=excluded.character_type,
+           updated_at=excluded.updated_at`
+    ).bind(session.user_id, nickname, characterType, now, now).run();
+
+    return withCors(json({ ok: true, nickname, character_type: characterType }));
+}
+
+async function handleMinimeInteract(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
+
+    const now = new Date().toISOString();
+    await getDb(env).prepare(
+        `UPDATE avatars SET last_minime_at=?, updated_at=? WHERE user_id=?`
+    ).bind(now, now, session.user_id).run();
+
+    return withCors(json({ ok: true }));
+}
+
+async function handleSaveScore(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
+
+    const body = await request.json().catch(() => ({}));
+    const gameType = ['sudoku', '2048'].includes(body.game_type) ? body.game_type : null;
+    const score = Number.isInteger(body.score) ? body.score : 0;
+    const durationSeconds = Number.isInteger(body.duration_seconds) ? body.duration_seconds : null;
+
+    if (!gameType) return withCors(json({ error: 'invalid game_type' }, 400));
+
+    const now = new Date().toISOString();
+    await getDb(env).prepare(
+        `INSERT INTO game_scores (id, user_id, game_type, score, played_at, duration_seconds, extra_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+        makeId('gsc'),
+        session.user_id,
+        gameType,
+        score,
+        now,
+        durationSeconds,
+        body.extra ? JSON.stringify(body.extra) : null
+    ).run();
+
+    return withCors(json({ ok: true }));
+}
+
+async function handleTodayScores(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ authenticated: false, scores: [] }));
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const rows = await getDb(env).prepare(
+        `SELECT game_type, score, played_at, duration_seconds
+         FROM game_scores
+         WHERE user_id=? AND played_at >= ?
+         ORDER BY played_at ASC`
+    ).bind(session.user_id, todayStart.toISOString()).all();
+
+    const avatar = await getDb(env).prepare(
+        `SELECT last_minime_at FROM avatars WHERE user_id=?`
+    ).bind(session.user_id).first();
+
+    const lastMinimeAt = avatar?.last_minime_at || null;
+    const minimeCaredToday = lastMinimeAt && lastMinimeAt >= todayStart.toISOString();
+
+    return withCors(json({
+        authenticated: true,
+        scores: rows.results || [],
+        minime_cared_today: Boolean(minimeCaredToday),
     }));
 }
 
@@ -354,7 +524,8 @@ async function getSessionUser(db, request) {
     if (!sessionId) return null;
 
     return db.prepare(
-        `SELECT u.user_id, u.email, p.nickname, p.avatar_url, p.last_login_at, s.is_new_user
+        `SELECT u.user_id, u.email, u.company, u.commute_start, u.commute_end, u.onboarding_done,
+                p.nickname, p.avatar_url, p.last_login_at, s.is_new_user
          FROM auth_sessions s
          JOIN users u ON u.user_id = s.user_id
          LEFT JOIN user_profiles p ON p.user_id = u.user_id
