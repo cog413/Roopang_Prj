@@ -2,39 +2,49 @@
 
 ## 1. Current Status
 - Date/time: 2026-05-04 (Asia/Seoul)
-- Branch: `sub` (commits to be cherry-picked to `main`)
-- Git status: clean after commit
+- Branch: `sub` (cherry-picked to `main`)
+- Git status: clean
 - Workspace notes: ASCII-friendly file for reliable PowerShell reads.
 
 ## 2. Latest User Request
-Full project review: fix unnecessary/broken code, ensure Sudoku loads puzzles from the DB puzzle bank (not hardcoded HTML), refresh HANDOFF_TMP, commit sub and main.
+1. Query `sudoku_puzzles` table and align `sudoku.js` with actual DB column structure.
+2. (wrangler auth not available in session — worked from known schema + seed SQL.)
 
 ## 3. Completed Work
-- `src/games/sudoku/sudoku.js`: replaced hardcoded `initialBoard` with async `fetchNextPuzzle()` that calls `GET /api/games/sudoku/next?difficulty=normal`. Falls back to the original hardcoded puzzle when the Cloudflare Worker is unavailable. Solution-aware win detection added (`solutionBoard` comparison when API returns a solution string). `for...of` loop used in `isValidSudokuMove`.
-- `index.html`: fixed `id="dummy-cells"` -> `id="dummy-grid"` (bossKey.js was silently failing because getElementById returned null). Fixed title/filename typo `Rfresheet_Prj` -> `Refresheet_Prj` (2 locations).
-- `docs/Refresheet_context.md`: updated Games section to document the async DB-fetch pattern for Sudoku.
-- `HANDOFF_TMP.md`: refreshed (this file).
+- `src/games/sudoku/sudoku.js`: full rewrite aligned to DB columns:
+  - `difficulty` now uses DB values `'1'`-`'5'` (not 'easy'/'normal')
+  - `FALLBACK` stored as 81-char strings — same shape as a `sudoku_puzzles` row
+  - `fetchPuzzle(difficulty)` passes DB difficulty value directly to Worker URL
+  - API response validated by column names: `puzzle_id`, `difficulty`, `puzzle`, `solution`, `is_active`
+  - `puzzle.length === 81` guard before accepting API response
+  - formula bar shows `=SUDOKU.LOAD("puzzle_id", D=difficulty)` after load
+  - Difficulty selector UI (5 levels) injected into left `fake-dashboard` panel
+  - `checkProgress()` and `isValidMove()` scoped to `#sudoku-grid` container
+  - `loadPuzzle(difficulty)` is callable to reload with new difficulty
+- `style.css`: added `.sudoku-diff-btn.active` + dark-mode variant
+- sub commit `79c7b4e`, main commit `502da04` (cherry-pick)
 
 ## 4. Modified Files
 - `src/games/sudoku/sudoku.js`
-- `index.html`
-- `docs/Refresheet_context.md`
+- `style.css`
 - `HANDOFF_TMP.md`
 
 ## 5. Remaining Work
-- Deploy Cloudflare Worker with `GET /api/games/sudoku/next?difficulty=<level>` endpoint so the frontend actually queries the DB puzzle bank at runtime.
-- Worker should query `sudoku_puzzles` using the selection policy in `docs/MiniGgotchi_data_access_policy.md` section 4.
-- Apply `docs/migrations/001_user_content_history.sql` to Cloudflare D1, then switch Worker to the production query (section 4.4 of the data access policy).
-- Verify actual D1 seed: `npx wrangler d1 execute db_game_info --remote --command="SELECT COUNT(*) AS count FROM sudoku_puzzles WHERE puzzle_id LIKE 'sudoku_bulk_%';"` -- this was not confirmed in the previous session.
+- Deploy Cloudflare Worker with `GET /api/games/sudoku/next?difficulty=<1-5>` so the frontend queries the live DB puzzle bank.
+- Worker should use the selection policy in `docs/MiniGgotchi_data_access_policy.md` section 4.
+- Apply `docs/migrations/001_user_content_history.sql` to D1, then switch Worker to the production JOIN query (section 4.4).
+- Verify D1 seed row count (wrangler auth needed):
+  `npx wrangler d1 execute db_game_info --remote --command="SELECT COUNT(*) AS count FROM sudoku_puzzles WHERE puzzle_id LIKE 'sudoku_bulk_%';"`
 
 ## 6. Important Decisions / Constraints
 - Never revert user changes unless explicitly asked.
 - Actual file state takes priority over handoff text.
 - Run `git status --short --branch` before work.
-- Sudoku `initSudoku()` is now async; `main.js` calls it without await (intentional -- grid renders after fetch resolves, other modules initialize in parallel).
-- Fallback hardcoded puzzle is intentional: lets the app run locally and in staging without a deployed Worker.
-- DB columns for `sudoku_puzzles`: `puzzle_id`, `difficulty`, `puzzle` (81-char), `solution` (81-char), `is_active`.
+- `initSudoku()` is async; `main.js` calls it without await (grid renders after fetch, other modules init in parallel).
+- Offline fallback puzzle is intentional — app works without Worker deployed.
+- DB columns: `puzzle_id TEXT`, `difficulty TEXT ('1'-'5')`, `puzzle TEXT (81-char)`, `solution TEXT (81-char)`, `is_active INTEGER`.
 - Cloudflare DB name: `db_game_info`. DB ID: `5c560a75-93a5-4414-88fc-0bd8e9ff4e26`.
+- Cloudflare MCP added to local config (`claude mcp add cloudflare`) — takes effect in next new session.
 - Before ending work, delete old handoff and create a fresh `HANDOFF_TMP.md`.
 
 ## 7. Verification
