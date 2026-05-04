@@ -267,3 +267,38 @@ AI는 아래를 판단해야 한다:
 
 **6. 반영 필요 사항 (중요)**
 - ReadMe 시트는 카드/문서 UI가 아니라 셀 병합과 채우기 색을 활용한 엑셀 입력형 UI 패턴을 유지한다.
+
+---
+
+### [2026-05-04 22:47] (CLI: codex)
+
+**1. 목표**
+- ReadMe 하단에 "마우스를 올렸을 때 반응하는 버튼만 진짜입니다. (예: 보기 탭)" 문장을 추가한다.
+- 상단 `보기` 탭에 다크모드 기능을 넣는다.
+- 기존 `JH` 버튼을 Google 로그인 버튼으로 바꾸고, 로그인 성공 후 Office 365처럼 초성/이니셜을 표시한다.
+- 로그인/회원가입 정보가 어떤 DB에 쌓이는지 확인하고 기존 인증 흐름과 연결한다.
+
+**2. 현재 상태**
+- Google OAuth Worker는 Cloudflare D1 `db_game_info`에 연결되어 있으며 binding은 `DB`이다.
+- 인증 데이터는 `users`, `user_profiles`, `auth_events`, `auth_sessions`에 기록되는 구조다.
+
+**3. 문제**
+- 기존 `JH` 버튼은 다크모드 토글 역할이어서 로그인 버튼 역할과 충돌했다.
+- 다크모드는 사용자가 기대한 `보기` 탭이 아니라 우측 계정 버튼에 연결되어 있었다.
+
+**4. 시도한 것**
+- `index.html`에서 `JH` 영역을 `login-button`으로 교체했다.
+- `보기` 메뉴 탭에 `view-menu-tab` ID를 부여하고 다크모드 토글로 연결했다.
+- `src/auth/authState.js`에서 비로그인 시 Google OAuth 시작 URL로 이동하고, 로그인 상태면 `/api/me`의 `nickname`/`email` 기반 초성 또는 이니셜을 표시하도록 구현했다.
+- `style.css`에 Office 계정 배지 느낌의 `account-button` 스타일을 추가했다.
+- `node --check`로 `authState.js`, `excelLayout.js` 구문을 확인했다.
+
+**5. 해결 / 인사이트**
+- 비로그인 상태에서는 우측 버튼이 `로그인`으로 보이고 `/api/auth/google/start`로 이동한다.
+- 로그인 성공 후 `/api/me`가 반환하는 사용자 정보 기준으로 버튼에 초성/이니셜이 표시된다.
+- DB 적재 대상은 Cloudflare D1 `db_game_info`의 `users`, `user_profiles`, `auth_events`, `auth_sessions`로 명확하다.
+
+**6. 반영 필요 사항 (중요)**
+- 다크모드는 `보기` 탭에서 토글한다.
+- 우측 계정 버튼은 Google 로그인 진입점이며 로그인 후 사용자 초성/이니셜을 표시한다.
+- 인증 데이터는 D1 `db_game_info`의 `users`, `user_profiles`, `auth_events`, `auth_sessions`에 누적한다.

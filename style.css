@@ -408,22 +408,32 @@ body.dark-mode .pet-interaction-panel {
     background-size: 80px 25px; /* Matches col/row size */
 }
 
-/* Fake Dashboard & Theme Toggle */
+/* Fake Dashboard & Account Button */
 .window-controls { display: flex; align-items: center; }
-.theme-toggle {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+.account-button {
+    min-width: 44px;
+    height: 22px;
+    border-radius: 11px;
     background-color: #0b5028;
     color: #fff;
     text-align: center;
-    line-height: 20px;
-    font-size: 10px;
+    font-size: 11px;
     cursor: pointer;
     margin-left: 15px;
     user-select: none;
     border: 1px solid #114a29;
+    padding: 0 8px;
+}
+.account-button:hover {
+    background-color: #0f6b37;
+    border-color: #c8e6c9;
+}
+.account-button.authenticated {
+    min-width: 24px;
+    width: 24px;
+    padding: 0;
+    border-radius: 50%;
+    font-weight: 700;
 }
 .sheet-layout {
     display: flex;
