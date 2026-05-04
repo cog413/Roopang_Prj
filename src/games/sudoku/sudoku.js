@@ -1,15 +1,30 @@
-// Fallback puzzle used when the API is unavailable (Worker not yet deployed)
-const FALLBACK_BOARD = [
-    [5, 3, 0, 0, 7, 0, 0, 0, 0],
-    [6, 0, 0, 1, 9, 5, 0, 0, 0],
-    [0, 9, 8, 0, 0, 0, 0, 6, 0],
-    [8, 0, 0, 0, 6, 0, 0, 0, 3],
-    [4, 0, 0, 8, 0, 3, 0, 0, 1],
-    [7, 0, 0, 0, 2, 0, 0, 0, 6],
-    [0, 6, 0, 0, 0, 0, 2, 8, 0],
-    [0, 0, 0, 4, 1, 9, 0, 0, 5],
-    [0, 0, 0, 0, 8, 0, 0, 7, 9]
-];
+// sudoku_puzzles table columns:
+//   puzzle_id TEXT PK  — e.g. 'sudoku_bulk_000001'
+//   difficulty TEXT    — '1'(easiest) ~ '5'(hardest)
+//   puzzle    TEXT     — 81-char string, '0' = empty cell
+//   solution  TEXT     — 81-char string, complete answer
+//   is_active INTEGER  — 1 = selectable
+//
+// API (Cloudflare Worker, not yet deployed):
+//   GET /api/games/sudoku/next?difficulty=<1-5>
+//   → returns one sudoku_puzzles row as JSON
+
+const DIFFICULTY_LABEL = {
+    '1': '쉬움',
+    '2': '쉬움+',
+    '3': '보통',
+    '4': '어려움',
+    '5': '최고난도',
+};
+
+// Offline fallback — identical shape to a sudoku_puzzles DB row
+const FALLBACK = {
+    puzzle_id: 'fallback_offline',
+    difficulty: '3',
+    puzzle:   '530070000600195000098000060800060003400803001700020006060000280000419005000080079',
+    solution: '534678912672195348198342567859761423426853791713924856961537284287419635345286179',
+    is_active: 1,
+};
 
 function parsePuzzleStr(str) {
     const board = [];
@@ -19,64 +34,135 @@ function parsePuzzleStr(str) {
     return board;
 }
 
-async function fetchNextPuzzle() {
-    const res = await fetch('/api/games/sudoku/next?difficulty=normal');
+// Calls Worker: GET /api/games/sudoku/next?difficulty=<1-5>
+// Response is a sudoku_puzzles row: { puzzle_id, difficulty, puzzle, solution, is_active }
+async function fetchPuzzle(difficulty) {
+    const res = await fetch(`/api/games/sudoku/next?difficulty=${difficulty}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
 }
 
 export async function initSudoku() {
-    const grid = document.getElementById('sudoku-grid');
-    if (!grid) return;
+    const container = document.getElementById('sudoku-grid');
+    if (!container) return;
 
     const formulaInput = document.getElementById('formula-input');
     const currentCellBox = document.getElementById('current-cell');
 
-    let initialBoard = FALLBACK_BOARD;
+    let selectedCell = null;
     let solutionBoard = null;
+    let currentDifficulty = '3';
 
-    try {
-        const data = await fetchNextPuzzle();
-        if (data.puzzle && data.solution) {
-            initialBoard = parsePuzzleStr(data.puzzle);
-            solutionBoard = parsePuzzleStr(data.solution);
-        }
-    } catch {
-        // Worker not deployed yet — using offline fallback puzzle
+    // Inject difficulty selector into the left fake-dashboard
+    const leftPanel = document.querySelector('#sudoku-sheet .side-left');
+    if (leftPanel) leftPanel.appendChild(buildDifficultySelector());
+
+    // Keyboard handler registered once for the lifetime of the sheet
+    document.addEventListener('keydown', onKeyDown);
+
+    // Modal close buttons
+    const modal = document.getElementById('validation-modal');
+    document.querySelectorAll('.modal-close, .modal-btn.cancel, .modal-btn.retry').forEach(btn => {
+        btn.addEventListener('click', () => { if (modal) modal.style.display = 'none'; });
+    });
+
+    await loadPuzzle(currentDifficulty);
+
+    // ── helpers ─────────────────────────────────────────────────────────────
+
+    function buildDifficultySelector() {
+        const table = document.createElement('div');
+        table.className = 'fake-table';
+
+        const header = document.createElement('div');
+        header.className = 'fake-table-header';
+        header.textContent = '난이도 선택';
+        table.appendChild(header);
+
+        Object.entries(DIFFICULTY_LABEL).forEach(([val, label]) => {
+            const labelCell = document.createElement('div');
+            labelCell.className = 'fake-table-cell label sudoku-diff-btn';
+            labelCell.dataset.diff = val;
+            labelCell.textContent = label;
+            if (val === currentDifficulty) labelCell.classList.add('active');
+
+            const valueCell = document.createElement('div');
+            valueCell.className = 'fake-table-cell value';
+            valueCell.textContent = `D${val}`;
+
+            labelCell.addEventListener('click', async () => {
+                if (val === currentDifficulty) return;
+                currentDifficulty = val;
+                table.querySelectorAll('.sudoku-diff-btn').forEach(b =>
+                    b.classList.toggle('active', b.dataset.diff === val)
+                );
+                await loadPuzzle(val);
+            });
+
+            table.appendChild(labelCell);
+            table.appendChild(valueCell);
+        });
+
+        return table;
     }
 
-    let selectedCell = null;
+    async function loadPuzzle(difficulty) {
+        container.innerHTML = '';
+        selectedCell = null;
+        solutionBoard = null;
+
+        // Try DB via Worker; fall back to offline puzzle on any error
+        let row = FALLBACK;
+        try {
+            const data = await fetchPuzzle(difficulty);
+            if (data && data.puzzle && data.solution && data.puzzle.length === 81) {
+                row = data;
+            }
+        } catch {
+            // Worker not deployed yet — offline fallback in use
+        }
+
+        const initialBoard = parsePuzzleStr(row.puzzle);
+        solutionBoard = parsePuzzleStr(row.solution);
+
+        if (formulaInput) {
+            formulaInput.value = `=SUDOKU.LOAD("${row.puzzle_id}",D=${row.difficulty})`;
+        }
+        if (currentCellBox) currentCellBox.textContent = 'A1';
+
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'excel-cell';
+                cell.dataset.row = r;
+                cell.dataset.col = c;
+
+                const val = initialBoard[r][c];
+                if (val !== 0) {
+                    cell.textContent = val;
+                    cell.classList.add('fixed');
+                }
+
+                cell.addEventListener('click', () => {
+                    if (selectedCell) selectedCell.classList.remove('selected');
+                    selectedCell = cell;
+                    cell.classList.add('selected');
+                    if (currentCellBox) currentCellBox.textContent = getCellRef(r, c);
+                    if (formulaInput) formulaInput.value = cell.textContent || '';
+                });
+
+                container.appendChild(cell);
+            }
+        }
+
+        checkProgress();
+    }
 
     function getCellRef(row, col) {
         return String.fromCharCode(65 + col) + (row + 1);
     }
 
-    for (let row = 0; row < 9; row++) {
-        for (let col = 0; col < 9; col++) {
-            const cell = document.createElement('div');
-            cell.className = 'excel-cell';
-            cell.dataset.row = row;
-            cell.dataset.col = col;
-
-            const val = initialBoard[row][col];
-            if (val !== 0) {
-                cell.textContent = val;
-                cell.classList.add('fixed');
-            }
-
-            cell.addEventListener('click', () => {
-                if (selectedCell) selectedCell.classList.remove('selected');
-                selectedCell = cell;
-                cell.classList.add('selected');
-                if (currentCellBox) currentCellBox.textContent = getCellRef(row, col);
-                if (formulaInput) formulaInput.value = cell.textContent || '';
-            });
-
-            grid.appendChild(cell);
-        }
-    }
-
-    document.addEventListener('keydown', (e) => {
+    function onKeyDown(e) {
         if (document.body.classList.contains('safe-mode')) return;
         const sheet = document.getElementById('sudoku-sheet');
         if (!sheet || sheet.style.display === 'none') return;
@@ -86,13 +172,12 @@ export async function initSudoku() {
             if (!selectedCell.classList.contains('fixed')) {
                 const r = parseInt(selectedCell.dataset.row);
                 const c = parseInt(selectedCell.dataset.col);
-                if (isValidSudokuMove(r, c, e.key)) {
+                if (isValidMove(r, c, e.key)) {
                     selectedCell.textContent = e.key;
                     selectedCell.classList.add('user-input');
                     if (formulaInput) formulaInput.value = e.key;
-                    checkWin();
+                    checkProgress();
                 } else {
-                    const modal = document.getElementById('validation-modal');
                     if (modal) modal.style.display = 'flex';
                 }
             }
@@ -108,24 +193,24 @@ export async function initSudoku() {
 
         let r = parseInt(selectedCell.dataset.row);
         let c = parseInt(selectedCell.dataset.col);
-        if (e.key === 'ArrowUp' && r > 0) r--;
-        if (e.key === 'ArrowDown' && r < 8) r++;
-        if (e.key === 'ArrowLeft' && c > 0) c--;
+        if (e.key === 'ArrowUp'    && r > 0) r--;
+        if (e.key === 'ArrowDown'  && r < 8) r++;
+        if (e.key === 'ArrowLeft'  && c > 0) c--;
         if (e.key === 'ArrowRight' && c < 8) c++;
         if (r !== parseInt(selectedCell.dataset.row) || c !== parseInt(selectedCell.dataset.col)) {
-            const nextCell = document.querySelector(`.sudoku .excel-cell[data-row="${r}"][data-col="${c}"]`);
-            if (nextCell) nextCell.click();
+            const next = container.querySelector(`.excel-cell[data-row="${r}"][data-col="${c}"]`);
+            if (next) next.click();
         }
-    });
+    }
 
-    function checkWin() {
-        const cells = document.querySelectorAll('.sudoku .excel-cell');
-        let filledCount = 0;
+    function checkProgress() {
+        const cells = container.querySelectorAll('.excel-cell');
+        let filled = 0;
         let allCorrect = true;
 
         cells.forEach(cell => {
             const val = cell.textContent;
-            if (val !== '') filledCount++;
+            if (val !== '') filled++;
             if (solutionBoard) {
                 const r = parseInt(cell.dataset.row);
                 const c = parseInt(cell.dataset.col);
@@ -133,38 +218,25 @@ export async function initSudoku() {
             }
         });
 
-        const progressDisplay = document.getElementById('sudoku-progress-display');
-        if (progressDisplay) progressDisplay.textContent = `${filledCount} / 81`;
+        const display = document.getElementById('sudoku-progress-display');
+        if (display) display.textContent = `${filled} / 81`;
 
-        const won = filledCount === 81 && (solutionBoard ? allCorrect : true);
-        if (won && formulaInput) {
+        if (filled === 81 && allCorrect && formulaInput) {
             formulaInput.value = '=WIN("축하합니다! 스도쿠를 완료했습니다.")';
         }
     }
 
-    function isValidSudokuMove(row, col, value) {
-        const cells = document.querySelectorAll('.sudoku .excel-cell');
-        for (const cell of cells) {
+    function isValidMove(row, col, value) {
+        for (const cell of container.querySelectorAll('.excel-cell')) {
             const r = parseInt(cell.dataset.row);
             const c = parseInt(cell.dataset.col);
             if (r === row && c === col) continue;
             const val = cell.textContent;
-            if (val === '') continue;
-            if (val === value) {
-                if (r === row || c === col) return false;
-                if (Math.floor(r / 3) === Math.floor(row / 3) && Math.floor(c / 3) === Math.floor(col / 3)) return false;
-            }
+            if (val !== value) continue;
+            if (r === row || c === col) return false;
+            if (Math.floor(r / 3) === Math.floor(row / 3) &&
+                Math.floor(c / 3) === Math.floor(col / 3)) return false;
         }
         return true;
     }
-
-    checkWin();
-
-    const modal = document.getElementById('validation-modal');
-    const closeBtns = document.querySelectorAll('.modal-close, .modal-btn.cancel, .modal-btn.retry');
-    closeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (modal) modal.style.display = 'none';
-        });
-    });
 }

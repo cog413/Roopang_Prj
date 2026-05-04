@@ -262,6 +262,10 @@ body {
     font-weight: bold;
 }
 
+/* Difficulty selector active state */
+.sudoku-diff-btn { cursor: pointer; }
+.sudoku-diff-btn.active { background-color: #dbe5f1 !important; font-weight: bold; color: #1a365d; }
+
 /* Thicker borders for 3x3 blocks */
 .sudoku .excel-cell:nth-child(3n) { border-right: 2px solid #a19f9d; }
 .sudoku .excel-cell:nth-child(9n) { border-right: 1px solid #e1dfdd; } /* reset last col */
@@ -617,6 +621,7 @@ body.dark-mode .fake-table, body.dark-mode .fake-chart { background-color: trans
 body.dark-mode .fake-table-header { background-color: #1a365d; border-color: #444; color: #d4d4d4; }
 body.dark-mode .fake-table-cell { border-color: #444; background-color: #2d2d2d; color: #d4d4d4; }
 body.dark-mode .fake-table-cell.label { background-color: #333; }
+body.dark-mode .sudoku-diff-btn.active { background-color: #1a365d !important; color: #90cdf4; }
 body.dark-mode .fake-table-cell.total { background-color: #1a365d; border-top: 1px solid #2b6cb0; }
 body.dark-mode .excel-modal { background-color: #2d2d2d; border-color: #555; }
 body.dark-mode .modal-header { background-color: #2d2d2d; color: #d4d4d4; }
