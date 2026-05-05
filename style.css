@@ -211,6 +211,7 @@ body {
 
 .row-header {
     height: 25px;
+    flex: 0 0 25px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1067,13 +1068,19 @@ body.dark-mode .g2048-size-btn.active { background-color: #1a365d !important; co
     color: #333;
 }
 .rm-col-main {
-    width: 680px;
+    width: 720px;
     flex-shrink: 0;
 }
 .rm-col-side {
-    width: 500px;
+    width: 720px;
     flex-shrink: 0;
     padding-left: 24px;
+}
+.rm-col-side .rm-sop-title,
+.rm-col-side .rm-sop-body,
+.rm-col-side .rm-guide-item,
+.rm-col-side .rm-note-item {
+    white-space: nowrap;
 }
 
 /* Section headers */
