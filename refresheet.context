@@ -131,3 +131,10 @@
 - PowerShell에서 `wrangler pages secret put` 실행 시 Ctrl+V 직접 입력으로 제어 문자가 들어갈 수 있으므로 `Get-Clipboard` 파이프 방식으로 값을 넣는다.
 - Pages secret 변경 후에는 production 배포와 `/api/auth/google/start` 302 redirect 여부를 확인한다.
 - ReadMe 오른쪽 보조 컬럼은 SOP/안내 텍스트가 깨지지 않도록 420px 수준의 폭을 유지한다.
+
+---
+
+## ReadMe Column Width Rule
+
+- ReadMe 오른쪽 보조 컬럼(SOP, 시트 안내, 참고사항)은 긴 문장 가독성을 위해 500px 수준을 기준 폭으로 유지한다.
+- 전체 폭이 부담될 때는 오른쪽 컬럼을 줄이기보다 왼쪽 KPI/랭킹 컬럼을 소폭 조정한다.
