@@ -81,109 +81,119 @@
                     <div id="readme-sheet" class="sheet-view active">
                         <div class="rm-sheet" aria-label="Refresheet 안내 시트">
 
-                            <!-- 1. KPI 현황 -->
-                            <div class="rm-section-hd rm-hd-green">KPI(Key Performance Index) 현황</div>
-                            <div class="rm-kpi-row">
-                                <div class="rm-kpi-card">
-                                    <div class="rm-kpi-name">집중 Index</div>
-                                    <div class="rm-kpi-val" id="kpi-focus-val">
-                                        <span class="rm-need-login">로그인 필요</span>
-                                    </div>
-                                    <div class="rm-kpi-desc">짧은 휴식으로 집중력을 회복한 정도</div>
-                                    <div class="rm-kpi-sub">(게임 1판 완료 시 +33%, 최대 100%)</div>
-                                </div>
-                                <div class="rm-kpi-card">
-                                    <div class="rm-kpi-name">존버 Index</div>
-                                    <div class="rm-kpi-val" id="kpi-endurance-val">
-                                        <span class="rm-need-login">로그인 필요</span>
-                                    </div>
-                                    <div class="rm-kpi-desc">근무 시간 대비 버틴 진행률</div>
-                                    <div class="rm-kpi-sub">(퇴근까지 실시간으로 반영됩니다)</div>
-                                </div>
-                                <div class="rm-kpi-card">
-                                    <div class="rm-kpi-name">케어 Index</div>
-                                    <div class="rm-kpi-val" id="kpi-care-val">
-                                        <span class="rm-need-login">로그인 필요</span>
-                                    </div>
-                                    <div class="rm-kpi-desc">미니미를 챙긴 정도</div>
-                                    <div class="rm-kpi-sub">(밥걸기 / 먹이주기 / 꾸미기 중 1회 이상)</div>
-                                </div>
-                            </div>
+                            <!-- 좌측 컬럼: KPI + 실적장표 -->
+                            <div class="rm-col-main">
 
-                            <!-- 2. 랭킹 현황 -->
-                            <div class="rm-section-hd rm-hd-green rm-hd-flex">
-                                <span>랭킹 현황</span>
-                                <span class="rm-rank-tabs">
-                                    <button class="rm-rank-tab active" data-period="daily">일간</button>
-                                    <button class="rm-rank-tab" data-period="weekly">주간</button>
-                                    <button class="rm-rank-tab" data-period="monthly">월간</button>
-                                </span>
-                            </div>
-                            <div class="rm-rank-row">
-                                <div class="rm-rank-card">
-                                    <div class="rm-rank-label" id="rank-personal-label">오늘의 실적 (개인)</div>
-                                    <div class="rm-rank-my" id="rank-personal-my">
-                                        <span class="rm-need-login">로그인 필요</span>
+                                <!-- 1. KPI 현황 -->
+                                <div class="rm-section-hd rm-hd-green">KPI(Key Performance Index) 현황</div>
+                                <div class="rm-kpi-row">
+                                    <div class="rm-kpi-card">
+                                        <div class="rm-kpi-name">집중 Index</div>
+                                        <div class="rm-kpi-val" id="kpi-focus-val">
+                                            <span class="rm-need-login">로그인 필요</span>
+                                        </div>
+                                        <div class="rm-kpi-desc">짧은 휴식으로 집중력을 회복한 정도</div>
+                                        <div class="rm-kpi-sub">(게임 1판 완료 시 +33%, 최대 100%)</div>
                                     </div>
-                                    <div class="rm-rank-list" id="rank-personal-list"></div>
-                                </div>
-                                <div class="rm-rank-card">
-                                    <div class="rm-rank-label" id="rank-company-label">오늘의 실적 (회사별)</div>
-                                    <div class="rm-rank-my" id="rank-company-my">
-                                        <span class="rm-need-login">로그인 필요</span>
+                                    <div class="rm-kpi-card">
+                                        <div class="rm-kpi-name">존버 Index</div>
+                                        <div class="rm-kpi-val" id="kpi-endurance-val">
+                                            <span class="rm-need-login">로그인 필요</span>
+                                        </div>
+                                        <div class="rm-kpi-desc">근무 시간 대비 버틴 진행률</div>
+                                        <div class="rm-kpi-sub">(퇴근까지 실시간으로 반영됩니다)</div>
                                     </div>
-                                    <div class="rm-rank-list" id="rank-company-list"></div>
+                                    <div class="rm-kpi-card">
+                                        <div class="rm-kpi-name">케어 Index</div>
+                                        <div class="rm-kpi-val" id="kpi-care-val">
+                                            <span class="rm-need-login">로그인 필요</span>
+                                        </div>
+                                        <div class="rm-kpi-desc">미니미를 챙긴 정도</div>
+                                        <div class="rm-kpi-sub">(밥걸기 / 먹이주기 / 꾸미기 중 1회 이상)</div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- 3. SOP -->
-                            <div class="rm-section-hd rm-hd-green">SOP(Statement of Purpose)</div>
-                            <div class="rm-sop">
-                                <div class="rm-sop-item">
-                                    <div class="rm-sop-title">&lt;제1조. 누구나 휴식할 권리가 있다&gt;</div>
-                                    <div class="rm-sop-body">지치고 단조로운 일상 속, Refresheet가 잠깐의 쉼이 되길 바랍니다. 게임도 하고, 미니미에게 오늘의 응원도 받아보세요.</div>
+                                <!-- 2. 실적 장표 -->
+                                <div class="rm-section-hd rm-hd-green rm-hd-flex">
+                                    <span>실적 장표</span>
+                                    <span class="rm-rank-tabs">
+                                        <button class="rm-rank-tab active" data-period="daily">일간</button>
+                                        <button class="rm-rank-tab" data-period="weekly">주간</button>
+                                        <button class="rm-rank-tab" data-period="monthly">월간</button>
+                                    </span>
                                 </div>
-                                <div class="rm-sop-item">
-                                    <div class="rm-sop-title">&lt;제2조. 우리가 쉬는 건, 추진력을 얻기 위함이다&gt;</div>
-                                    <div class="rm-sop-body">게임은 적당히. 시간당 3판까지만 점수 획득 가능 (매 정시 초기화)</div>
+                                <div class="rm-rank-row">
+                                    <div class="rm-rank-card">
+                                        <div class="rm-rank-label" id="rank-personal-label">오늘의 실적 (개인)</div>
+                                        <div class="rm-rank-my" id="rank-personal-my">
+                                            <span class="rm-need-login">로그인 필요</span>
+                                        </div>
+                                        <div class="rm-rank-list" id="rank-personal-list"></div>
+                                    </div>
+                                    <div class="rm-rank-card">
+                                        <div class="rm-rank-label" id="rank-company-label">오늘의 실적 (회사별)</div>
+                                        <div class="rm-rank-my" id="rank-company-my">
+                                            <span class="rm-need-login">로그인 필요</span>
+                                        </div>
+                                        <div class="rm-rank-list" id="rank-company-list"></div>
+                                    </div>
                                 </div>
-                                <div class="rm-sop-item">
-                                    <div class="rm-sop-title">&lt;제3조. 누군가를 아끼는 마음이 나를 살린다&gt;</div>
-                                    <div class="rm-sop-body">게임 포인트로 미니미를 키워보세요. 먹이고, 꾸미고, 아껴주며 하루를 버틸 힘을 얻어요.</div>
-                                </div>
-                                <div class="rm-sop-item">
-                                    <div class="rm-sop-title">&lt;제4조. 우리는 혼자가 아니다&gt;</div>
-                                    <div class="rm-sop-body">같은 하루를 버티는 사람들이 있습니다. 회사별 점수 랭킹에서 확인해보세요.</div>
-                                </div>
-                            </div>
 
-                            <!-- 3. 시트 안내 -->
-                            <div class="rm-section-hd rm-hd-green">시트 안내</div>
-                            <div class="rm-guide">
-                                <div class="rm-guide-item">
-                                    <span class="rm-guide-label">관리시트</span>
-                                    <span class="rm-guide-sep">:</span>
-                                    <span class="rm-guide-text">미니미 관리시트</span>
-                                </div>
-                                <div class="rm-guide-item">
-                                    <span class="rm-guide-label">2048</span>
-                                    <span class="rm-guide-sep">:</span>
-                                    <span class="rm-guide-text">방향키로 숫자를 키워 성과를 만들어보세요</span>
-                                </div>
-                                <div class="rm-guide-item">
-                                    <span class="rm-guide-label">SDK</span>
-                                    <span class="rm-guide-sep">:</span>
-                                    <span class="rm-guide-text">데이터를 분석해 요소를 적재적소에 배치해보세요</span>
-                                </div>
-                            </div>
+                            </div><!-- /.rm-col-main -->
 
-                            <!-- 4. 참고사항 -->
-                            <div class="rm-section-hd rm-hd-caution">참고사항</div>
-                            <div class="rm-notes">
-                                <div class="rm-note-item">※ 일부 기능은 로그인 후 이용 가능합니다.</div>
-                                <div class="rm-note-item">※ 마우스를 올렸을 때 반응하는 버튼만 진짜입니다 (예: 보기 탭, 로그인버튼)</div>
-                                <div class="rm-note-item">※ 위기의 순간이 온다면 Esc를 눌러보세요 (공백화면으로 긴급전환)</div>
-                            </div>
+                            <!-- 우측 컬럼: SOP + 시트안내 + 참고사항 -->
+                            <div class="rm-col-side">
+
+                                <!-- 3. SOP -->
+                                <div class="rm-section-hd rm-hd-green">SOP(Statement of Purpose)</div>
+                                <div class="rm-sop">
+                                    <div class="rm-sop-item">
+                                        <div class="rm-sop-title">&lt;제1조. 누구나 휴식할 권리가 있다&gt;</div>
+                                        <div class="rm-sop-body">지치고 단조로운 일상 속, Refresheet가 잠깐의 쉼이 되길 바랍니다. 게임도 하고, 미니미에게 오늘의 응원도 받아보세요.</div>
+                                    </div>
+                                    <div class="rm-sop-item">
+                                        <div class="rm-sop-title">&lt;제2조. 우리가 쉬는 건, 추진력을 얻기 위함이다&gt;</div>
+                                        <div class="rm-sop-body">게임은 적당히. 시간당 3판까지만 점수 획득 가능 (매 정시 초기화)</div>
+                                    </div>
+                                    <div class="rm-sop-item">
+                                        <div class="rm-sop-title">&lt;제3조. 누군가를 아끼는 마음이 나를 살린다&gt;</div>
+                                        <div class="rm-sop-body">게임 포인트로 미니미를 키워보세요. 먹이고, 꾸미고, 아껴주며 하루를 버틸 힘을 얻어요.</div>
+                                    </div>
+                                    <div class="rm-sop-item">
+                                        <div class="rm-sop-title">&lt;제4조. 우리는 혼자가 아니다&gt;</div>
+                                        <div class="rm-sop-body">같은 하루를 버티는 사람들이 있습니다. 회사별 점수 랭킹에서 확인해보세요.</div>
+                                    </div>
+                                </div>
+
+                                <!-- 4. 시트 안내 -->
+                                <div class="rm-section-hd rm-hd-green">시트 안내</div>
+                                <div class="rm-guide">
+                                    <div class="rm-guide-item">
+                                        <span class="rm-guide-label">관리시트</span>
+                                        <span class="rm-guide-sep">:</span>
+                                        <span class="rm-guide-text">미니미 관리시트</span>
+                                    </div>
+                                    <div class="rm-guide-item">
+                                        <span class="rm-guide-label">2048</span>
+                                        <span class="rm-guide-sep">:</span>
+                                        <span class="rm-guide-text">방향키로 숫자를 키워 성과를 만들어보세요</span>
+                                    </div>
+                                    <div class="rm-guide-item">
+                                        <span class="rm-guide-label">SDK</span>
+                                        <span class="rm-guide-sep">:</span>
+                                        <span class="rm-guide-text">데이터를 분석해 요소를 적재적소에 배치해보세요</span>
+                                    </div>
+                                </div>
+
+                                <!-- 5. 참고사항 -->
+                                <div class="rm-section-hd rm-hd-caution">참고사항</div>
+                                <div class="rm-notes">
+                                    <div class="rm-note-item">※ 일부 기능은 로그인 후 이용 가능합니다.</div>
+                                    <div class="rm-note-item">※ 마우스를 올렸을 때 반응하는 버튼만 진짜입니다 (예: 보기 탭, 로그인버튼)</div>
+                                    <div class="rm-note-item">※ 위기의 순간이 온다면 Esc를 눌러보세요 (공백화면으로 긴급전환)</div>
+                                </div>
+
+                            </div><!-- /.rm-col-side -->
 
                         </div>
                     </div>

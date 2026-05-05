@@ -324,7 +324,7 @@ body {
 /* Mini Pet UI Overlay */
 .mini-pet-ui-overlay {
     position: absolute;
-    top: 675px;
+    top: 650px;
     left: 40px;
     z-index: 100;
     pointer-events: none; /* Let clicks pass through if not on a button */
@@ -1058,11 +1058,22 @@ body.dark-mode .g2048-size-btn.active { background-color: #1a365d !important; co
    ReadMe Sheet v2 (rm-* prefix)
    ===================================================== */
 .rm-sheet {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
     padding: 25px 40px 60px;
-    width: 720px;
     font-size: 12px;
     font-family: 'Segoe UI', Calibri, sans-serif;
     color: #333;
+}
+.rm-col-main {
+    width: 720px;
+    flex-shrink: 0;
+}
+.rm-col-side {
+    width: 340px;
+    flex-shrink: 0;
+    padding-left: 24px;
 }
 
 /* Section headers */
@@ -1074,7 +1085,9 @@ body.dark-mode .g2048-size-btn.active { background-color: #1a365d !important; co
     margin-top: 20px;
     first-of-type { margin-top: 0; }
 }
-.rm-sheet .rm-section-hd:first-child { margin-top: 0; }
+.rm-sheet .rm-section-hd:first-child,
+.rm-col-main .rm-section-hd:first-child,
+.rm-col-side .rm-section-hd:first-child { margin-top: 0; }
 .rm-hd-green {
     background: #d9ead3;
     color: #217346;
@@ -1670,8 +1683,10 @@ body.dark-mode .mps-body-b { background:
     .window-controls { gap: 10px; }
     .account-button { padding: 4px 10px; font-size: 13px; }
 
-    /* ReadMe sheet padding */
-    .rm-sheet { padding: 0 4px 32px; }
+    /* ReadMe sheet padding + stack columns */
+    .rm-sheet { padding: 0 4px 32px; flex-direction: column; }
+    .rm-col-main, .rm-col-side { width: 100%; }
+    .rm-col-side { padding-left: 0; }
 
     /* Hide decorative Excel chrome */
     .menu-tabs,
