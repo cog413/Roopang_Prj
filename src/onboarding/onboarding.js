@@ -59,6 +59,17 @@ function buildModalDOM() {
                 </div>
                 <div id="ob-company-tags" class="ob-tags"></div>
                 <div class="ob-hint">동일 회사 유저 수가 표시됩니다. 입력하지 않아도 됩니다.</div>
+                <div class="ob-consent">
+                    <label class="ob-consent-row">
+                        <input type="checkbox" id="ob-terms-check">
+                        <span>[필수] <a href="/terms.html" target="_blank">이용약관</a> 및 <a href="/privacy.html" target="_blank">개인정보처리방침</a>에 동의합니다</span>
+                    </label>
+                    <label class="ob-consent-row">
+                        <input type="checkbox" id="ob-marketing-check">
+                        <span>[선택] 서비스 업데이트 등 마케팅 정보 수신에 동의합니다</span>
+                    </label>
+                </div>
+                <div id="ob-terms-error" class="ob-consent-error" style="display:none;">이용약관 동의는 필수입니다.</div>
                 <div class="modal-buttons">
                     <button class="modal-btn retry" id="ob-next">다음(N)</button>
                     <button class="modal-btn cancel" id="ob-skip1">건너뛰기(S)</button>
@@ -95,8 +106,22 @@ function bindEvents() {
         modalEl.style.display = 'none';
     });
 
-    modalEl.querySelector('#ob-next').addEventListener('click', () => showStep(2));
-    modalEl.querySelector('#ob-skip1').addEventListener('click', () => showStep(2));
+    modalEl.querySelector('#ob-next').addEventListener('click', () => {
+        if (!modalEl.querySelector('#ob-terms-check').checked) {
+            modalEl.querySelector('#ob-terms-error').style.display = 'block';
+            return;
+        }
+        modalEl.querySelector('#ob-terms-error').style.display = 'none';
+        showStep(2);
+    });
+    modalEl.querySelector('#ob-skip1').addEventListener('click', () => {
+        if (!modalEl.querySelector('#ob-terms-check').checked) {
+            modalEl.querySelector('#ob-terms-error').style.display = 'block';
+            return;
+        }
+        modalEl.querySelector('#ob-terms-error').style.display = 'none';
+        showStep(2);
+    });
     modalEl.querySelector('#ob-back').addEventListener('click', () => showStep(1));
     modalEl.querySelector('#ob-save').addEventListener('click', saveOnboarding);
 
@@ -184,13 +209,19 @@ async function saveOnboarding() {
     const company = modalEl.querySelector('#ob-company-input').value.trim();
     const commuteStart = modalEl.querySelector('#ob-commute-start').value;
     const commuteEnd = modalEl.querySelector('#ob-commute-end').value;
+    const marketingAgreed = modalEl.querySelector('#ob-marketing-check')?.checked ?? false;
 
     try {
         const res = await fetch('/api/onboarding', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ company: company || null, commute_start: commuteStart, commute_end: commuteEnd }),
+            body: JSON.stringify({
+                company: company || null,
+                commute_start: commuteStart,
+                commute_end: commuteEnd,
+                marketing_agreed: marketingAgreed,
+            }),
         });
         if (res.ok) {
             if (window.refresheetAuth) {

@@ -230,13 +230,15 @@ async function handleOnboarding(request, env) {
     const company = typeof body.company === 'string' ? body.company.trim().slice(0, 100) : null;
     const commuteStart = /^\d{2}:\d{2}$/.test(body.commute_start) ? body.commute_start : '09:00';
     const commuteEnd = /^\d{2}:\d{2}$/.test(body.commute_end) ? body.commute_end : '18:00';
+    const marketingAgreed = body.marketing_agreed === true ? 1 : 0;
 
     const db = getDb(env);
     const now = new Date().toISOString();
     const stmts = [
         db.prepare(
-            `UPDATE users SET company=?, commute_start=?, commute_end=?, onboarding_done=1, updated_at=? WHERE user_id=?`
-        ).bind(company || null, commuteStart, commuteEnd, now, session.user_id),
+            `UPDATE users SET company=?, commute_start=?, commute_end=?, onboarding_done=1,
+             marketing_agreed=?, terms_agreed_at=COALESCE(terms_agreed_at, ?), updated_at=? WHERE user_id=?`
+        ).bind(company || null, commuteStart, commuteEnd, marketingAgreed, now, now, session.user_id),
     ];
 
     if (company) {
