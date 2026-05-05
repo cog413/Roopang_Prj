@@ -25,6 +25,23 @@ export function initGame2048UI() {
 
     document.addEventListener('keydown', onKeyDown);
 
+    // Touch swipe for mobile
+    let _tx = 0, _ty = 0;
+    grid.addEventListener('touchstart', e => {
+        _tx = e.changedTouches[0].clientX;
+        _ty = e.changedTouches[0].clientY;
+    }, { passive: true });
+    grid.addEventListener('touchend', e => {
+        if (gameOver) return;
+        const dx = e.changedTouches[0].clientX - _tx;
+        const dy = e.changedTouches[0].clientY - _ty;
+        if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
+        const key = Math.abs(dx) > Math.abs(dy)
+            ? (dx > 0 ? 'ArrowRight' : 'ArrowLeft')
+            : (dy > 0 ? 'ArrowDown'  : 'ArrowUp');
+        document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    }, { passive: true });
+
     const gameOverModal = document.getElementById('game-over-modal');
     document.getElementById('game-over-retry')?.addEventListener('click', () => {
         if (gameOverModal) gameOverModal.style.display = 'none';
@@ -111,9 +128,14 @@ export function initGame2048UI() {
         addRandomTile(board);
         addRandomTile(board);
 
-        // Set grid CSS to match board size
-        grid.style.gridTemplateColumns = `repeat(${boardSize}, 80px)`;
-        grid.style.gridTemplateRows    = `repeat(${boardSize}, 25px)`;
+        const isMobile = window.innerWidth <= 768;
+        const cellSize = isMobile
+            ? Math.min(80, Math.floor((window.innerWidth - 24) / boardSize))
+            : 80;
+        const cellH = isMobile ? cellSize : 25;
+
+        grid.style.gridTemplateColumns = `repeat(${boardSize}, ${cellSize}px)`;
+        grid.style.gridTemplateRows    = `repeat(${boardSize}, ${cellH}px)`;
 
         renderBoard();
     }

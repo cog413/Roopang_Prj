@@ -82,6 +82,9 @@ export async function initSudoku() {
     // Keyboard (registered once)
     document.addEventListener('keydown', onKeyDown);
 
+    // Mobile numpad — injected once, visible via CSS on small screens
+    container.insertAdjacentElement('afterend', buildMobileNumpad());
+
     // Show login popup when SDK tab is first visited
     const sudokuTab = document.querySelector('.tab[data-sheet="sudoku"]');
     if (sudokuTab) {
@@ -418,5 +421,32 @@ export async function initSudoku() {
                 Math.floor(c / 3) === Math.floor(col / 3)) return false;
         }
         return true;
+    }
+
+    function buildMobileNumpad() {
+        const pad = document.createElement('div');
+        pad.className = 'mobile-numpad';
+
+        for (let n = 1; n <= 9; n++) {
+            const btn = document.createElement('button');
+            btn.className = 'mobile-numpad-btn';
+            btn.textContent = String(n);
+            btn.type = 'button';
+            btn.addEventListener('click', () => {
+                document.dispatchEvent(new KeyboardEvent('keydown', { key: String(n), bubbles: true }));
+            });
+            pad.appendChild(btn);
+        }
+
+        const del = document.createElement('button');
+        del.className = 'mobile-numpad-btn del-btn';
+        del.textContent = '⌫ 지우기';
+        del.type = 'button';
+        del.addEventListener('click', () => {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+        });
+        pad.appendChild(del);
+
+        return pad;
     }
 }
