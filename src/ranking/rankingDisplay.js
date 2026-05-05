@@ -46,47 +46,74 @@ function renderRanking(data) {
     setText('rank-personal-label', PERSONAL_LABELS[p] || PERSONAL_LABELS.monthly);
     setText('rank-company-label',  COMPANY_LABELS[p]  || COMPANY_LABELS.monthly);
 
+    // ── 내 개인 순위 ──────────────────────────────────
+    const pTotal = data.personal.total ?? 0;
+    const pTotalSuffix = pTotal > 0 ? ` &nbsp;·&nbsp; 전체 ${pTotal}명` : '';
+
     const myPersonalEl = document.getElementById('rank-personal-my');
     if (myPersonalEl) {
         myPersonalEl.innerHTML = data.personal.my_rank
-            ? `<span class="rm-rank-badge">내 순위 <strong>#${data.personal.my_rank}위</strong> &nbsp;·&nbsp; ${fmt(data.personal.my_score)}pt</span>`
-            : `<span class="rm-rank-none">기록 없음</span>`;
+            ? `<span class="rm-rank-badge">내 순위 <strong>#${data.personal.my_rank}위</strong> &nbsp;·&nbsp; ${fmt(data.personal.my_score)}pt${pTotalSuffix}</span>`
+            : `<span class="rm-rank-none">기록 없음${pTotal > 0 ? ` (전체 ${pTotal}명)` : ''}</span>`;
     }
+
+    // ── 내 회사 순위 ──────────────────────────────────
+    const cTotal = data.company.total ?? 0;
+    const cTotalSuffix = cTotal > 0 ? ` / ${cTotal}개사` : '';
 
     const myCompanyEl = document.getElementById('rank-company-my');
     if (myCompanyEl) {
         if (!data.company.my_company) {
             myCompanyEl.innerHTML = `<span class="rm-rank-none">회사 미설정</span>`;
         } else if (data.company.my_rank) {
-            myCompanyEl.innerHTML = `<span class="rm-rank-badge">${esc(data.company.my_company)} <strong>#${data.company.my_rank}위</strong></span>`;
+            myCompanyEl.innerHTML = `<span class="rm-rank-badge">${esc(data.company.my_company)} <strong>#${data.company.my_rank}위</strong>${cTotalSuffix} &nbsp;·&nbsp; ${fmt(data.company.my_score)}pt</span>`;
         } else {
-            myCompanyEl.innerHTML = `<span class="rm-rank-none">기록 없음</span>`;
+            myCompanyEl.innerHTML = `<span class="rm-rank-none">기록 없음${cTotal > 0 ? ` (${cTotal}개사 참가 중)` : ''}</span>`;
         }
     }
 
-    renderList('rank-personal-list', data.personal.top, r =>
-        `<div class="rm-rank-item${r.is_me ? ' rm-rank-me' : ''}">
-            <span class="rm-rank-pos">${medal(r.rank)}</span>
-            <span class="rm-rank-name">${esc(r.nickname)}</span>
-            <span class="rm-rank-score">${fmt(r.score)}</span>
-        </div>`
+    // ── Top 5 리스트 (빈 슬롯 "-" 처리) ─────────────
+    renderList('rank-personal-list', padTop(data.personal.top), r =>
+        r.empty
+            ? `<div class="rm-rank-item rm-rank-slot-empty">
+                <span class="rm-rank-pos">${medal(r.rank)}</span>
+                <span class="rm-rank-name">-</span>
+                <span class="rm-rank-score">-</span>
+               </div>`
+            : `<div class="rm-rank-item${r.is_me ? ' rm-rank-me' : ''}">
+                <span class="rm-rank-pos">${medal(r.rank)}</span>
+                <span class="rm-rank-name">${esc(r.nickname)}</span>
+                <span class="rm-rank-score">${fmt(r.score)}</span>
+               </div>`
     );
 
-    renderList('rank-company-list', data.company.top, r =>
-        `<div class="rm-rank-item${r.is_mine ? ' rm-rank-me' : ''}">
-            <span class="rm-rank-pos">${medal(r.rank)}</span>
-            <span class="rm-rank-name">${esc(r.company)}</span>
-            <span class="rm-rank-score">${fmt(r.score)}</span>
-        </div>`
+    renderList('rank-company-list', padTop(data.company.top), r =>
+        r.empty
+            ? `<div class="rm-rank-item rm-rank-slot-empty">
+                <span class="rm-rank-pos">${medal(r.rank)}</span>
+                <span class="rm-rank-name">-</span>
+                <span class="rm-rank-score">-</span>
+               </div>`
+            : `<div class="rm-rank-item${r.is_mine ? ' rm-rank-me' : ''}">
+                <span class="rm-rank-pos">${medal(r.rank)}</span>
+                <span class="rm-rank-name">${esc(r.company)}</span>
+                <span class="rm-rank-score">${fmt(r.score)}</span>
+               </div>`
     );
+}
+
+function padTop(items, size = 5) {
+    const padded = items.slice(0, size);
+    while (padded.length < size) {
+        padded.push({ rank: padded.length + 1, empty: true });
+    }
+    return padded;
 }
 
 function renderList(id, items, template) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.innerHTML = items.length
-        ? items.map(template).join('')
-        : '<div class="rm-rank-empty">집계 중</div>';
+    el.innerHTML = items.map(template).join('');
 }
 
 function setRankNeedLogin() {

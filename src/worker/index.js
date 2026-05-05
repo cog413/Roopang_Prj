@@ -584,7 +584,7 @@ async function handleRankings(request, env) {
     const { start } = kstPeriodBounds(period);
     const db = getDb(env);
 
-    const [personalTop, companyTop] = await Promise.all([
+    const [personalTop, companyTop, personalTotalRow, companyTotalRow] = await Promise.all([
         db.prepare(`
             SELECT u.user_id,
                    COALESCE(a.nickname, p.nickname, u.email) AS nickname,
@@ -608,6 +608,12 @@ async function handleRankings(request, env) {
             GROUP BY u.company
             ORDER BY total_score DESC
             LIMIT 5`).bind(start).all(),
+        db.prepare(`SELECT COUNT(DISTINCT user_id) AS cnt FROM game_scores WHERE played_at >= ?`)
+            .bind(start).first(),
+        db.prepare(`SELECT COUNT(DISTINCT u.company) AS cnt
+            FROM game_scores gs JOIN users u ON u.user_id = gs.user_id
+            WHERE u.company IS NOT NULL AND u.company != '' AND gs.played_at >= ?`)
+            .bind(start).first(),
     ]);
 
     let myPersonalRank = null, myPersonalScore = 0;
@@ -649,8 +655,9 @@ async function handleRankings(request, env) {
         period,
         period_label: PERIOD_LABELS[period],
         personal: {
-            my_rank: myPersonalRank,
+            my_rank:  myPersonalRank,
             my_score: myPersonalScore,
+            total:    personalTotalRow?.cnt ?? 0,
             top: pResults.map((r, i) => ({
                 rank: i + 1,
                 nickname: r.nickname,
@@ -660,8 +667,9 @@ async function handleRankings(request, env) {
         },
         company: {
             my_company: session?.company || null,
-            my_rank: myCompanyRank,
-            my_score: myCompanyScore,
+            my_rank:    myCompanyRank,
+            my_score:   myCompanyScore,
+            total:      companyTotalRow?.cnt ?? 0,
             top: cResults.map((r, i) => ({
                 rank: i + 1,
                 company: r.company,

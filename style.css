@@ -1243,6 +1243,9 @@ body.dark-mode .g2048-size-btn.active { background-color: #1a365d !important; co
 .rm-rank-score { font-size: 10px; color: #888; white-space: nowrap; }
 .rm-rank-item.rm-rank-me .rm-rank-score { color: #217346; }
 .rm-rank-empty { font-size: 11px; color: #b0b0b0; font-style: italic; padding: 4px 2px; }
+.rm-rank-slot-empty { opacity: 0.35; pointer-events: none; }
+.rm-rank-slot-empty .rm-rank-name,
+.rm-rank-slot-empty .rm-rank-score { color: #bbb; }
 
 /* ── SOP ─────────────────────────────────────────── */
 .rm-sop {
