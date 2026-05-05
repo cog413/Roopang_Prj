@@ -1,7 +1,7 @@
 # MiniGgotchi Product Requirements Document
 
-Version: v0.3 integrated  
-Updated: 2026-05-04
+Version: v0.4  
+Updated: 2026-05-05
 
 ## 1. Product Overview
 
@@ -24,6 +24,8 @@ MiniGgotchi combines short daily mini-games, pet growth, and lightweight competi
 | Economy Health | Balance point earning and spending to avoid inflation. |
 | Competition | Support personal, game-specific, and company-tag rankings. |
 | Expansion | Prepare systems for PvP, company competitions, events, and monetization. |
+| Globalization | KR version ships first; all systems must be designed for locale-swappable global reuse. |
+| Monetization | Google AdSense (display) + direct payment for cosmetics/convenience items. |
 
 ### 1.4 Core Gameplay Loop
 
@@ -144,6 +146,27 @@ Points are earned through mini-game play and spent on pet survival, growth, cosm
 
 ## 4. Pet System
 
+### 4.0 Character Types
+
+Three character types are planned at launch (KR v1). Each has a distinct visual identity, idle animation, and reaction animation set.
+
+| Type | Identity | Visual Concept | Status |
+|------|----------|----------------|--------|
+| A | 직장인 A (정장) | Blue body, red tie, sharp eyes | CSS sprite (basic) |
+| B | 직장인 B (캐주얼) | Green rounded body, glasses | CSS sprite (basic) |
+| C | 직장인 C (막내) | To be designed | Planned |
+
+Animation requirements per character:
+- **Idle**: subtle wiggle / breathing loop
+- **Walking**: foot step alternation (already partial)
+- **Reaction - 기쁨**: jump or spin
+- **Reaction - 슬픔**: droop / shrink
+- **Reaction - 배고픔**: shake left-right
+- **Reaction - 응원**: arms up motion (CSS keyframe)
+- **Strain (낑낑)**: already implemented for all types
+
+All animations must be CSS keyframe only — no canvas, no external library. Character type is stored in `avatars.character_type` and must drive both the 관리시트 sprite and the 미니미 setup modal preview identically.
+
 ### 4.1 Growth Mechanics
 
 The pet is the emotional and progression anchor of MiniGgotchi.
@@ -183,25 +206,40 @@ Core interactions:
 
 ## 5. Ranking & Competition
 
+### 5.0 Ranking Terminology (KR Version)
+
+All ranking UI must use office-worker disguise terminology. Do not use gaming vocabulary.
+
+| System Concept | KR Display Label | Reset Cycle |
+|---|---|---|
+| Daily personal ranking | 오늘의 실적 | Daily 00:00 KST |
+| Weekly personal ranking | 주간 성과 리포트 | Monday 00:00 KST |
+| Monthly personal ranking | 이달의 사원 | 1st of month 00:00 KST |
+| Company ranking | 매출 순위 / 부서 실적 현황 | Weekly (Monday reset) |
+| Personal best record | 개인 최고 실적 | All-time, no reset |
+
+The reset cycle and cutoff policy must be documented in the app UI (ReadMe 시트 또는 별도 정책 탭).
+
 ### 5.1 Personal Ranking
 
 Personal ranking tracks a player's own progress over time.
 
-| Ranking Type | Description |
-| --- | --- |
-| Daily best | Best performance by game per day. |
-| Weekly progress | Weekly points, growth, or streak performance. |
-| Personal records | Best Sudoku clear, best 2048 score, best Typing result. |
+| Ranking Type | KR Label | Description |
+| --- | --- | --- |
+| Daily best | 오늘의 실적 | Best performance by game per day. |
+| Weekly progress | 주간 성과 리포트 | Weekly points, growth, or streak performance. |
+| Monthly best | 이달의 사원 | Top performer of the month by cumulative score. |
+| Personal records | 개인 최고 실적 | Best Sudoku clear, best 2048 score, best Typing result. |
 
 ### 5.2 Game Ranking
 
 Game rankings compare players within each mini-game.
 
-| Game | Ranking Metric |
-| --- | --- |
-| Sudoku | Difficulty-adjusted clear performance. |
-| 2048 | Normalized score or max tile performance. |
-| Typing | Accuracy-gated speed performance. |
+| Game | KR Label | Ranking Metric |
+| --- | --- | --- |
+| Sudoku | SDK 데이터 분석 실적 | Difficulty-adjusted clear performance. |
+| 2048 | 자산 운용 수익률 | Normalized score or max tile performance. |
+| Typing | 보고서 작성 속도 | Accuracy-gated speed performance. |
 
 Ranking scores should use normalized performance and difficulty to avoid over-rewarding naturally high-score games.
 
@@ -457,3 +495,91 @@ Potential monetization:
 - Random boxes limited to cosmetic or non-ranking-impacting items.
 
 Monetization must not create pay-to-win ranking advantages.
+
+### 9.5 Global Version
+
+A separate global version is planned after KR v1 stabilizes. Requirements:
+
+- All Korean UI text must be externalizable to a locale config object (not necessarily a full i18n lib at first).
+- Office-worker disguise concept transfers globally, but specific terminology ("팀장님", "사원증") must be locale-swappable.
+- Fake dashboard content (company names, figures, department titles) should be data-driven, not hardcoded in HTML.
+- Pet system, game logic, point economy, and ranking logic are locale-neutral and can be shared as-is.
+- Company tag system must support non-Korean characters from day one (UTF-8 normalized).
+- The KR and global versions may share the same codebase with a locale flag, or be deployed as separate Pages projects — to be decided at v1 stabilization.
+
+## 10. Mobile Platform
+
+### 10.1 Mobile Web Requirements
+
+The app must be usable on mobile browsers (Chrome/Safari on iOS and Android). It does not need to be a native app.
+
+| Area | Requirement |
+|---|---|
+| Layout | Responsive breakpoint at 768px. Excel shell collapses or adapts gracefully. |
+| Readability | Font sizes, KPI cards, ReadMe text must remain legible on small screens. |
+| Game - 2048 | Swipe gesture (touchstart/touchend delta) replaces arrow keys on mobile. |
+| Game - Sudoku | Tap-to-select cell, on-screen number pad replaces keyboard input. |
+| Pet interaction | Buttons must be tappable (min 44×44px touch target). |
+| Tab navigation | Sheet tabs must be horizontally scrollable and tappable. |
+
+### 10.2 Mobile Non-Goals (v1)
+
+- Native app packaging (PWA install prompt acceptable but not required).
+- Landscape-only layouts.
+- Device-specific gestures beyond basic swipe/tap.
+
+## 11. Referral Marketing System
+
+### 11.1 Referral Flow
+
+Goal: viral acquisition where users invite colleagues. Referrer earns bonus points when referree completes onboarding and first valid game.
+
+| Step | Description |
+|---|---|
+| Invite link | Referrer shares a URL with their user ID encoded: `?ref=<userId>` |
+| Onboarding survey | During onboarding (or on login page), ask "누구의 추천을 받고 오셨나요?" with email input field. |
+| Attribution | Store referrer ID at signup. Grant bonus points after referree completes first valid session. |
+| Referrer reward | +50pt per successful referral (subject to anti-abuse cap: max 10 referrals per month). |
+| Referree reward | +30pt first-session bonus if referred. |
+
+### 11.2 Structural Requirements (Pre-Implementation)
+
+Even before the referral reward logic is built, the following must be in place:
+
+- Onboarding step (or login page) includes an optional survey field: email input for referrer.
+- `users` table or a new `referrals` table must store `referrer_user_id` and `referral_status`.
+- The `?ref=` query param must be preserved through the OAuth redirect flow (pass via `state` param or `return_to`).
+
+### 11.3 Anti-Abuse
+
+- Self-referral is blocked (referrer ID cannot match the new user's own account).
+- Referral bonus is only granted after first valid (non-abandoned) game session.
+- Maximum 10 rewarded referrals per user per month.
+
+## 12. Monetization Details
+
+### 12.1 Google AdSense
+
+Goal: display ads for unauthenticated or free-tier users.
+
+- Apply for AdSense review when the app has meaningful traffic.
+- Policy compliance notes (from AdSense guidelines — informational only, do not restrict features for this):
+  - Content must be original, provide user value, and not be primarily ad-serving.
+  - Ads must not be placed in a way that invites accidental clicks (e.g., next to game controls).
+  - The Excel disguise concept is acceptable as creative content; it does not violate content policies on its own.
+- Placement target: `Data_Visual_Widget` area (currently "AD AREA") — already positioned in DOM.
+- Do not modify core features to pass AdSense review. Address compliance only if/when review is rejected.
+
+### 12.2 Direct Payment (Cosmetics / Convenience)
+
+Paid items are strictly non-competitive. They must not affect ranking scores or point earning rates.
+
+| Category | Examples | Model |
+|---|---|---|
+| Pet skins | Seasonal outfits, holiday costumes | One-time purchase or point shop |
+| Room themes | Office background variations | One-time purchase |
+| Convenience | Play-limit skip (1 extra game/day), hunger recovery item | Consumable purchase |
+| Event pass | Access to seasonal events and exclusive cosmetics | Subscription or one-time |
+| Random boxes | Cosmetic-only drops | Optional, no P2W items |
+
+Payment infrastructure: to be decided (Stripe, Toss Payments for KR, etc.). DB schema needs a `purchases` table and item catalog when this is implemented.
