@@ -1071,7 +1071,7 @@ body.dark-mode .g2048-size-btn.active { background-color: #1a365d !important; co
     flex-shrink: 0;
 }
 .rm-col-side {
-    width: 340px;
+    width: 420px;
     flex-shrink: 0;
     padding-left: 24px;
 }
