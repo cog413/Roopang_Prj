@@ -45,6 +45,15 @@ The old `My_Pet` sheet has been removed. Its conversation behavior now lives ins
 
 ## Pet System
 
+Pattie update:
+
+- The management sheet now has a Pattie world layer over the fake Excel habitat.
+- `src/patties/PattieAssetLoader.js` loads `public/assets/patties/manifest.json`.
+- `src/patties/PattieSprite.js` renders 32x32 transparent PNG sprite sheets with `image-rendering: pixelated`.
+- `src/patties/PattieRoamingController.js` manages walk/idle/sleep/happy/jump/climb behavior and chart-bar climbing.
+- `src/patties/pattieWorldConfig.js` defines `sheet`, `chart`, `card`, and `blocked` terrain rules.
+- Pattie settings are saved through `/api/pattie`; DB migration is `docs/migrations/005_pattie_assets_items.sql`.
+
 `src/pet/miniPet.js` owns the visible pet scene:
 
 - Creates one pet only (`mp-sprite-0`, `mp-bubble-0`).

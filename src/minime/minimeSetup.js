@@ -1,12 +1,21 @@
 import { showLoginPopup, goToLogin } from '../ui/loginPopup.js';
+import { pattieAssetLoader } from '../patties/PattieAssetLoader.js';
 
 let setupEl = null;
+let settingsButton = null;
 export let currentAvatar = null;
+
+const CHARACTER_LABELS = {
+    rabbit: '토끼 Pattie',
+    dog: '강아지 토닥이',
+    cat: '고양이 Pattie',
+};
 
 export async function initMinimeSheet() {
     const sheet = document.getElementById('mini-pet-sheet');
     if (!sheet) return;
 
+    ensureSettingsButton();
     new MutationObserver(async () => {
         if (sheet.style.display !== 'none') await onMinimeSheetShown();
     }).observe(sheet, { attributes: true, attributeFilter: ['style'] });
@@ -15,49 +24,70 @@ export async function initMinimeSheet() {
 }
 
 async function onMinimeSheetShown() {
+    ensureSettingsButton();
     const auth = window.refresheetAuth;
 
     if (!auth?.authenticated) {
         showLoginPopup({
-            message: '미니미 기능은 로그인이 필요합니다.\nGoogle 로그인을 하시겠습니까?',
+            message: '관리시트 캐릭터 설정은 로그인이 필요합니다.\nGoogle 로그인으로 토닥이를 저장할까요?',
             onLogin: goToLogin,
             onSkip: () => {},
         });
         return;
     }
 
-    const avatar = await fetchAvatar();
+    const avatar = await fetchPattie();
     currentAvatar = avatar;
+    if (!avatar?.character_key || !avatar?.nickname) showSetupFlow();
+    else applyAvatarToScene(avatar);
+}
 
-    if (!avatar) {
-        showSetupFlow();
-    } else {
-        applyAvatarToScene(avatar);
+function ensureSettingsButton() {
+    const habitat = document.getElementById('mini-pet-habitat');
+    if (!habitat || settingsButton) return;
+    settingsButton = document.createElement('button');
+    settingsButton.type = 'button';
+    settingsButton.className = 'pattie-settings-button';
+    settingsButton.textContent = '토닥이 설정';
+    settingsButton.addEventListener('click', async () => {
+        const auth = window.refresheetAuth;
+        if (!auth?.authenticated) {
+            showLoginPopup({
+                message: '토닥이 설정은 로그인이 필요합니다.\nGoogle 로그인으로 계속할까요?',
+                onLogin: goToLogin,
+                onSkip: () => {},
+            });
+            return;
+        }
+        const avatar = await fetchPattie();
+        currentAvatar = avatar;
+        showSetupFlow(avatar);
+    });
+    habitat.appendChild(settingsButton);
+}
+
+async function fetchPattie() {
+    try {
+        const res = await fetch('/api/pattie', { credentials: 'include' });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.pattie || null;
+    } catch {
+        return null;
     }
 }
 
-async function fetchAvatar() {
-    try {
-        const res = await fetch('/api/avatar', { credentials: 'include' });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.avatar || null;
-    } catch { return null; }
-}
-
-function showSetupFlow() {
-    ensureSetupModal();
-    showSetupStep(1);
+async function showSetupFlow(avatar = currentAvatar) {
+    await ensureSetupModal();
+    fillForm(avatar);
     setupEl.style.display = 'flex';
 }
 
-function ensureSetupModal() {
+async function ensureSetupModal() {
     if (setupEl) return;
-    setupEl = document.getElementById('minime-setup-modal');
-    if (!setupEl) {
-        setupEl = buildSetupDOM();
-        document.body.appendChild(setupEl);
-    }
+    setupEl = buildSetupDOM();
+    document.body.appendChild(setupEl);
+    await renderChoices();
     bindSetupEvents();
 }
 
@@ -69,141 +99,130 @@ function buildSetupDOM() {
     el.innerHTML = `
         <div class="excel-modal ms-modal">
             <div class="modal-header">
-                <span>미니미 설정</span>
-                <span class="modal-close" id="ms-close">✕</span>
+                <span>토닥이 설정</span>
+                <span class="modal-close" id="ms-close">×</span>
             </div>
-
-            <!-- Step 1: 닉네임 -->
-            <div id="ms-step1" class="ob-step">
-                <div class="ob-step-title">미니미 닉네임을 입력해주세요</div>
+            <div class="ob-step">
+                <div class="ob-step-title">관리시트에 같이 살 토닥이를 정해주세요</div>
                 <div class="ob-field">
-                    <label class="ob-label">닉네임 (최대 10자)</label>
-                    <input id="ms-nickname" class="ob-input" type="text"
-                           placeholder="나만의 미니미 이름" maxlength="10">
+                    <label class="ob-label">이름</label>
+                    <input id="ms-nickname" class="ob-input" type="text" placeholder="토닥이 이름" maxlength="20">
                 </div>
-                <div class="ob-hint">미니미가 이 이름으로 불립니다.</div>
-                <div class="modal-buttons">
-                    <button class="modal-btn retry" id="ms-next">다음(N)</button>
+                <div class="ob-field">
+                    <label class="ob-label">캐릭터</label>
+                    <div class="ms-char-row" id="ms-character-list"></div>
                 </div>
-            </div>
-
-            <!-- Step 2: 캐릭터 선택 -->
-            <div id="ms-step2" class="ob-step" style="display:none;">
-                <div class="ob-step-title">캐릭터를 선택해주세요</div>
-                <div class="ms-char-row">
-                    <div class="ms-char-card" data-type="type_a">
-                        <div class="ms-char-preview char-type-a">
-                            <div class="ms-body ms-body-a">
-                                <div class="ms-eyes"><div class="ms-eye"></div><div class="ms-eye"></div></div>
-                                <div class="ms-mouth"></div>
-                                <div class="ms-tie"></div>
-                            </div>
-                            <div class="ms-feet"><div class="ms-foot"></div><div class="ms-foot"></div></div>
-                        </div>
-                        <div class="ms-char-name">씩씩한 사원</div>
-                        <div class="ms-char-desc">열정적이고 도전적</div>
-                    </div>
-                    <div class="ms-char-card" data-type="type_b">
-                        <div class="ms-char-preview char-type-b">
-                            <div class="ms-body ms-body-b">
-                                <div class="ms-eyes"><div class="ms-eye"></div><div class="ms-eye"></div></div>
-                                <div class="ms-mouth"></div>
-                                <div class="ms-glasses"></div>
-                            </div>
-                            <div class="ms-feet"><div class="ms-foot"></div><div class="ms-foot"></div></div>
-                        </div>
-                        <div class="ms-char-name">꼼꼼한 연구원</div>
-                        <div class="ms-char-desc">분석적이고 신중한</div>
-                    </div>
+                <div class="ob-field">
+                    <label class="ob-label">아이템</label>
+                    <div class="pattie-item-choice-row" id="ms-item-list"></div>
                 </div>
+                <div class="ob-hint">아이템은 꾸미기용이며 점수와 랭킹에는 영향을 주지 않습니다.</div>
                 <div class="modal-buttons">
                     <button class="modal-btn retry" id="ms-save">저장(S)</button>
-                    <button class="modal-btn" id="ms-back">이전(P)</button>
+                    <button class="modal-btn" id="ms-cancel">취소</button>
                 </div>
             </div>
         </div>`;
     return el;
 }
 
+async function renderChoices() {
+    const characters = await pattieAssetLoader.listCharacters();
+    const items = await pattieAssetLoader.listItems();
+    const charList = setupEl.querySelector('#ms-character-list');
+    const itemList = setupEl.querySelector('#ms-item-list');
+
+    charList.innerHTML = characters.map(({ key, displayName }) => `
+        <button type="button" class="ms-char-card pattie-char-card" data-type="${key}">
+            <span class="pattie-choice-preview" data-preview="${key}"></span>
+            <span class="ms-char-name">${CHARACTER_LABELS[key] || displayName || key}</span>
+        </button>
+    `).join('');
+
+    itemList.innerHTML = items.map(({ key, displayName, type }) => `
+        <label class="pattie-item-choice">
+            <input type="checkbox" value="${key}" data-item-type="${type || 'generic'}">
+            <span>${displayName || key}</span>
+        </label>
+    `).join('');
+
+    for (const card of charList.querySelectorAll('.pattie-choice-preview')) {
+        const key = card.dataset.preview;
+        const anim = await pattieAssetLoader.getAnimation(key, 'idle');
+        if (anim) {
+            card.style.backgroundImage = `url("${anim.src}")`;
+            card.style.backgroundSize = `${anim.frameCount * anim.frameWidth}px ${anim.frameHeight}px`;
+        }
+    }
+}
+
 function bindSetupEvents() {
     setupEl.querySelector('#ms-close').addEventListener('click', () => {
         setupEl.style.display = 'none';
     });
-
-    setupEl.querySelector('#ms-next').addEventListener('click', () => {
-        const nick = setupEl.querySelector('#ms-nickname').value.trim();
-        if (!nick) {
-            setupEl.querySelector('#ms-nickname').focus();
-            return;
-        }
-        showSetupStep(2);
+    setupEl.querySelector('#ms-cancel').addEventListener('click', () => {
+        setupEl.style.display = 'none';
     });
-    setupEl.querySelector('#ms-back').addEventListener('click', () => showSetupStep(1));
     setupEl.querySelector('#ms-save').addEventListener('click', saveAvatar);
-
     setupEl.querySelectorAll('.ms-char-card').forEach(card => {
         card.addEventListener('click', () => {
             setupEl.querySelectorAll('.ms-char-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
         });
     });
-    // default selection
-    setupEl.querySelector('[data-type="type_a"]').classList.add('selected');
 }
 
-function showSetupStep(n) {
-    setupEl.querySelector('#ms-step1').style.display = n === 1 ? '' : 'none';
-    setupEl.querySelector('#ms-step2').style.display = n === 2 ? '' : 'none';
+function fillForm(avatar) {
+    setupEl.querySelector('#ms-nickname').value = avatar?.nickname || '토닥이';
+    const characterKey = avatar?.character_key || mapLegacyCharacter(avatar?.character_type);
+    setupEl.querySelectorAll('.ms-char-card').forEach(card => {
+        card.classList.toggle('selected', card.dataset.type === characterKey);
+    });
+    if (!setupEl.querySelector('.ms-char-card.selected')) {
+        setupEl.querySelector('[data-type="rabbit"]')?.classList.add('selected');
+    }
+    const equipped = Array.isArray(avatar?.equipped_item_keys) ? avatar.equipped_item_keys : [];
+    setupEl.querySelectorAll('#ms-item-list input[type="checkbox"]').forEach(input => {
+        input.checked = equipped.includes(input.value);
+    });
 }
 
 async function saveAvatar() {
     const nickname = setupEl.querySelector('#ms-nickname').value.trim();
     const selected = setupEl.querySelector('.ms-char-card.selected');
-    const characterType = selected?.dataset.type || 'type_a';
+    const characterKey = selected?.dataset.type || 'rabbit';
+    const equippedItemKeys = Array.from(setupEl.querySelectorAll('#ms-item-list input:checked')).map(input => input.value);
 
-    if (!nickname) { showSetupStep(1); return; }
+    if (!nickname) {
+        setupEl.querySelector('#ms-nickname').focus();
+        return;
+    }
 
-    try {
-        const res = await fetch('/api/avatar', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname, character_type: characterType }),
-        });
-        if (res.ok) {
-            currentAvatar = { nickname, character_type: characterType };
-            applyAvatarToScene(currentAvatar);
-        }
-    } catch { /* ignore */ }
-
+    const res = await fetch('/api/pattie', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            nickname,
+            character_key: characterKey,
+            equipped_item_keys: equippedItemKeys,
+        }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    currentAvatar = data.pattie;
+    applyAvatarToScene(currentAvatar);
     setupEl.style.display = 'none';
 }
 
 export function applyAvatarToScene(avatar) {
-    const sprite = document.getElementById('mp-sprite-0');
-    if (!sprite) return;
-    sprite.classList.remove('char-type-a', 'char-type-b');
-    sprite.classList.add(avatar.character_type === 'type_b' ? 'char-type-b' : 'char-type-a');
+    document.dispatchEvent(new CustomEvent('refresheet:pattie-profile-updated', {
+        detail: avatar,
+    }));
+}
 
-    const body = sprite.querySelector('.mps-body');
-    if (body) {
-        body.classList.remove('mps-body-a', 'mps-body-b');
-        body.classList.add(avatar.character_type === 'type_b' ? 'mps-body-b' : 'mps-body-a');
-
-        if (avatar.character_type === 'type_b') {
-            if (!body.querySelector('.mps-glasses')) {
-                const g = document.createElement('div');
-                g.className = 'mps-glasses';
-                body.appendChild(g);
-            }
-            body.querySelector('.mps-tie')?.remove();
-        } else {
-            if (!body.querySelector('.mps-tie')) {
-                const t = document.createElement('div');
-                t.className = 'mps-tie';
-                body.appendChild(t);
-            }
-            body.querySelector('.mps-glasses')?.remove();
-        }
-    }
+function mapLegacyCharacter(characterType) {
+    if (characterType === 'type_b') return 'dog';
+    if (characterType === 'dog' || characterType === 'cat') return characterType;
+    return 'rabbit';
 }

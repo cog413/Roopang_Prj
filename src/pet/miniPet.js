@@ -1,5 +1,7 @@
 const SPEECHES   = ['...', '쉿', '천천히 순찰중', '업무중...', '데이터 확인', '휴식 승인'];
 const STRAIN_MSG = ['으... 무거워', '낑낑...', '데이터 장벽!', '이쪽은 데이터 지대', '비켜요 비켜'];
+import { initPattieWorld } from '../patties/PattieRoamingController.js';
+
 const BOUNDS     = { minX: 50, maxX: 540, minY: 80, maxY: 500 };
 
 const ROWS = [
@@ -138,10 +140,12 @@ function buildDOM() {
     const habitat = document.getElementById('mini-pet-habitat');
     if (!habitat) return;
     domBuilt = true;
+    habitat.classList.add('pattie-world');
 
     // Main performance table
     const table = el('div', 'mp-table');
     table.id = 'mp-table';
+    table.dataset.pattieZone = 'sheet';
     const header = el('div', 'mht-row mht-header');
     ['부서명', 'Q1', 'Q2', 'Q3', 'Q4'].forEach(text => {
         const cell = el('div', 'mht-cell');
@@ -161,6 +165,7 @@ function buildDOM() {
 
     // Project table
     const projectTable = el('div', 'mp-table proj-table');
+    projectTable.dataset.pattieZone = 'sheet';
     const projectHeader = el('div', 'mht-row mht-header');
     ['주요 프로젝트명', '진척률', '상태', '마감기한', '담당자'].forEach(text => {
         const cell = el('div', 'mht-cell');
@@ -183,6 +188,7 @@ function buildDOM() {
     // Bar chart
     const chart = el('div', 'mp-chart');
     chart.id = 'mp-chart';
+    chart.dataset.pattieZone = 'chart';
     const chartTitle = el('div', 'mp-chart-title');
     chartTitle.textContent = '분기별 실적 현황 (억원)';
     const bars = el('div', 'mp-bars');
@@ -196,6 +202,7 @@ function buildDOM() {
         bar.style.height    = '0%';
         bar.style.background = data.color;
         bar.dataset.h       = data.h;
+        bar.dataset.pattieTerrain = 'chart-bar';
         label.textContent   = data.label;
         column.append(value, bar, label);
         bars.appendChild(column);
@@ -204,9 +211,11 @@ function buildDOM() {
 
     // Trend line chart (SVG)
     const trend = buildTrendChart();
+    trend.dataset.pattieZone = 'card';
 
     // Minimap
     const map = el('div', 'mp-minimap');
+    map.dataset.pattieZone = 'card';
     map.innerHTML = `
         <div class="mp-minimap-title">실시간 분석 맵</div>
         <canvas id="mp-map-canvas" width="148" height="108"></canvas>
@@ -217,7 +226,7 @@ function buildDOM() {
         </div>`;
 
     habitat.append(table, projectTable, chart, trend, map);
-    createPet(habitat);
+    initPattieWorld(habitat);
 }
 
 function buildTrendChart() {

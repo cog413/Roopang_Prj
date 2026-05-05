@@ -1,0 +1,185 @@
+{
+  "version": "test-001",
+  "source": "public",
+  "isTestAsset": true,
+  "basePath": "/public/assets/patties",
+  "characters": {
+    "rabbit": {
+      "displayName": "Rabbit Pattie",
+      "animations": {
+        "idle": {
+          "src": "/public/assets/patties/rabbit/idle.png",
+          "frameCount": 3,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "walk": {
+          "src": "/public/assets/patties/rabbit/walk.png",
+          "frameCount": 4,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "sleep": {
+          "src": "/public/assets/patties/rabbit/sleep.png",
+          "frameCount": 2,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "happy": {
+          "src": "/public/assets/patties/rabbit/happy.png",
+          "frameCount": 2,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "jump": {
+          "src": "/public/assets/patties/rabbit/jump.png",
+          "frameCount": 3,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "climb": {
+          "src": "/public/assets/patties/rabbit/climb.png",
+          "frameCount": 4,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        }
+      }
+    },
+    "dog": {
+      "displayName": "Dog Pattie",
+      "animations": {
+        "idle": {
+          "src": "/public/assets/patties/dog/idle.png",
+          "frameCount": 3,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "walk": {
+          "src": "/public/assets/patties/dog/walk.png",
+          "frameCount": 4,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "sleep": {
+          "src": "/public/assets/patties/dog/sleep.png",
+          "frameCount": 2,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "happy": {
+          "src": "/public/assets/patties/dog/happy.png",
+          "frameCount": 2,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "jump": {
+          "src": "/public/assets/patties/dog/jump.png",
+          "frameCount": 3,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "climb": {
+          "src": "/public/assets/patties/dog/climb.png",
+          "frameCount": 4,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        }
+      }
+    },
+    "cat": {
+      "displayName": "Cat Pattie",
+      "animations": {
+        "idle": {
+          "src": "/public/assets/patties/cat/idle.png",
+          "frameCount": 3,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "walk": {
+          "src": "/public/assets/patties/cat/walk.png",
+          "frameCount": 4,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "sleep": {
+          "src": "/public/assets/patties/cat/sleep.png",
+          "frameCount": 2,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "happy": {
+          "src": "/public/assets/patties/cat/happy.png",
+          "frameCount": 2,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "jump": {
+          "src": "/public/assets/patties/cat/jump.png",
+          "frameCount": 3,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        },
+        "climb": {
+          "src": "/public/assets/patties/cat/climb.png",
+          "frameCount": 4,
+          "frameWidth": 32,
+          "frameHeight": 32,
+          "fps": 2,
+          "frameDurationMs": 500
+        }
+      }
+    }
+  },
+  "items": {
+    "sunglasses": {
+      "displayName": "Sunglasses",
+      "type": "face",
+      "src": "/public/assets/patties/items/sunglasses.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "isTestAsset": true
+    },
+    "bee_suit": {
+      "displayName": "Bee Suit",
+      "type": "outfit",
+      "src": "/public/assets/patties/items/bee_suit.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "isTestAsset": true
+    }
+  }
+}
