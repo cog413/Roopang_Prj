@@ -40,6 +40,15 @@ export default {
             if (url.pathname === '/api/avatar' && request.method === 'POST') {
                 return handleSaveAvatar(request, env);
             }
+            if (url.pathname === '/api/pattie' && request.method === 'GET') {
+                return handleGetPattie(request, env);
+            }
+            if (url.pathname === '/api/pattie' && request.method === 'POST') {
+                return handleSavePattie(request, env);
+            }
+            if (url.pathname === '/api/pattie/items' && request.method === 'GET') {
+                return handlePattieItems(request, env);
+            }
             if (url.pathname === '/api/minime/interact' && request.method === 'POST') {
                 return handleMinimeInteract(request, env);
             }
@@ -286,6 +295,103 @@ async function handleSaveAvatar(request, env) {
     ).bind(session.user_id, nickname, characterType, now, now).run();
 
     return withCors(json({ ok: true, nickname, character_type: characterType }));
+}
+
+async function handleGetPattie(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ authenticated: false, pattie: null }));
+
+    const avatar = await getDb(env).prepare(
+        `SELECT nickname, character_type, character_key, equipped_item_keys, last_minime_at
+         FROM avatars WHERE user_id=?`
+    ).bind(session.user_id).first();
+
+    return withCors(json({
+        authenticated: true,
+        pattie: avatar ? normalizePattieRow(avatar) : null,
+    }));
+}
+
+async function handleSavePattie(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
+
+    const body = await request.json().catch(() => ({}));
+    const nickname = typeof body.nickname === 'string' ? body.nickname.trim().slice(0, 20) : null;
+    const characterKey = ['rabbit', 'dog', 'cat'].includes(body.character_key) ? body.character_key : 'rabbit';
+    const equippedItems = Array.isArray(body.equipped_item_keys)
+        ? body.equipped_item_keys.filter((key) => ['sunglasses', 'bee_suit'].includes(key)).slice(0, 4)
+        : [];
+
+    if (!nickname) return withCors(json({ error: 'nickname required' }, 400));
+
+    const db = getDb(env);
+    const now = new Date().toISOString();
+    const itemJson = JSON.stringify(equippedItems);
+    const characterType = characterKey;
+    const stmts = [
+        db.prepare(
+            `INSERT INTO avatars (user_id, nickname, character_type, character_key, equipped_item_keys, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(user_id) DO UPDATE SET
+               nickname=excluded.nickname,
+               character_type=excluded.character_type,
+               character_key=excluded.character_key,
+               equipped_item_keys=excluded.equipped_item_keys,
+               updated_at=excluded.updated_at`
+        ).bind(session.user_id, nickname, characterType, characterKey, itemJson, now, now),
+    ];
+
+    for (const itemKey of equippedItems) {
+        stmts.push(
+            db.prepare(
+                `INSERT OR IGNORE INTO user_pattie_items (user_id, item_key, acquired_at, source)
+                 VALUES (?, ?, ?, 'default')`
+            ).bind(session.user_id, itemKey, now)
+        );
+    }
+
+    await db.batch(stmts);
+    return withCors(json({
+        ok: true,
+        pattie: { nickname, character_type: characterType, character_key: characterKey, equipped_item_keys: equippedItems },
+    }));
+}
+
+async function handlePattieItems(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ authenticated: false, items: [] }));
+
+    const rows = await getDb(env).prepare(
+        `SELECT item_key, display_name, item_type, src, is_test_asset
+         FROM pattie_items
+         WHERE is_active=1
+         ORDER BY item_key ASC`
+    ).all();
+
+    return withCors(json({ authenticated: true, items: rows.results || [] }));
+}
+
+function normalizePattieRow(row) {
+    let equipped = [];
+    try {
+        equipped = row.equipped_item_keys ? JSON.parse(row.equipped_item_keys) : [];
+    } catch {
+        equipped = [];
+    }
+    const legacy = row.character_type === 'type_b' ? 'dog' : row.character_type;
+    const characterKey = ['rabbit', 'dog', 'cat'].includes(row.character_key)
+        ? row.character_key
+        : ['rabbit', 'dog', 'cat'].includes(legacy)
+            ? legacy
+            : 'rabbit';
+    return {
+        nickname: row.nickname,
+        character_type: row.character_type,
+        character_key: characterKey,
+        equipped_item_keys: Array.isArray(equipped) ? equipped : [],
+        last_minime_at: row.last_minime_at || null,
+    };
 }
 
 async function handleMinimeInteract(request, env) {

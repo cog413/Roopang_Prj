@@ -146,3 +146,14 @@
 - 최신 기준: ReadMe 오른쪽 보조 컬럼(SOP, 시트 안내, 참고사항)은 왼쪽 메인 컬럼과 같은 720px 폭을 유지한다.
 - 오른쪽 보조 컬럼의 SOP/가이드/참고 텍스트는 줄바꿈을 막아 엑셀에 입력된 한 줄 텍스트처럼 보이게 한다.
 - row header 숫자 칸은 `height: 25px`만 두지 말고 `flex: 0 0 25px`로 고정해 모든 시트의 25px 셀 격자와 맞춘다.
+
+---
+
+## Pattie Management Sheet Rules
+
+- Pattie 캐릭터 asset은 `public/assets/patties/manifest.json`과 `PattieAssetLoader`를 통해 접근한다.
+- 현재 Pages 배포는 빌드 없이 루트가 서빙되므로 Pattie 런타임 URL은 `/public/assets/patties/...`를 기준으로 한다.
+- rabbit/dog/cat은 `manually_command/character_image.png`의 32x32 도트 실루엣, 색상, 표정, 검은 외곽선을 유지한다.
+- 관리시트 지형은 `data-pattie-zone="sheet|chart|card|blocked"`와 `data-pattie-terrain="chart-bar"`로 선언한다.
+- D1에는 이미지 바이너리를 저장하지 않고 `character_assets`, `pattie_items`, `user_pattie_items`, `avatars.character_key`, `avatars.equipped_item_keys`로 metadata/src만 저장한다.
+- 예시 아이템 `sunglasses`, `bee_suit`는 cosmetic 전용이며 점수/랭킹에 영향을 주지 않는다.

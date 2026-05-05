@@ -785,6 +785,69 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
     background: #fff;
     overflow: auto;
 }
+.pattie-world {
+    position: relative;
+    overflow: auto;
+}
+.pattie-sprite {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+    pointer-events: auto;
+    z-index: 130;
+    transform: translate(100px, 250px);
+    transition: none;
+    cursor: pointer;
+}
+.pattie-sprite-base,
+.pattie-item-layer,
+.pattie-equipped-item {
+    position: absolute;
+    inset: 0;
+    width: 32px;
+    height: 32px;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+}
+.pattie-equipped-item {
+    background-size: 32px 32px;
+}
+.pattie-sprite:hover {
+    outline: 1px dotted #217346;
+    outline-offset: 2px;
+}
+.pattie-settings-button {
+    position: absolute;
+    right: 16px;
+    top: 12px;
+    z-index: 140;
+    height: 24px;
+    padding: 0 8px;
+    border: 1px solid #c8c6c4;
+    background: #fff;
+    color: #217346;
+    font-size: 11px;
+    cursor: pointer;
+}
+.pattie-settings-button:hover {
+    background: #e2f0d9;
+    border-color: #70ad47;
+}
+.pattie-nameplate {
+    position: absolute;
+    z-index: 129;
+    min-width: 44px;
+    padding: 1px 5px;
+    border: 1px solid #c8c6c4;
+    background: #fffef4;
+    color: #333;
+    font-size: 10px;
+    text-align: center;
+    pointer-events: none;
+    transform: translate(-6px, -18px);
+    white-space: nowrap;
+}
 
 /* ?? ?ㅼ쟻?ν몴 ??????????????????????????????????????? */
 .mp-table {
@@ -917,6 +980,7 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
     z-index: 100;
     pointer-events: none;
     transition: top 5.8s ease-in-out, left 6.4s ease-in-out;
+    display: none;
 }
 
 .mps-body {
@@ -1017,6 +1081,13 @@ body.dark-mode .mp-val  { color: #888; }
 body.dark-mode .mp-minimap { background: #2d2d2d; border-color: #444; }
 body.dark-mode .mp-bubble  { background: #2d2d2d; border-color: #555; color: #d4d4d4; }
 body.dark-mode #mp-map-canvas { border-color: #444; }
+body.dark-mode .pattie-settings-button,
+body.dark-mode .pattie-nameplate,
+body.dark-mode .pattie-item-choice {
+    background: #2d2d2d;
+    border-color: #555;
+    color: #d4d4d4;
+}
 
 /* Pet strain animation (낑낑 모션) */
 @keyframes strain {
@@ -1551,6 +1622,40 @@ body.dark-mode .ob-select { background: #3a3a3a; border-color: #555; color: #d4d
 }
 .ms-char-card:hover { border-color: #217346; background: #f3f9f5; }
 .ms-char-card.selected { border-color: #217346; background: #dff2e3; }
+.pattie-item-choice-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 8px 0 12px;
+}
+.pattie-item-choice {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #c8c6c4;
+    background: #fff;
+    padding: 6px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.pattie-item-choice:hover {
+    background: #e2f0d9;
+    border-color: #70ad47;
+}
+.pattie-char-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.pattie-choice-preview {
+    width: 32px;
+    height: 32px;
+    display: block;
+    image-rendering: pixelated;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+}
 .ms-char-preview {
     width: 60px;
     height: 72px;

@@ -548,3 +548,42 @@ AI는 아래를 판단해야 한다:
 **6. 반영 필요 사항 (중요)**
 - ReadMe 오른쪽 보조 컬럼 기준 폭은 720px로 유지한다.
 - 모든 시트에서 row 숫자 영역은 `flex: 0 0 25px`로 셀 높이와 맞춘다.
+
+---
+
+### [2026-05-05 23:33] (CLI: codex)
+
+**1. 목표**
+- Refresheet 관리시트를 Pattie가 사는 공간으로 확장한다.
+- rabbit/dog/cat 32x32 도트 테스트 asset, manifest 기반 loader, roaming/jump/climb/happy 동작, 캐릭터/이름/아이템 설정, D1 저장 구조, 기획서 반영을 구현한다.
+
+**2. 현재 상태**
+- 기준 이미지는 `manually_command/character_image.png`를 확인했다.
+- 관리시트는 `src/pet/miniPet.js`가 표, 프로젝트 표, 오른쪽 상단 막대그래프, 카드성 패널을 동적으로 생성한다.
+- 기존 avatar 저장은 D1 `avatars` 테이블을 사용한다.
+
+**3. 문제**
+- 기존 미니펫은 CSS 도형 기반 단일 검정 점 캐릭터였고 rabbit/dog/cat sprite asset/manifest 구조가 없었다.
+- public 폴더가 빌드 없이 루트에서 그대로 서빙되므로 런타임 URL은 `/assets/...`가 아니라 `/public/assets/...`여야 했다.
+- 원격 D1 migration apply는 pending `004_consent.sql`에서 `marketing_agreed` 중복 컬럼으로 실패했다.
+
+**4. 시도한 것**
+- `public/assets/patties/manifest.json`과 rabbit/dog/cat의 idle/walk/sleep/happy/jump/climb PNG sprite sheet를 생성했다.
+- `PattieAssetLoader`, `PattieSprite`, `PattieRoamingController`, `pattieWorldConfig`를 추가했다.
+- 관리시트 표/차트/카드에 `data-pattie-zone`, 막대그래프에 `data-pattie-terrain="chart-bar"`를 동적으로 붙였다.
+- `scripts/clean-pattie-assets.js`, `scripts/replace-pattie-assets.js`, 테스트 asset 생성 스크립트를 추가했다.
+- `/api/pattie`, `/api/pattie/items` Worker API와 `docs/migrations/005_pattie_assets_items.sql`을 추가했다.
+- D1에는 005 SQL을 직접 execute로 적용하고, 이미 반영된 004/005를 `d1_migrations`에 기록했다.
+- 로컬 서버에서 `/public/assets/patties/manifest.json` 및 PNG asset이 200으로 서빙되는지 확인했다.
+
+**5. 해결 / 인사이트**
+- 관리시트에는 Pattie world 레이어가 올라가며 chartZone에서 climb, 클릭 시 happy가 발동된다.
+- 사용자는 관리시트 진입/설정 버튼을 통해 이름, rabbit/dog/cat, sunglasses/bee_suit 아이템을 저장할 수 있다.
+- 원격 D1에는 `avatars.character_key`, `avatars.equipped_item_keys`, `character_assets`, `pattie_items`, `user_pattie_items`가 반영됐다.
+- `pattie_items` 기본 src는 현재 배포 구조에 맞춰 `/public/assets/patties/items/...`로 보정했다.
+
+**6. 반영 필요 사항 (중요)**
+- Pattie asset 경로는 현 정적 배포 구조에서는 `/public/assets/patties/...`를 기준으로 한다.
+- 코드에서는 개별 PNG를 하드코딩하지 않고 manifest/AssetLoader를 통한다.
+- D1에는 이미지 바이너리를 저장하지 않고 src/metadata만 저장한다.
+- 관리시트 지형은 sheet/chart/card/blocked zone과 chart-bar terrain attribute를 기준으로 확장한다.

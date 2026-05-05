@@ -167,6 +167,20 @@ Animation requirements per character:
 
 All animations must be CSS keyframe only — no canvas, no external library. Character type is stored in `avatars.character_type` and must drive both the 관리시트 sprite and the 미니미 setup modal preview identically.
 
+### 4.0.1 Pattie 관리시트 거주/이동 시스템
+
+관리시트는 Pattie가 사는 엑셀 공간으로 취급한다. rabbit, dog, cat 캐릭터는 `manually_command/character_image.png`의 32x32 도트 실루엣, 색상, 눈/표정, 검은 외곽선을 기준으로 유지한다.
+
+Asset은 `public/assets/patties/manifest.json`에서 관리하며 코드에서 개별 PNG 경로를 직접 하드코딩하지 않는다. 테스트 asset은 `isTestAsset`, `version`을 manifest에 기록하고 `scripts/clean-pattie-assets.js`, `scripts/replace-pattie-assets.js`로 일괄 삭제/교체할 수 있어야 한다.
+
+관리시트 지형은 `sheetZone`, `chartZone`, `cardZone`, `blockedZone`으로 나눈다. 오른쪽 상단 그래프는 메이플스토리 지형처럼 취급하며, 막대그래프에는 `data-pattie-terrain="chart-bar"`를 붙여 jump/climb 후보로 사용한다.
+
+Pattie의 기본 애니메이션은 `idle`, `walk`, `sleep`, `happy`, `jump`, `climb`이며 0.5초 단위 프레임 전환을 기준으로 한다. sheetZone은 walk 중심, chartZone은 jump/climb 확률이 높고, 클릭/케어 액션은 happy를 최우선으로 발동한다.
+
+사용자는 관리시트 진입 시 Pattie 이름, 캐릭터(`rabbit`, `dog`, `cat`), 아이템을 설정할 수 있어야 한다. 기존 사용자라도 설정 값이 없으면 초기 설정 모달을 표시한다. 예시 아이템은 `sunglasses`, `bee_suit`이며 점수/랭킹에 영향을 주지 않는 cosmetic으로만 동작한다.
+
+DB는 `avatars.character_key`, `avatars.equipped_item_keys`, `pattie_items`, `user_pattie_items`, `character_assets`로 확장한다. 이미지 바이너리는 D1에 저장하지 않고, D1에는 src와 메타데이터만 저장한다. 실제 PNG는 현재 public asset을 쓰며 추후 R2로 이동할 수 있게 AssetLoader 인터페이스를 유지한다.
+
 ### 4.1 Growth Mechanics
 
 The pet is the emotional and progression anchor of MiniGgotchi.
