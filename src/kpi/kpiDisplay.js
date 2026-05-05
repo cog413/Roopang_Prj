@@ -1,3 +1,16 @@
+let _timerStarted = false;
+
+export function startEnduranceTimer() {
+    if (_timerStarted) return;
+    _timerStarted = true;
+    setInterval(() => {
+        const auth = window.refresheetAuth;
+        if (!auth?.authenticated) return;
+        const idx = calcEnduranceIndex(auth.commute_start || '09:00', auth.commute_end || '18:00');
+        setKpiNumber('kpi-endurance-val', `${idx}%`, getColorClass(idx));
+    }, 60_000);
+}
+
 export async function refreshKpiDisplay() {
     const auth = window.refresheetAuth;
 

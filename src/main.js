@@ -9,7 +9,7 @@ import { initAuthState } from './auth/authState.js';
 import { maybeShowOnboarding } from './onboarding/onboarding.js';
 import { initMinimeSheet } from './minime/minimeSetup.js';
 import { showLoginPopup, goToLogin } from './ui/loginPopup.js';
-import { refreshKpiDisplay } from './kpi/kpiDisplay.js';
+import { refreshKpiDisplay, startEnduranceTimer } from './kpi/kpiDisplay.js';
 
 // Expose loginPopup module globally for game modules that can't import directly
 window.loginPopupModule = { showLoginPopup, goToLogin };
@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initAuthState().then(async (authState) => {
         await maybeShowOnboarding(authState);
         await refreshKpiDisplay();
+        startEnduranceTimer();
     });
     initExcelLayout();
     initBossKey();
