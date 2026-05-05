@@ -1142,6 +1142,94 @@ body.dark-mode .g2048-size-btn.active { background-color: #1a365d !important; co
     line-height: 1.3;
 }
 
+/* ── 랭킹 현황 ───────────────────────────────────── */
+.rm-hd-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.rm-rank-tabs {
+    display: flex;
+    gap: 3px;
+}
+.rm-rank-tab {
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid #a9d18e;
+    color: #217346;
+    cursor: pointer;
+    border-radius: 2px;
+    line-height: 1.4;
+}
+.rm-rank-tab:hover { background: #c6e0b4; }
+.rm-rank-tab.active { background: #217346; color: #fff; border-color: #217346; }
+.rm-rank-row {
+    display: flex;
+    border: 1px solid #c6e0b4;
+    border-top: none;
+}
+.rm-rank-card {
+    flex: 1;
+    padding: 10px 12px;
+    border-right: 1px solid #c6e0b4;
+    background: #fff;
+    min-height: 110px;
+}
+.rm-rank-card:last-child { border-right: none; }
+.rm-rank-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #217346;
+    margin-bottom: 5px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #d9ead3;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.rm-rank-my {
+    min-height: 22px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.rm-rank-badge {
+    font-size: 11px;
+    color: #217346;
+    background: #f3f9f5;
+    border: 1px solid #c6e0b4;
+    padding: 2px 7px;
+    border-radius: 2px;
+}
+.rm-rank-badge strong { color: #1a5c38; }
+.rm-rank-none {
+    font-size: 11px;
+    color: #b0b0b0;
+    font-style: italic;
+}
+.rm-rank-list { display: flex; flex-direction: column; gap: 1px; }
+.rm-rank-item {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: center;
+    height: 20px;
+    font-size: 11px;
+    color: #333;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+.rm-rank-item.rm-rank-me {
+    background: #f3f9f5;
+    font-weight: 600;
+    color: #217346;
+}
+.rm-rank-pos { font-size: 12px; text-align: center; }
+.rm-rank-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 4px; }
+.rm-rank-score { font-size: 10px; color: #888; white-space: nowrap; }
+.rm-rank-item.rm-rank-me .rm-rank-score { color: #217346; }
+.rm-rank-empty { font-size: 11px; color: #b0b0b0; font-style: italic; padding: 4px 2px; }
+
 /* ── SOP ─────────────────────────────────────────── */
 .rm-sop {
     background: #fff;
@@ -1235,6 +1323,17 @@ body.dark-mode .rm-kpi-mid  { color: #90cdf4; }
 body.dark-mode .rm-kpi-good { color: #b7e1c0; }
 body.dark-mode .rm-kpi-desc { color: #ccc; }
 body.dark-mode .rm-kpi-sub  { color: #888; }
+body.dark-mode .rm-rank-tab { border-color: #2f6f44; color: #4CAF50; }
+body.dark-mode .rm-rank-tab.active { background: #2f6f44; color: #fff; border-color: #2f6f44; }
+body.dark-mode .rm-rank-row { border-color: #2f6f44; }
+body.dark-mode .rm-rank-card { background: #2d2d2d; border-color: #2f6f44; }
+body.dark-mode .rm-rank-label { color: #4CAF50; border-color: #2f6f44; }
+body.dark-mode .rm-rank-badge { background: #1f4e2f; border-color: #2f6f44; color: #b7e1c0; }
+body.dark-mode .rm-rank-badge strong { color: #b7e1c0; }
+body.dark-mode .rm-rank-item { color: #d4d4d4; }
+body.dark-mode .rm-rank-item.rm-rank-me { background: #1f4e2f; color: #b7e1c0; }
+body.dark-mode .rm-rank-item.rm-rank-me .rm-rank-score { color: #b7e1c0; }
+body.dark-mode .rm-rank-score { color: #666; }
 body.dark-mode .rm-sop { background: #2d2d2d; border-color: #2f6f44; }
 body.dark-mode .rm-sop-title { color: #90cdf4; }
 body.dark-mode .rm-sop-body { color: #bbb; }

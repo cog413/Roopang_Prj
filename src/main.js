@@ -10,6 +10,7 @@ import { maybeShowOnboarding } from './onboarding/onboarding.js';
 import { initMinimeSheet } from './minime/minimeSetup.js';
 import { showLoginPopup, goToLogin } from './ui/loginPopup.js';
 import { refreshKpiDisplay, startEnduranceTimer } from './kpi/kpiDisplay.js';
+import { initRankingTabs, refreshRankingDisplay } from './ranking/rankingDisplay.js';
 
 // Expose loginPopup module globally for game modules that can't import directly
 window.loginPopupModule = { showLoginPopup, goToLogin };
@@ -28,10 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2500);
 
     // Initialize Layout and Stealth Modules
+    initRankingTabs();
+
     initAuthState().then(async (authState) => {
         await maybeShowOnboarding(authState);
         await refreshKpiDisplay();
         startEnduranceTimer();
+        await refreshRankingDisplay();
     });
     initExcelLayout();
     initBossKey();
@@ -49,8 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Minime sheet auth/setup flow
     initMinimeSheet();
 
-    // KPI 재갱신: 점수 저장 이벤트 수신
-    document.addEventListener('refresheet:score-saved', () => refreshKpiDisplay());
-    document.addEventListener('refresheet:onboarding-done', () => refreshKpiDisplay());
+    // KPI + 랭킹 재갱신: 점수 저장 이벤트 수신
+    document.addEventListener('refresheet:score-saved', () => {
+        refreshKpiDisplay();
+        refreshRankingDisplay();
+    });
+    document.addEventListener('refresheet:onboarding-done', () => {
+        refreshKpiDisplay();
+        refreshRankingDisplay();
+    });
 });
 

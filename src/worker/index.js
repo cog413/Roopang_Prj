@@ -49,6 +49,9 @@ export default {
             if (url.pathname === '/api/scores/today' && request.method === 'GET') {
                 return handleTodayScores(request, env);
             }
+            if (url.pathname === '/api/rankings' && request.method === 'GET') {
+                return handleRankings(request, env);
+            }
 
             return withCors(json({ error: 'not_found' }, 404));
         } catch (error) {
@@ -570,6 +573,121 @@ function pickNickname(googleUser) {
     const name = typeof googleUser.name === 'string' ? googleUser.name.trim() : '';
     if (name) return name;
     return googleUser.email.split('@')[0];
+}
+
+async function handleRankings(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    const url = new URL(request.url);
+    const period = ['daily', 'weekly', 'monthly'].includes(url.searchParams.get('period'))
+        ? url.searchParams.get('period') : 'daily';
+
+    const { start } = kstPeriodBounds(period);
+    const db = getDb(env);
+
+    const [personalTop, companyTop] = await Promise.all([
+        db.prepare(`
+            SELECT u.user_id,
+                   COALESCE(a.nickname, p.nickname, u.email) AS nickname,
+                   SUM(gs.score) AS total_score
+            FROM game_scores gs
+            JOIN users u ON u.user_id = gs.user_id
+            LEFT JOIN avatars a ON a.user_id = u.user_id
+            LEFT JOIN user_profiles p ON p.user_id = u.user_id
+            WHERE gs.played_at >= ?
+            GROUP BY u.user_id
+            ORDER BY total_score DESC
+            LIMIT 5`).bind(start).all(),
+        db.prepare(`
+            SELECT u.company,
+                   SUM(gs.score) AS total_score,
+                   COUNT(DISTINCT gs.user_id) AS player_count
+            FROM game_scores gs
+            JOIN users u ON u.user_id = gs.user_id
+            WHERE u.company IS NOT NULL AND u.company != ''
+              AND gs.played_at >= ?
+            GROUP BY u.company
+            ORDER BY total_score DESC
+            LIMIT 5`).bind(start).all(),
+    ]);
+
+    let myPersonalRank = null, myPersonalScore = 0;
+    let myCompanyRank = null, myCompanyScore = 0;
+
+    if (session) {
+        const [myScoreRow, myCompanyRow] = await Promise.all([
+            db.prepare(`SELECT COALESCE(SUM(score),0) AS s FROM game_scores WHERE user_id=? AND played_at>=?`)
+                .bind(session.user_id, start).first(),
+            session.company
+                ? db.prepare(`SELECT COALESCE(SUM(gs.score),0) AS s FROM game_scores gs JOIN users u ON u.user_id=gs.user_id WHERE u.company=? AND gs.played_at>=?`)
+                    .bind(session.company, start).first()
+                : Promise.resolve(null),
+        ]);
+
+        myPersonalScore = myScoreRow?.s ?? 0;
+        myCompanyScore  = myCompanyRow?.s ?? 0;
+
+        const [pRankRow, cRankRow] = await Promise.all([
+            myPersonalScore > 0
+                ? db.prepare(`SELECT COUNT(*)+1 AS r FROM (SELECT user_id,SUM(score) AS s FROM game_scores WHERE played_at>=? GROUP BY user_id) WHERE s>?`)
+                    .bind(start, myPersonalScore).first()
+                : Promise.resolve(null),
+            myCompanyScore > 0 && session.company
+                ? db.prepare(`SELECT COUNT(*)+1 AS r FROM (SELECT u.company,SUM(gs.score) AS s FROM game_scores gs JOIN users u ON u.user_id=gs.user_id WHERE u.company IS NOT NULL AND gs.played_at>=? GROUP BY u.company) WHERE s>?`)
+                    .bind(start, myCompanyScore).first()
+                : Promise.resolve(null),
+        ]);
+
+        myPersonalRank = pRankRow?.r ?? (myPersonalScore > 0 ? 1 : null);
+        myCompanyRank  = cRankRow?.r ?? (myCompanyScore > 0 ? 1 : null);
+    }
+
+    const PERIOD_LABELS = { daily: '오늘', weekly: '이번 주', monthly: '이번 달' };
+    const pResults = personalTop.results || [];
+    const cResults = companyTop.results || [];
+
+    return withCors(json({
+        period,
+        period_label: PERIOD_LABELS[period],
+        personal: {
+            my_rank: myPersonalRank,
+            my_score: myPersonalScore,
+            top: pResults.map((r, i) => ({
+                rank: i + 1,
+                nickname: r.nickname,
+                score: r.total_score,
+                is_me: session ? r.user_id === session.user_id : false,
+            })),
+        },
+        company: {
+            my_company: session?.company || null,
+            my_rank: myCompanyRank,
+            my_score: myCompanyScore,
+            top: cResults.map((r, i) => ({
+                rank: i + 1,
+                company: r.company,
+                score: r.total_score,
+                players: r.player_count,
+                is_mine: session?.company ? r.company === session.company : false,
+            })),
+        },
+    }));
+}
+
+function kstPeriodBounds(period) {
+    const kstOffsetMs = 9 * 3_600_000;
+    const kstNow = new Date(Date.now() + kstOffsetMs);
+    const start = new Date(kstNow);
+    if (period === 'daily') {
+        start.setUTCHours(0, 0, 0, 0);
+    } else if (period === 'weekly') {
+        const day = kstNow.getUTCDay();
+        start.setUTCHours(0, 0, 0, 0);
+        start.setUTCDate(start.getUTCDate() - (day === 0 ? 6 : day - 1));
+    } else {
+        start.setUTCDate(1);
+        start.setUTCHours(0, 0, 0, 0);
+    }
+    return { start: new Date(start.getTime() - kstOffsetMs).toISOString() };
 }
 
 function kstHourBounds() {
