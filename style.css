@@ -1641,3 +1641,137 @@ body.dark-mode .mps-body-b { background:
     background-size: 6px 6px, 7px 7px, auto;
     border-radius: 8px;
 }
+
+/* =====================================================
+   Mobile numpad (hidden on desktop)
+   ===================================================== */
+.mobile-numpad { display: none; }
+
+/* =====================================================
+   Mobile responsive — max 768px
+   ===================================================== */
+@media (max-width: 768px) {
+    /* Unlock page scroll */
+    body {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    #excel-app {
+        height: auto;
+        min-height: 100svh;
+    }
+
+    /* Larger tap targets for sheet tabs */
+    .tab { padding: 8px 14px; font-size: 13px; }
+    .tabs { -webkit-overflow-scrolling: touch; }
+
+    /* Login button stays reachable */
+    .window-controls { gap: 10px; }
+    .account-button { padding: 4px 10px; font-size: 13px; }
+
+    /* ReadMe sheet padding */
+    .rm-sheet { padding: 0 4px 32px; }
+
+    /* Hide decorative Excel chrome */
+    .menu-tabs,
+    .toolbar,
+    .column-headers,
+    .corner-header,
+    .row-headers { display: none !important; }
+
+    /* Release fixed-height scroll lock */
+    .spreadsheet-container {
+        overflow: visible;
+        flex-grow: 0;
+        height: auto;
+    }
+    .spreadsheet-body {
+        overflow: visible;
+        height: auto;
+        flex-grow: 0;
+    }
+    .grid-content {
+        display: block;
+        overflow: visible;
+        height: auto;
+        flex-grow: 0;
+        width: 100%;
+    }
+    .sheet-view {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        width: 100%;
+        height: auto !important;
+    }
+
+    /* README: stack KPI / ranking cards */
+    .rm-kpi-row,
+    .rm-rank-row { flex-direction: column; }
+    .rm-kpi-card { border-right: none !important; border-bottom: 1px solid #c6e0b4; }
+    .rm-rank-card { border-right: none !important; border-bottom: 1px solid #c6e0b4; }
+
+    /* Hide right-side fake-dashboard panels */
+    .fake-dashboard { display: none !important; }
+
+    /* 2048: JS sets grid-template via initBoard(); just fix cell height */
+    #game2048-grid .excel-cell {
+        height: revert !important;
+        font-size: 20px !important;
+        font-weight: bold;
+        justify-content: center !important;
+    }
+
+    /* Sudoku: fit 9 cells across ~360px = 38px each */
+    #sudoku-grid {
+        grid-template-columns: repeat(9, 38px) !important;
+        grid-template-rows: repeat(9, 38px) !important;
+    }
+    #sudoku-grid .excel-cell {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 16px !important;
+    }
+
+    /* Mobile numpad */
+    .mobile-numpad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 14px 12px;
+        background: #f0f4f0;
+        border-top: 1px solid #c6e0b4;
+        max-width: 380px;
+        margin: 0 auto 16px;
+    }
+    .mobile-numpad-btn {
+        padding: 14px 0;
+        font-size: 20px;
+        font-weight: 600;
+        border: 1px solid #b0c8a0;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        text-align: center;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    .mobile-numpad-btn:active { background: #d4e8c2; border-color: #4CAF50; }
+    .mobile-numpad-btn.del-btn {
+        grid-column: span 3;
+        padding: 12px 0;
+        font-size: 16px;
+        background: #fff8e1;
+        border-color: #f0c040;
+    }
+    .mobile-numpad-btn.del-btn:active { background: #ffe082; border-color: #f0a000; }
+}
+
+/* Dark mode mobile extras */
+body.dark-mode .mobile-numpad { background: #2a2a2a; border-color: #444; }
+body.dark-mode .mobile-numpad-btn { background: #3a3a3a; border-color: #555; color: #d4d4d4; }
+body.dark-mode .mobile-numpad-btn:active { background: #1f4e2f; border-color: #4CAF50; }
+body.dark-mode .mobile-numpad-btn.del-btn { background: #3d3520; border-color: #ffa000; color: #ffd54f; }
+body.dark-mode .rm-kpi-card { border-bottom-color: #2f6f44; }
+body.dark-mode .rm-rank-card { border-bottom-color: #2f6f44; }
