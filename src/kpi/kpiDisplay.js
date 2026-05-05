@@ -58,6 +58,13 @@ function renderKpi(auth, data) {
     setKpiNumber('kpi-focus-val', `${focusIndex}%`, getColorClass(focusIndex));
     setKpiNumber('kpi-endurance-val', `${enduranceIndex}%`, getColorClass(enduranceIndex));
     setKpiNumber('kpi-care-val', `${careIndex}%`, getColorClass(careIndex));
+
+    const remaining = data.hourly_plays_remaining ?? null;
+    if (remaining !== null) {
+        const subEl = document.querySelector('#kpi-focus-val')
+            ?.closest('.rm-kpi-card')?.querySelector('.rm-kpi-sub');
+        if (subEl) subEl.textContent = `이번 시간 ${remaining}판 남음 (매 정시 초기화)`;
+    }
 }
 
 function calcEnduranceIndex(startStr, endStr) {

@@ -357,8 +357,14 @@ export async function initSudoku() {
                     duration_seconds: elapsed,
                     extra: { difficulty: currentDifficulty, puzzle_id: currentPuzzleId, mistakes: mistakeCount },
                 }),
-            }).then(() => document.dispatchEvent(new CustomEvent('refresheet:score-saved')))
-              .catch(() => {});
+            }).then(async (res) => {
+                if (res.status === 429) {
+                    const d = await res.json().catch(() => ({}));
+                    if (formulaInput) formulaInput.value = `=LIMIT.REACHED("이번 시간 3판 완료 · ${d.resets_at_kst || '다음 정시'} 초기화")`;
+                    return;
+                }
+                document.dispatchEvent(new CustomEvent('refresheet:score-saved'));
+            }).catch(() => {});
         }
     }
 

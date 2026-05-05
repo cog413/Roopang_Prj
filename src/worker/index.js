@@ -305,8 +305,23 @@ async function handleSaveScore(request, env) {
 
     if (!gameType) return withCors(json({ error: 'invalid game_type' }, 400));
 
+    const db = getDb(env);
+    const { start, end, nextHourKST } = kstHourBounds();
+    const hourlyRow = await db.prepare(
+        `SELECT COUNT(*) as cnt FROM game_scores
+         WHERE user_id = ? AND played_at >= ? AND played_at < ?`
+    ).bind(session.user_id, start, end).first();
+
+    if ((hourlyRow?.cnt ?? 0) >= 3) {
+        return withCors(json({
+            error: 'hourly_limit_reached',
+            plays_this_hour: hourlyRow.cnt,
+            resets_at_kst: nextHourKST,
+        }, 429));
+    }
+
     const now = new Date().toISOString();
-    await getDb(env).prepare(
+    await db.prepare(
         `INSERT INTO game_scores (id, user_id, game_type, score, played_at, duration_seconds, extra_json)
          VALUES (?, ?, ?, ?, ?, ?, ?)`
     ).bind(
@@ -329,24 +344,34 @@ async function handleTodayScores(request, env) {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const rows = await getDb(env).prepare(
-        `SELECT game_type, score, played_at, duration_seconds
-         FROM game_scores
-         WHERE user_id=? AND played_at >= ?
-         ORDER BY played_at ASC`
-    ).bind(session.user_id, todayStart.toISOString()).all();
+    const db = getDb(env);
+    const { start: hourStart, end: hourEnd } = kstHourBounds();
 
-    const avatar = await getDb(env).prepare(
-        `SELECT last_minime_at FROM avatars WHERE user_id=?`
-    ).bind(session.user_id).first();
+    const [rows, avatar, hourlyRow] = await Promise.all([
+        db.prepare(
+            `SELECT game_type, score, played_at, duration_seconds
+             FROM game_scores
+             WHERE user_id=? AND played_at >= ?
+             ORDER BY played_at ASC`
+        ).bind(session.user_id, todayStart.toISOString()).all(),
+        db.prepare(`SELECT last_minime_at FROM avatars WHERE user_id=?`)
+            .bind(session.user_id).first(),
+        db.prepare(
+            `SELECT COUNT(*) as cnt FROM game_scores
+             WHERE user_id = ? AND played_at >= ? AND played_at < ?`
+        ).bind(session.user_id, hourStart, hourEnd).first(),
+    ]);
 
     const lastMinimeAt = avatar?.last_minime_at || null;
     const minimeCaredToday = lastMinimeAt && lastMinimeAt >= todayStart.toISOString();
+    const hourlyPlaysUsed = hourlyRow?.cnt ?? 0;
 
     return withCors(json({
         authenticated: true,
         scores: rows.results || [],
         minime_cared_today: Boolean(minimeCaredToday),
+        hourly_plays_used: hourlyPlaysUsed,
+        hourly_plays_remaining: Math.max(0, 3 - hourlyPlaysUsed),
     }));
 }
 
@@ -545,6 +570,20 @@ function pickNickname(googleUser) {
     const name = typeof googleUser.name === 'string' ? googleUser.name.trim() : '';
     if (name) return name;
     return googleUser.email.split('@')[0];
+}
+
+function kstHourBounds() {
+    const kstOffsetMs = 9 * 3_600_000;
+    const kstNow = new Date(Date.now() + kstOffsetMs);
+    kstNow.setUTCMinutes(0, 0, 0);
+    const hourStartUtc = new Date(kstNow.getTime() - kstOffsetMs);
+    const hourEndUtc   = new Date(hourStartUtc.getTime() + 3_600_000);
+    const nextHour     = (kstNow.getUTCHours() + 1) % 24;
+    return {
+        start: hourStartUtc.toISOString(),
+        end:   hourEndUtc.toISOString(),
+        nextHourKST: `${String(nextHour).padStart(2, '0')}:00`,
+    };
 }
 
 function makeId(prefix) {
