@@ -1,3 +1,5 @@
+import { showUserSettings } from './userSettings.js';
+
 export async function initAuthState() {
     const authState = await fetchAuthState();
     window.refresheetAuth = authState;
@@ -34,6 +36,7 @@ export async function fetchAuthState() {
             commute_start: data.user.commute_start || '09:00',
             commute_end: data.user.commute_end || '18:00',
             onboarding_done: Boolean(data.user.onboarding_done),
+            marketing_agreed: Boolean(data.user.marketing_agreed),
         };
     } catch {
         return anonymousState();
@@ -51,17 +54,65 @@ export async function logout() {
     document.dispatchEvent(new CustomEvent('refresheet:auth', { detail: window.refresheetAuth }));
 }
 
+let dropdownEl = null;
+
 function bindLoginButton(authState) {
     const button = document.getElementById('login-button');
     if (!button) return;
 
     updateLoginButton(button, authState);
-    button.addEventListener('click', () => {
-        if (window.refresheetAuth?.authenticated) return;
 
-        const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-        window.location.href = `/api/auth/google/start?return_to=${encodeURIComponent(returnTo || '/')}`;
+    button.removeEventListener('click', button._clickHandler);
+    button._clickHandler = () => {
+        if (!window.refresheetAuth?.authenticated) {
+            const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+            window.location.href = `/api/auth/google/start?return_to=${encodeURIComponent(returnTo || '/')}`;
+            return;
+        }
+        toggleDropdown(button);
+    };
+    button.addEventListener('click', button._clickHandler);
+}
+
+function toggleDropdown(anchor) {
+    if (dropdownEl && document.body.contains(dropdownEl)) {
+        dropdownEl.remove();
+        dropdownEl = null;
+        return;
+    }
+
+    dropdownEl = document.createElement('div');
+    dropdownEl.className = 'account-dropdown';
+    dropdownEl.innerHTML = `
+        <div class="account-dropdown-item" id="dd-settings">내 설정</div>
+        <div class="account-dropdown-item account-dropdown-item--logout" id="dd-logout">로그아웃</div>`;
+    document.body.appendChild(dropdownEl);
+
+    const rect = anchor.getBoundingClientRect();
+    dropdownEl.style.top = `${rect.bottom + 4}px`;
+    dropdownEl.style.right = `${document.documentElement.clientWidth - rect.right}px`;
+
+    dropdownEl.querySelector('#dd-settings').addEventListener('click', () => {
+        dropdownEl.remove();
+        dropdownEl = null;
+        showUserSettings();
     });
+    dropdownEl.querySelector('#dd-logout').addEventListener('click', () => {
+        dropdownEl.remove();
+        dropdownEl = null;
+        logout();
+    });
+
+    setTimeout(() => {
+        document.addEventListener('click', closeDropdownOutside, { once: true });
+    }, 0);
+}
+
+function closeDropdownOutside(e) {
+    if (dropdownEl && !dropdownEl.contains(e.target)) {
+        dropdownEl.remove();
+        dropdownEl = null;
+    }
 }
 
 function updateLoginButton(button, authState) {

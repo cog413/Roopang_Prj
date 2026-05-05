@@ -204,6 +204,7 @@ async function handleMe(request, env) {
             commute_start: session.commute_start || '09:00',
             commute_end: session.commute_end || '18:00',
             onboarding_done: Boolean(session.onboarding_done),
+            marketing_agreed: Boolean(session.marketing_agreed),
         },
     }));
 }
@@ -555,6 +556,7 @@ async function getSessionUser(db, request) {
 
     return db.prepare(
         `SELECT u.user_id, u.email, u.company, u.commute_start, u.commute_end, u.onboarding_done,
+                u.marketing_agreed,
                 p.nickname, p.avatar_url, p.last_login_at, s.is_new_user
          FROM auth_sessions s
          JOIN users u ON u.user_id = s.user_id
