@@ -185,3 +185,4 @@
 - Upward movement selects `jump` or `climb`; downward movement uses `hopDown` with a small arc. The NPC must never target arbitrary points outside chart terrain surfaces.
 - Chart NPC initial placement must use the chart floor surface, not bar top surfaces, because bar height animation may still be at 0% on first render.
 - Walk/run tuning must adjust both coordinate duration and sprite frame duration so the pet does not visually slide.
+- Chart NPC platform coordinates must be chart-local (`offsetLeft`/`offsetTop` accumulated to the chart root), not viewport coordinates, to avoid jitter during Excel sheet scrolling.

@@ -278,10 +278,10 @@ export class PattieRoamingController {
 
         const chart = this.getZones().find((zone) => zone.id === 'chart-zone');
         if (chart) {
-            const root = this.rootRect();
             const size = this.config.movement.spriteSize;
-            this.x = clamp(this.x, chart.bounds.left - root.left + 4, chart.bounds.right - root.left - size - 4);
-            this.y = clamp(this.y, chart.bounds.top - root.top + 4, chart.bounds.bottom - root.top - size - 6);
+            const bounds = this.getLocalChartBounds();
+            this.x = clamp(this.x, bounds.left + 4, bounds.right - size - 4);
+            this.y = clamp(this.y, bounds.top + 4, bounds.bottom - size - 6);
         }
 
         if (t >= 1) {
@@ -331,11 +331,10 @@ export class PattieRoamingController {
     startClimb(targetBar = null) {
         const bar = targetBar || this.findNearestBar();
         if (bar) {
-            const root = this.rootRect();
             const size = this.config.movement.spriteSize;
-            this.x = clamp(bar.left - root.left - size + 10, 0, this.root.scrollWidth - size);
-            this.y = clamp(bar.bottom - root.top - size, 0, this.root.scrollHeight - size);
-            this.climbTargetY = clamp(bar.top - root.top - size + 4, 0, this.root.scrollHeight - size);
+            this.x = clamp(bar.left - size + 10, 0, this.root.clientWidth - size);
+            this.y = clamp(bar.bottom - size, 0, this.root.clientHeight - size);
+            this.climbTargetY = clamp(bar.top - size + 4, 0, this.root.clientHeight - size);
         }
         this.mode = 'climb';
         this.sprite.play('climb', { restart: true });
@@ -405,36 +404,31 @@ export class PattieRoamingController {
     findNearestBar() {
         const bars = this.getSortedBars();
         if (!bars.length) return null;
-        const root = this.rootRect();
         const size = this.config.movement.spriteSize;
-        const centerX = root.left + this.x + size / 2;
+        const centerX = this.x + size / 2;
         return bars.sort((a, b) => Math.abs(centerX - (a.left + a.width / 2)) - Math.abs(centerX - (b.left + b.width / 2)))[0];
     }
 
     getChartSurfaces() {
-        const chart = this.getZones().find((zone) => zone.id === 'chart-zone');
-        if (!chart) return [];
-        const root = this.rootRect();
+        if (!this.getZones().find((zone) => zone.id === 'chart-zone')) return [];
         const size = this.config.movement.spriteSize;
-        const chartLeft = chart.bounds.left - root.left;
-        const chartRight = chart.bounds.right - root.left;
-        const chartBottom = chart.bounds.bottom - root.top;
+        const bounds = this.getLocalChartBounds();
 
-        // Terrain calculation: floor plus every visible bar top, all in root-local coordinates.
+        // Terrain calculation uses chart-local coordinates so page/excel scrolling cannot shift the pet.
         const floor = {
             id: 'chart-floor',
             kind: 'floor',
-            minX: chartLeft + 14,
-            maxX: chartRight - size - 14,
-            y: chartBottom - size - 16,
+            minX: bounds.left + 14,
+            maxX: bounds.right - size - 14,
+            y: bounds.bottom - size - 16,
         };
         const floorY = floor.y;
         const bars = this.getSortedBars().map((bar, index) => ({
             id: `bar-${index}`,
             kind: 'bar',
-            minX: bar.left - root.left + 1,
-            maxX: bar.right - root.left - size - 1,
-            y: bar.top - root.top - size,
+            minX: bar.left + 1,
+            maxX: bar.right - size - 1,
+            y: bar.top - size,
         })).filter((surface) => {
             const heightFromFloor = Math.abs(surface.y - floorY);
             return surface.maxX >= surface.minX && heightFromFloor <= this.config.movement.maxBarHeightFromFloorPx;
@@ -459,7 +453,7 @@ export class PattieRoamingController {
 
     getSortedBars() {
         return Array.from(this.root.querySelectorAll(this.config.terrainRules.chartBar.selector))
-            .map((bar) => bar.getBoundingClientRect())
+            .map((bar) => this.getLocalRect(bar))
             .filter((rect) => rect.width > 0 && rect.height > 0)
             .sort((a, b) => a.left - b.left);
     }
@@ -467,7 +461,6 @@ export class PattieRoamingController {
     findNextBarPlatform() {
         const bars = this.getSortedBars();
         if (!bars.length) return null;
-        const root = this.rootRect();
         const size = this.config.movement.spriteSize;
         this.chartBarIndex += this.direction;
         if (this.chartBarIndex >= bars.length) {
@@ -480,8 +473,8 @@ export class PattieRoamingController {
         this.chartBarIndex = clamp(this.chartBarIndex, 0, bars.length - 1);
         const target = bars[this.chartBarIndex];
         return {
-            x: target.left + target.width / 2 - root.left - size / 2,
-            y: target.top - root.top - size + 6,
+            x: target.left + target.width / 2 - size / 2,
+            y: target.top - size + 6,
         };
     }
 
@@ -493,6 +486,36 @@ export class PattieRoamingController {
 
     rootRect() {
         return this.root.getBoundingClientRect();
+    }
+
+    getLocalChartBounds() {
+        return {
+            left: 0,
+            top: 0,
+            right: this.root.clientWidth,
+            bottom: this.root.clientHeight,
+            width: this.root.clientWidth,
+            height: this.root.clientHeight,
+        };
+    }
+
+    getLocalRect(el) {
+        let left = 0;
+        let top = 0;
+        let node = el;
+        while (node && node !== this.root) {
+            left += node.offsetLeft || 0;
+            top += node.offsetTop || 0;
+            node = node.offsetParent;
+        }
+        return {
+            left,
+            top,
+            right: left + el.offsetWidth,
+            bottom: top + el.offsetHeight,
+            width: el.offsetWidth,
+            height: el.offsetHeight,
+        };
     }
 
     updateNameplate() {

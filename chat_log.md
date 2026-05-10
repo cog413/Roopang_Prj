@@ -727,3 +727,25 @@ AI는 아래를 판단해야 한다:
 **6. 반영 필요 사항 (중요)**
 - 그래프 NPC 초기 배치는 항상 바닥 플랫폼 기준이어야 하며, 막대 height animation 완료 전 막대 top을 초기 좌표로 쓰지 않는다.
 - walk/run은 좌표 이동 속도와 frameDuration을 함께 조절해 미끄러짐을 피한다.
+### [2026-05-10 16:39] (CLI: codex)
+
+**1. 목표**
+- 주간 매출 그래프 코기 NPC의 walk/run 이동 속도를 추가로 절반 낮추고, 엑셀 스크롤 시 좌표 흔들림을 줄인다.
+
+**2. 현재 상태**
+- walk/run 이동 duration과 frameDuration을 함께 늘려 이동 속도와 다리 프레임 속도를 더 느리게 맞췄다.
+- 막대/platform 좌표는 viewport가 아닌 그래프 카드 내부 local 좌표로 계산한다.
+
+**3. 문제**
+- `getBoundingClientRect()` 기반 좌표는 외부 스크롤 변화와 섞이면 흔들림처럼 보일 수 있었다.
+
+**4. 시도한 것**
+- `getLocalChartBounds()`와 `getLocalRect()`를 추가해 root 내부 상대좌표로 floor/bar surface를 계산했다.
+- legacy bar helper도 local rect 기준으로 보정했다.
+
+**5. 해결 / 인사이트**
+- 코기 좌표계가 그래프 카드 내부 기준으로 고정되어 엑셀 스크롤 영향을 덜 받는다.
+- walk/run은 좌표 duration과 sprite frame duration을 같이 줄여 미끄러짐을 완화한다.
+
+**6. 반영 필요 사항 (중요)**
+- 그래프 내부 NPC는 viewport 좌표가 아니라 chart-local 좌표를 기본으로 사용한다.
