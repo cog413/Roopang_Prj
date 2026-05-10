@@ -790,6 +790,8 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 }
 .pattie-sprite {
     position: absolute;
+    left: 0;
+    top: 0;
     width: 25px;
     height: 25px;
     image-rendering: pixelated;

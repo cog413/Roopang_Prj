@@ -749,3 +749,28 @@ AI는 아래를 판단해야 한다:
 
 **6. 반영 필요 사항 (중요)**
 - 그래프 내부 NPC는 viewport 좌표가 아니라 chart-local 좌표를 기본으로 사용한다.
+### [2026-05-10 17:02] (CLI: codex)
+
+**1. 목표**
+- 관리시트를 실제 브라우저에서 열어 주간 매출 그래프 코기 NPC의 문제를 확인하고 수정한다.
+
+**2. 현재 상태**
+- Headless Edge + DevTools Protocol로 ReadMe에서 관리시트 탭을 클릭해 실제 DOM 좌표를 측정했다.
+- 수정 후 초기 측정에서 코기는 그래프 카드 내부 바닥 위 `translate(55px, 187px)` idle 상태로 시작했다.
+
+**3. 문제**
+- 수정 전 첫 5초 동안 코기 transform이 `translate(0px, 0px)`으로 그래프 카드 좌상단에 머물렀다.
+- 원인은 관리시트가 숨겨진 상태 또는 레이아웃 확정 전 초기화되어 chart floor 좌표가 적용되지 않는 것이었다.
+
+**4. 시도한 것**
+- 관리시트가 보이는 시점에만 `initPattieWorld(chart)`가 실행되도록 변경했다.
+- chart dimension 대기 루프를 추가했다.
+- chart root인 경우 zone 탐색을 우회하고 `clientWidth/clientHeight`로 바닥 좌표를 직접 계산하는 `placeOnChartFloor()`를 추가했다.
+- `.pattie-sprite`에 `left: 0; top: 0;`을 명시했다.
+
+**5. 해결 / 인사이트**
+- 수정 후 초기/2초 후 모두 그래프 바닥 위 idle 상태였고, 스크롤 후에도 chart 내부 상대좌표를 유지했다.
+
+**6. 반영 필요 사항 (중요)**
+- 실제 화면 테스트는 headless browser로 탭 전환까지 수행해 DOM 좌표를 검증한다.
+- chart NPC 초기화는 hidden sheet 상태에서 수행하지 않는다.

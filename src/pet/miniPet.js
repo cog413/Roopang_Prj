@@ -55,7 +55,7 @@ export function initMiniPet() {
     new MutationObserver(checkDisplay).observe(sheet, { attributes: true, attributeFilter: ['style'] });
 }
 
-function startScene() {
+async function startScene() {
     active = true;
     document.querySelectorAll('#mp-bars .mp-bar').forEach((bar, i) => {
         bar.style.height = '0%';
@@ -64,8 +64,37 @@ function startScene() {
             bar.style.height = `${bar.dataset.h}%`;
         }, i * 70);
     });
-    const world = getPattieWorld();
-    if (world?.sprite) world.start();
+    const chart = document.getElementById('mp-chart');
+    if (!chart) return;
+    await waitForVisibleChart(chart);
+    const world = await initPattieWorld(chart);
+    if (!active) {
+        world?.stop();
+        return;
+    }
+    await waitForVisibleChart(chart);
+    // The chart is visible here, so floor/platform dimensions are non-zero.
+    world.placeAtFirstZone();
+    world.start();
+}
+
+function waitForVisibleChart(chart) {
+    return new Promise(resolve => {
+        let tries = 0;
+        const check = () => {
+            tries += 1;
+            if (chart.clientWidth > 0 && chart.clientHeight > 0) {
+                resolve();
+                return;
+            }
+            if (tries > 20) {
+                resolve();
+                return;
+            }
+            requestAnimationFrame(check);
+        };
+        requestAnimationFrame(check);
+    });
 }
 
 function stopScene() {
@@ -96,9 +125,6 @@ function buildDOM() {
     const chart = buildWeeklySalesChart();
 
     habitat.append(table, projectTable, trend, analysis, chart);
-    initPattieWorld(chart).then((world) => {
-        if (!active) world?.stop();
-    });
 }
 
 function buildSalesTable() {

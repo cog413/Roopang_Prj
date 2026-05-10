@@ -356,6 +356,10 @@ export class PattieRoamingController {
     }
 
     placeAtFirstZone() {
+        if (this.root.matches?.("[data-pattie-zone='chart']")) {
+            this.placeOnChartFloor();
+            return;
+        }
         const zone = this.pickNearestZone();
         if (!zone) return;
         const root = this.rootRect();
@@ -371,6 +375,23 @@ export class PattieRoamingController {
         }
         this.sprite?.setPosition(this.x, this.y, this.direction);
         this.updateNameplate();
+    }
+
+    placeOnChartFloor() {
+        const size = this.config.movement.spriteSize;
+        const width = this.root.clientWidth || this.root.getBoundingClientRect().width;
+        const height = this.root.clientHeight || this.root.getBoundingClientRect().height;
+        const minX = 34;
+        const maxX = Math.max(minX, width - size - 34);
+        this.x = randomBetween(minX, maxX);
+        this.y = Math.max(0, height - size - 16);
+        this.direction = Math.random() < 0.5 ? -1 : 1;
+        this.terrainMotion = null;
+        this.jumpMotion = null;
+        this.setMode('idle');
+        this.sprite?.setPosition(this.x, this.y, this.direction);
+        this.updateNameplate();
+        this.lastDecisionAt = performance.now() + this.config.movement.initialIdleMs;
     }
 
     findCurrentZone() {
