@@ -268,7 +268,11 @@ export class PattieRoamingController {
         const m = this.terrainMotion;
         const elapsed = performance.now() - m.startedAt;
         const t = Math.min(1, elapsed / m.duration);
-        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        // walk/run: linear (constant speed) so legs match movement — no sliding
+        // jump/climb/hopDown: ease-in-out for natural arc feel
+        const eased = (m.mode === 'walk' || m.mode === 'run')
+            ? t
+            : t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
         this.x = m.startX + (m.endX - m.startX) * eased;
         this.y = m.startY + (m.endY - m.startY) * eased;
