@@ -12,7 +12,7 @@ export const pattieWorldConfig = {
             type: 'terrain',
             selector: "[data-pattie-zone='chart']",
             behavior: ['walk', 'idle', 'jump', 'climb'],
-            weights: { walk: 45, idle: 20, jump: 15, climb: 15, sleep: 5 },
+            weights: { idle: 10, jump: 55, climb: 35 },
         },
         {
             id: 'card-zone',
@@ -40,8 +40,8 @@ export const pattieWorldConfig = {
         climbStepPx: 0.42,
         decisionMs: 2400,
         sleepAfterMs: 45000,
-        spriteSize: 64,
+        spriteSize: 25,
         jumpDurationMs: 980,
-        jumpArcPx: 34,
+        jumpArcPx: 24,
     },
 };

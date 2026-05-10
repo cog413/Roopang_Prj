@@ -40,6 +40,7 @@ export class PattieRoamingController {
         this.zone = null;
         this.mode = 'walk';
         this.jumpMotion = null;
+        this.climbTargetY = null;
         this.lastInteractionAt = Date.now();
         this.lastDecisionAt = 0;
         this.raf = null;
@@ -142,8 +143,8 @@ export class PattieRoamingController {
         } else if (mode === 'jump') {
             this.startJump(this.zone?.id === 'chart-zone' ? this.findNextBarPlatform() : null);
         } else {
-            this.setMode(mode);
-            if (Math.random() < 0.35) this.direction *= -1;
+            this.setMode(this.zone?.id === 'chart-zone' && mode === 'walk' ? 'idle' : mode);
+            if (this.zone?.id !== 'chart-zone' && Math.random() < 0.35) this.direction *= -1;
         }
     }
 
@@ -174,8 +175,14 @@ export class PattieRoamingController {
         if (this.x <= minX || this.x >= maxX) this.direction *= -1;
         this.x = clamp(this.x, minX, maxX);
         this.y = clamp(this.y, minY, maxY);
+        if (this.mode === 'climb' && this.climbTargetY !== null && this.y <= this.climbTargetY) {
+            this.y = this.climbTargetY;
+            this.climbTargetY = null;
+            this.setMode('idle');
+            return;
+        }
         if (this.mode === 'climb' && this.y <= minY + 4) {
-            this.setMode('walk');
+            this.setMode('idle');
             this.direction *= -1;
         }
     }
@@ -217,7 +224,7 @@ export class PattieRoamingController {
             this.x = m.endX;
             this.y = m.endY;
             this.jumpMotion = null;
-            this.setMode('walk');
+            this.setMode(this.zone?.id === 'chart-zone' ? 'idle' : 'walk');
         }
     }
 
@@ -228,6 +235,7 @@ export class PattieRoamingController {
             const size = this.config.movement.spriteSize;
             this.x = clamp(bar.left - root.left - size + 10, 0, this.root.scrollWidth - size);
             this.y = clamp(bar.bottom - root.top - size, 0, this.root.scrollHeight - size);
+            this.climbTargetY = clamp(bar.top - root.top - size + 4, 0, this.root.scrollHeight - size);
         }
         this.mode = 'climb';
         this.sprite.play('climb', { restart: true });
@@ -271,7 +279,8 @@ export class PattieRoamingController {
     }
 
     pickNearestZone() {
-        return this.getZones().find((zone) => zone.type !== 'blocked') || null;
+        const zones = this.getZones().filter((zone) => zone.type !== 'blocked');
+        return zones.find((zone) => zone.id === 'chart-zone') || zones[0] || null;
     }
 
     getZones() {

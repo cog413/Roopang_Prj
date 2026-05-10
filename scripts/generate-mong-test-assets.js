@@ -218,6 +218,8 @@ function meta(name, frameCount, frameDurationMs) {
         frameCount,
         frameWidth: FRAME,
         frameHeight: FRAME,
+        renderWidth: 25,
+        renderHeight: 25,
         fps: Math.round(1000 / frameDurationMs),
         frameDurationMs,
     };
@@ -238,9 +240,15 @@ function main() {
     const run = loadFrames('run', /\.png$/i);
     const base = idle[0] || walk[0] || run[0];
 
+    const sleepBase = run[Math.floor(run.length / 2)] || walk[0] || base;
     const sleep = [0, 1, 2, 1, 0].map((_, i) => {
-        const f = drawFrame(base, { dx: -2 + i, dy: 8, squash: 0.72, darkenEyes: true });
-        drawZ(f, 44 + i, 10 - Math.floor(i / 2) * 2);
+        const f = drawFrame(sleepBase, {
+            dx: i % 2 === 0 ? 0 : 1,
+            dy: 7 + (i === 2 ? 1 : 0),
+            squash: 0.96,
+            darkenEyes: true,
+        });
+        drawZ(f, 45 + i, 9 - Math.floor(i / 2) * 2);
         return f;
     });
 
