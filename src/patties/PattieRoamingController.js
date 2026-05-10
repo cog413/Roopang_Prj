@@ -38,7 +38,7 @@ export class PattieRoamingController {
         this.direction = 1;
         this.active = false;
         this.zone = null;
-        this.mode = 'walk';
+        this.mode = 'idle';
         this.jumpMotion = null;
         this.climbTargetY = null;
         this.chartBarIndex = 0;
@@ -112,7 +112,7 @@ export class PattieRoamingController {
     start() {
         if (this.active) return;
         this.active = true;
-        this.lastDecisionAt = performance.now();
+        this.lastDecisionAt = performance.now() + this.config.movement.initialIdleMs;
         this.raf = requestAnimationFrame(this.boundTick);
     }
 
@@ -214,7 +214,11 @@ export class PattieRoamingController {
 
         // Terrain target selection: floor or one bar top surface, with x constrained to that surface.
         const current = this.findNearestSurface(surfaces);
-        const candidates = surfaces.filter((surface) => surface.id !== current?.id);
+        const candidates = surfaces.filter((surface) => {
+            if (surface.id === current?.id) return false;
+            const heightDelta = Math.abs(surface.y - this.y);
+            return heightDelta <= this.config.movement.maxTerrainDeltaPx;
+        });
         const target = randomItem(candidates.length ? candidates : surfaces);
         const targetX = randomBetween(target.minX, target.maxX);
         const targetY = target.y;
@@ -223,23 +227,30 @@ export class PattieRoamingController {
         const distance = Math.hypot(dx, dy);
 
         // State transition by height delta: flat walk, upward jump/climb, downward hop-down.
-        let mode = 'walk';
-        if (dy < -18) mode = Math.abs(dx) < 24 ? 'climb' : 'jump';
+        let mode = Math.abs(dx) > 160 && Math.abs(dy) <= 5 ? 'run' : 'walk';
+        if (dy < -18) mode = Math.abs(dx) < 30 ? 'climb' : 'jump';
         else if (dy < -6) mode = 'jump';
         else if (dy > 6) mode = 'hopDown';
 
         const duration = mode === 'walk'
-            ? clamp(distance * 32, 1500, 3200)
+            ? clamp(distance * this.config.movement.walkDurationPerPx, 4200, 14000)
+            : mode === 'run'
+                ? clamp(distance * this.config.movement.runDurationPerPx, 3000, 9000)
             : mode === 'climb'
-                ? clamp(Math.abs(dy) * 42 + Math.abs(dx) * 18, 900, 1800)
-                : clamp(distance * 18, 760, 1250);
+                ? clamp(Math.abs(dy) * 70 + Math.abs(dx) * 28, 1800, 3600)
+                : clamp(distance * 34, 1400, 2600);
 
         this.direction = targetX >= this.x ? 1 : -1;
         this.mode = mode;
         this.sprite.play(mode === 'hopDown' ? 'jump' : mode, {
             restart: true,
-            once: mode !== 'walk' && mode !== 'climb',
+            once: !['walk', 'run', 'climb'].includes(mode),
             next: 'idle',
+            frameDurationMs: mode === 'walk'
+                ? this.config.movement.walkFrameDurationMs
+                : mode === 'run'
+                    ? this.config.movement.runFrameDurationMs
+                    : null,
         });
         this.terrainMotion = {
             mode,
@@ -249,7 +260,7 @@ export class PattieRoamingController {
             endY: targetY,
             startedAt: performance.now(),
             duration,
-            arcPx: mode === 'jump' ? 26 : mode === 'hopDown' ? 14 : 0,
+            arcPx: mode === 'jump' ? 22 : mode === 'hopDown' ? 12 : 0,
         };
     }
 
@@ -350,10 +361,11 @@ export class PattieRoamingController {
         if (!zone) return;
         const root = this.rootRect();
         this.zone = zone;
-        const firstSurface = this.getChartSurfaces().find((surface) => surface.kind === 'bar');
-        if (zone.id === 'chart-zone' && firstSurface) {
-            this.x = (firstSurface.minX + firstSurface.maxX) / 2;
-            this.y = firstSurface.y;
+        const floor = this.getChartSurfaces().find((surface) => surface.kind === 'floor');
+        if (zone.id === 'chart-zone' && floor) {
+            this.x = randomBetween(floor.minX + 20, floor.maxX - 20);
+            this.y = floor.y;
+            this.setMode('idle');
         } else {
             this.x = zone.bounds.left - root.left + 40;
             this.y = zone.bounds.top - root.top + 40;
@@ -412,17 +424,21 @@ export class PattieRoamingController {
         const floor = {
             id: 'chart-floor',
             kind: 'floor',
-            minX: chartLeft + 10,
-            maxX: chartRight - size - 10,
-            y: chartBottom - size - 12,
+            minX: chartLeft + 14,
+            maxX: chartRight - size - 14,
+            y: chartBottom - size - 16,
         };
+        const floorY = floor.y;
         const bars = this.getSortedBars().map((bar, index) => ({
             id: `bar-${index}`,
             kind: 'bar',
-            minX: bar.left - root.left,
-            maxX: bar.right - root.left - size,
+            minX: bar.left - root.left + 1,
+            maxX: bar.right - root.left - size - 1,
             y: bar.top - root.top - size,
-        })).filter((surface) => surface.maxX >= surface.minX);
+        })).filter((surface) => {
+            const heightFromFloor = Math.abs(surface.y - floorY);
+            return surface.maxX >= surface.minX && heightFromFloor <= this.config.movement.maxBarHeightFromFloorPx;
+        });
         return [floor, ...bars];
     }
 
