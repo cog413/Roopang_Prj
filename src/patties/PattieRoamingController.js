@@ -43,6 +43,7 @@ export class PattieRoamingController {
         this.climbTargetY = null;
         this.chartBarIndex = 0;
         this.chartAction = 'jump';
+        this.terrainMotion = null;
         this.lastInteractionAt = Date.now();
         this.lastDecisionAt = 0;
         this.raf = null;
@@ -133,15 +134,19 @@ export class PattieRoamingController {
     }
 
     decide() {
+        if (this.terrainMotion || this.jumpMotion || this.mode === 'climb') return;
         this.zone = this.findCurrentZone() || this.pickNearestZone();
         if (Date.now() - this.lastInteractionAt > this.config.movement.sleepAfterMs && Math.random() < 0.2) {
             this.setMode('sleep');
             return;
         }
 
-        const mode = this.zone?.id === 'chart-zone'
-            ? this.nextChartAction()
-            : weightedPick(this.zone?.weights || this.config.zones[0].weights);
+        if (this.zone?.id === 'chart-zone') {
+            this.startChartTerrainMove();
+            return;
+        }
+
+        const mode = weightedPick(this.zone?.weights || this.config.zones[0].weights);
         if (mode === 'climb' && this.findTargetBar()) {
             this.startClimb(this.findTargetBar());
         } else if (mode === 'jump') {
@@ -155,6 +160,10 @@ export class PattieRoamingController {
     move() {
         const zone = this.zone || this.pickNearestZone();
         if (!zone) return;
+        if (this.terrainMotion) {
+            this.updateTerrainMotion();
+            return;
+        }
         if (this.mode === 'jump' && this.jumpMotion) {
             this.updateJumpMotion();
             return;
@@ -194,6 +203,82 @@ export class PattieRoamingController {
     setMode(mode) {
         this.mode = mode || 'idle';
         this.sprite.play(this.mode);
+    }
+
+    startChartTerrainMove() {
+        const surfaces = this.getChartSurfaces();
+        if (!surfaces.length) {
+            this.setMode('idle');
+            return;
+        }
+
+        // Terrain target selection: floor or one bar top surface, with x constrained to that surface.
+        const current = this.findNearestSurface(surfaces);
+        const candidates = surfaces.filter((surface) => surface.id !== current?.id);
+        const target = randomItem(candidates.length ? candidates : surfaces);
+        const targetX = randomBetween(target.minX, target.maxX);
+        const targetY = target.y;
+        const dy = targetY - this.y;
+        const dx = targetX - this.x;
+        const distance = Math.hypot(dx, dy);
+
+        // State transition by height delta: flat walk, upward jump/climb, downward hop-down.
+        let mode = 'walk';
+        if (dy < -18) mode = Math.abs(dx) < 24 ? 'climb' : 'jump';
+        else if (dy < -6) mode = 'jump';
+        else if (dy > 6) mode = 'hopDown';
+
+        const duration = mode === 'walk'
+            ? clamp(distance * 32, 1500, 3200)
+            : mode === 'climb'
+                ? clamp(Math.abs(dy) * 42 + Math.abs(dx) * 18, 900, 1800)
+                : clamp(distance * 18, 760, 1250);
+
+        this.direction = targetX >= this.x ? 1 : -1;
+        this.mode = mode;
+        this.sprite.play(mode === 'hopDown' ? 'jump' : mode, {
+            restart: true,
+            once: mode !== 'walk' && mode !== 'climb',
+            next: 'idle',
+        });
+        this.terrainMotion = {
+            mode,
+            startX: this.x,
+            startY: this.y,
+            endX: targetX,
+            endY: targetY,
+            startedAt: performance.now(),
+            duration,
+            arcPx: mode === 'jump' ? 26 : mode === 'hopDown' ? 14 : 0,
+        };
+    }
+
+    updateTerrainMotion() {
+        const m = this.terrainMotion;
+        const elapsed = performance.now() - m.startedAt;
+        const t = Math.min(1, elapsed / m.duration);
+        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+        this.x = m.startX + (m.endX - m.startX) * eased;
+        this.y = m.startY + (m.endY - m.startY) * eased;
+        if (m.mode === 'jump' || m.mode === 'hopDown') {
+            this.y -= Math.sin(Math.PI * t) * m.arcPx;
+        }
+
+        const chart = this.getZones().find((zone) => zone.id === 'chart-zone');
+        if (chart) {
+            const root = this.rootRect();
+            const size = this.config.movement.spriteSize;
+            this.x = clamp(this.x, chart.bounds.left - root.left + 4, chart.bounds.right - root.left - size - 4);
+            this.y = clamp(this.y, chart.bounds.top - root.top + 4, chart.bounds.bottom - root.top - size - 6);
+        }
+
+        if (t >= 1) {
+            this.x = m.endX;
+            this.y = m.endY;
+            this.terrainMotion = null;
+            this.setMode('idle');
+        }
     }
 
     startJump(target = null) {
@@ -265,10 +350,10 @@ export class PattieRoamingController {
         if (!zone) return;
         const root = this.rootRect();
         this.zone = zone;
-        const firstBar = this.getSortedBars()[0];
-        if (zone.id === 'chart-zone' && firstBar) {
-            this.x = firstBar.left + firstBar.width / 2 - root.left - this.config.movement.spriteSize / 2;
-            this.y = firstBar.top - root.top - this.config.movement.spriteSize + 6;
+        const firstSurface = this.getChartSurfaces().find((surface) => surface.kind === 'bar');
+        if (zone.id === 'chart-zone' && firstSurface) {
+            this.x = (firstSurface.minX + firstSurface.maxX) / 2;
+            this.y = firstSurface.y;
         } else {
             this.x = zone.bounds.left - root.left + 40;
             this.y = zone.bounds.top - root.top + 40;
@@ -295,7 +380,9 @@ export class PattieRoamingController {
 
     getZones() {
         return this.config.zones.flatMap((zone) => {
-            return Array.from(this.root.querySelectorAll(zone.selector)).map((el) => ({
+            const elements = Array.from(this.root.querySelectorAll(zone.selector));
+            if (this.root.matches?.(zone.selector)) elements.unshift(this.root);
+            return elements.map((el) => ({
                 ...zone,
                 el,
                 bounds: el.getBoundingClientRect(),
@@ -310,6 +397,41 @@ export class PattieRoamingController {
         const size = this.config.movement.spriteSize;
         const centerX = root.left + this.x + size / 2;
         return bars.sort((a, b) => Math.abs(centerX - (a.left + a.width / 2)) - Math.abs(centerX - (b.left + b.width / 2)))[0];
+    }
+
+    getChartSurfaces() {
+        const chart = this.getZones().find((zone) => zone.id === 'chart-zone');
+        if (!chart) return [];
+        const root = this.rootRect();
+        const size = this.config.movement.spriteSize;
+        const chartLeft = chart.bounds.left - root.left;
+        const chartRight = chart.bounds.right - root.left;
+        const chartBottom = chart.bounds.bottom - root.top;
+
+        // Terrain calculation: floor plus every visible bar top, all in root-local coordinates.
+        const floor = {
+            id: 'chart-floor',
+            kind: 'floor',
+            minX: chartLeft + 10,
+            maxX: chartRight - size - 10,
+            y: chartBottom - size - 12,
+        };
+        const bars = this.getSortedBars().map((bar, index) => ({
+            id: `bar-${index}`,
+            kind: 'bar',
+            minX: bar.left - root.left,
+            maxX: bar.right - root.left - size,
+            y: bar.top - root.top - size,
+        })).filter((surface) => surface.maxX >= surface.minX);
+        return [floor, ...bars];
+    }
+
+    findNearestSurface(surfaces) {
+        return [...surfaces].sort((a, b) => {
+            const ax = clamp(this.x, a.minX, a.maxX);
+            const bx = clamp(this.x, b.minX, b.maxX);
+            return Math.hypot(this.x - ax, this.y - a.y) - Math.hypot(this.x - bx, this.y - b.y);
+        })[0] || null;
     }
 
     findTargetBar() {
@@ -398,6 +520,15 @@ function weightedPick(weights) {
         if (point <= 0) return key;
     }
     return entries[0]?.[0] || 'idle';
+}
+
+function randomItem(items) {
+    return items[Math.floor(Math.random() * items.length)];
+}
+
+function randomBetween(min, max) {
+    if (max <= min) return min;
+    return min + Math.random() * (max - min);
 }
 
 function clamp(v, min, max) {

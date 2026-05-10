@@ -679,3 +679,26 @@ AI는 아래를 판단해야 한다:
 **6. 반영 필요 사항 (중요)**
 - Pattie/Mong은 그래프 박스 내부에서만 이동하는 화면에서는 chart-zone 전용 bar-to-bar 시퀀스를 사용한다.
 - 64x64 원본 도트 애셋은 스프라이트 시트 생성 시 중심/바닥선 정렬 보정을 거친다.
+### [2026-05-10 16:13] (CLI: codex)
+
+**1. 목표**
+- `moving.pptx` 요구사항 기준으로 주간 매출 추이 그래프 카드 안에서만 움직이는 코기 NPC를 구현한다.
+
+**2. 현재 상태**
+- 관리시트는 엑셀형 표, 프로젝트 표, 트렌드 카드, 분석 카드, `주간 매출 추이` 그래프 카드로 구성된다.
+- 그래프 카드는 온라인/오프라인 주간 매출 묶음 막대그래프이며 Pattie/Mong 컨트롤러의 root로 사용된다.
+
+**3. 문제**
+- 기존 구현은 그래프 내부 지형 surface와 바닥/막대 top 구분이 약했고, 관리시트 파일에 깨진 문자열이 많아 부분 수정 후 syntax error가 발생했다.
+
+**4. 시도한 것**
+- `src/pet/miniPet.js`를 유효한 UTF-8 코드로 재구성했다.
+- 그래프 카드 DOM을 `position: relative` 이동 root로 사용하고, 막대별 `data-pattie-terrain="chart-bar"`를 부여했다.
+- `PattieRoamingController`에 floor/bar top surface 계산, 랜덤 목표 선택, 높이 차이별 `walk`/`jump`/`climb`/`hopDown` 전환을 추가했다.
+
+**5. 해결 / 인사이트**
+- 코기는 그래프 카드 밖으로 나가지 않고, 바닥 또는 막대 top surface만 목표로 이동한다.
+- 상승은 jump/climb, 하강은 hopDown 포물선으로 처리해 순간이동을 제거했다.
+
+**6. 반영 필요 사항 (중요)**
+- 그래프 NPC는 카드 root 내부 absolute 좌표계를 기준으로 구현하고, 지형 계산은 JS의 surface 데이터로 관리한다.

@@ -893,33 +893,53 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 .mp-chart {
     position: absolute;
     left: 520px;
-    top: 390px;
-    width: 280px;
-    height: 190px;
-    border: 1px solid #c8c6c4;
-    background: #fff;
-    padding: 10px 12px 12px;
+    top: 360px;
+    width: 430px;
+    height: 230px;
+    border: 1px solid #b7c9d6;
+    background:
+        linear-gradient(180deg, rgba(242,248,252,0.92), rgba(255,255,255,0.98));
+    padding: 10px 14px 14px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(31,78,121,0.12);
+    overflow: hidden;
 }
 
 .mp-chart-title {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: bold;
     color: #1f3864;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid #e1dfdd;
+    padding-bottom: 4px;
 }
+
+.mp-chart-legend {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    height: 18px;
+    margin-bottom: 4px;
+    font-size: 10px;
+    color: #44546a;
+    border-bottom: 1px solid #d8e2ea;
+}
+.mp-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 4px;
+    border-radius: 50%;
+}
+.mp-dot-online { background: #5b9bd5; }
+.mp-dot-offline { background: #ed7d31; }
 
 .mp-bars {
     position: relative;
     display: flex;
     align-items: flex-end;
-    gap: 8px;
-    height: 142px;
-    padding: 10px 6px 0 10px;
+    gap: 12px;
+    height: 172px;
+    padding: 12px 10px 0 12px;
     flex: 1;
     border-left: 1px solid #d9d9d9;
     border-bottom: 1px solid #d9d9d9;
@@ -937,15 +957,23 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
     gap: 2px;
 }
 
-.mp-bar {
+.mp-bar-pair {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3px;
     width: 100%;
+    height: 100%;
+}
+
+.mp-bar {
+    width: 12px;
     border-radius: 2px 2px 0 0;
-    background: linear-gradient(to top, #2e75b6, #5b9bd5);
     transition: height 0.7s ease-out;
     min-height: 18px;
 }
-.mp-col:nth-child(5) .mp-bar { background: linear-gradient(to top, #375623, #70ad47); }
-.mp-col:nth-child(6) .mp-bar { background: linear-gradient(to top, #c55a11, #ed7d31); }
+.mp-bar-online { background: linear-gradient(to top, #2e75b6, #7fb6e6); }
+.mp-bar-offline { background: linear-gradient(to top, #c55a11, #f4a261); }
 
 .mp-val { font-size: 9px; color: #666; text-align: center; min-height: 11px; }
 .mp-lbl { font-size: 10px; font-weight: bold; color: #555; }

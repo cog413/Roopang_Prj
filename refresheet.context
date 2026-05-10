@@ -181,3 +181,5 @@
 
 - Graph-only guide screens constrain Pattie/Mong to the chart box and use a deterministic bar-to-bar `jump`/`climb` sequence instead of free roaming.
 - Test sprite generation normalizes each frame's alpha bounds to a shared center line and bottom line before building sprite sheets.
+- Weekly sales chart NPC movement uses a chart-local absolute coordinate system. Valid terrain surfaces are the chart floor and each bar's top surface, calculated from `getBoundingClientRect()`.
+- Upward movement selects `jump` or `climb`; downward movement uses `hopDown` with a small arc. The NPC must never target arbitrary points outside chart terrain surfaces.
