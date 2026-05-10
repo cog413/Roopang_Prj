@@ -620,3 +620,36 @@ AI는 아래를 판단해야 한다:
 - mong 테스트 asset은 `public/assets/patties_mong_test`에만 둔다.
 - 최종 asset과 테스트 asset을 섞지 않는다.
 - 64x64 mong 테스트 기간에는 `PattieAssetLoader` 기본 manifest가 `/public/assets/patties_mong_test/manifest.json`을 읽는다.
+
+---
+
+### [2026-05-10 15:18] (CLI: codex)
+
+**1. 목표**
+- `manually_command/moving.pptx` 첫 페이지 `@` 가이드를 반영해 mong 테스트 캐릭터 크기, sleep 모션, bar graph 이동, 관리시트 프로젝트 테이블 폭을 수정한다.
+
+**2. 현재 상태**
+- mong 원본은 64x64 sprite지만 화면에서는 엑셀 셀 정도 크기로 보여야 한다.
+- 관리시트 오른쪽 상단 주간 매출 추이 그래프 박스가 캐릭터의 주 활동 영역이다.
+
+**3. 문제**
+- 캐릭터가 64px로 렌더링되어 엑셀 셀 대비 너무 컸다.
+- sleep 모션이 서 있는 캐릭터를 눌러놓은 느낌이라 부자연스러웠다.
+- chartZone 안에서 일반 walk가 섞여 bar graph 이동이 jump/climb 중심으로 보이지 않았다.
+- 관리시트 두 번째 프로젝트 표의 `주요프로젝트명`, `마감기한` 컬럼 폭이 텍스트보다 좁아 값이 삐져나왔다.
+
+**4. 시도한 것**
+- mong manifest에 `renderWidth`, `renderHeight` 25를 추가하고 PattieSprite가 원본 frameWidth 64와 화면 render size를 분리해 처리하게 했다.
+- sleep 생성 로직을 run side pose 기반으로 바꿔 누워서 자는 느낌에 가깝게 수정했다.
+- chartZone 이동 확률에서 walk를 제거하고 jump/climb/idle 중심으로 조정했다.
+- chartZone 기본 위치를 우선 선택하고, bar graph 이동은 다음 막대 상단으로 jump하거나 막대 옆 climb 후 idle하도록 수정했다.
+- `.proj-table .mht-row` 컬럼 폭을 별도 지정해 프로젝트명과 마감기한 컬럼을 넓혔다.
+
+**5. 해결 / 인사이트**
+- 원본 64x64 asset은 유지하되 화면 렌더링은 25x25로 줄여 엑셀 셀 크기에 맞췄다.
+- 주간 매출 추이 그래프 박스 안에서는 walk보다 jump/climb으로 이동하는 지형 행동이 더 자연스럽다.
+
+**6. 반영 필요 사항 (중요)**
+- mong 테스트 asset은 원본 frame size와 render size를 분리한다.
+- 관리시트 chartZone에서는 bar 이동을 jump/climb 중심으로 유지한다.
+- 프로젝트 표는 텍스트 길이에 맞춰 `.proj-table` 전용 컬럼 폭을 유지한다.

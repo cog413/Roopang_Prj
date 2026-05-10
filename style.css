@@ -791,8 +791,8 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 }
 .pattie-sprite {
     position: absolute;
-    width: 64px;
-    height: 64px;
+    width: 25px;
+    height: 25px;
     image-rendering: pixelated;
     pointer-events: auto;
     z-index: 130;
@@ -805,13 +805,13 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 .pattie-equipped-item {
     position: absolute;
     inset: 0;
-    width: 64px;
-    height: 64px;
+    width: 25px;
+    height: 25px;
     background-repeat: no-repeat;
     image-rendering: pixelated;
 }
 .pattie-equipped-item {
-    background-size: 64px 64px;
+    background-size: 25px 25px;
 }
 .pattie-sprite:hover {
     outline: 1px dotted #217346;
@@ -845,7 +845,7 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
     font-size: 10px;
     text-align: center;
     pointer-events: none;
-    transform: translate(7px, -14px);
+    transform: translate(-5px, -14px);
     white-space: nowrap;
 }
 
@@ -859,6 +859,12 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 .mht-row {
     display: grid;
     grid-template-columns: 110px 50px 50px 50px 50px; /* ?⑷퀎 = 310px = JS TABLE_W */
+}
+.proj-table .mht-row {
+    grid-template-columns: 220px 58px 58px 96px 76px;
+}
+.proj-table .mht-cell {
+    font-size: 10.5px;
 }
 
 .mht-header .mht-cell {

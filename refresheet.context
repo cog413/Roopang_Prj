@@ -166,3 +166,12 @@
 - 최종 Pattie asset(`public/assets/patties/`)과 mong 테스트 asset을 섞지 않는다.
 - mong 테스트 manifest는 `/public/assets/patties_mong_test/manifest.json`이며 frameWidth/frameHeight는 64다.
 - chartZone jump는 `data-pattie-terrain="chart-bar"` 막대들을 x축 순서로 읽고 다음 막대 상단으로 이동해야 한다.
+
+---
+
+## Moving Guide / Mong Runtime Rules
+
+- `manually_command/moving.pptx`의 첫 페이지 `@` 가이드는 관리시트 Pattie 이동 기준으로 본다.
+- mong 테스트 sprite는 원본 64x64를 유지하되 화면 렌더 크기는 엑셀 셀 정도인 25x25를 기준으로 한다.
+- 주간 매출 추이 그래프 박스 안에서 이동할 때는 일반 walk보다 bar-to-bar jump 또는 climb을 우선한다.
+- `.proj-table`은 프로젝트명/마감기한 텍스트가 삐져나오지 않도록 전용 column width를 유지한다.

@@ -77,15 +77,17 @@ export class PattieSprite {
         if (!this.animation) return;
         const width = this.animation.frameWidth || 32;
         const height = this.animation.frameHeight || 32;
-        this.el.style.width = `${width}px`;
-        this.el.style.height = `${height}px`;
-        this.baseEl.style.width = `${width}px`;
-        this.baseEl.style.height = `${height}px`;
+        const renderWidth = this.animation.renderWidth || width;
+        const renderHeight = this.animation.renderHeight || height;
+        this.el.style.width = `${renderWidth}px`;
+        this.el.style.height = `${renderHeight}px`;
+        this.baseEl.style.width = `${renderWidth}px`;
+        this.baseEl.style.height = `${renderHeight}px`;
         this.baseEl.style.backgroundImage = `url("${this.animation.src}")`;
-        this.baseEl.style.backgroundPosition = `-${this.frame * width}px 0`;
-        this.baseEl.style.backgroundSize = `${(this.animation.frameCount || 1) * width}px ${height}px`;
-        this.itemLayer.style.width = `${width}px`;
-        this.itemLayer.style.height = `${height}px`;
+        this.baseEl.style.backgroundPosition = `-${this.frame * renderWidth}px 0`;
+        this.baseEl.style.backgroundSize = `${(this.animation.frameCount || 1) * renderWidth}px ${renderHeight}px`;
+        this.itemLayer.style.width = `${renderWidth}px`;
+        this.itemLayer.style.height = `${renderHeight}px`;
     }
 
     setPosition(x, y, direction = 1) {
