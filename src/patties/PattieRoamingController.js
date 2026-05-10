@@ -223,42 +223,61 @@ export class PattieRoamingController {
             return;
         }
 
-        // Terrain target selection: floor or adjacent bar surface only.
         const current = this.findNearestSurface(surfaces);
-        const maxHDist = this.config.movement.maxJumpDistancePx ?? 62;
+        const maxRadius = 100; // unified euclidean radius for all cross-surface targets
+
+        // Other surfaces within 100px radius and within height delta.
         const candidates = surfaces.filter((surface) => {
             if (surface.id === current?.id) return false;
-            const heightDelta = Math.abs(surface.y - this.y);
-            if (heightDelta > this.config.movement.maxTerrainDeltaPx) return false;
-            // For bar targets, restrict horizontal distance to adjacent columns only.
-            if (surface.kind === 'bar') {
-                const hDist = this.x < surface.minX ? surface.minX - this.x
-                    : this.x > surface.maxX ? this.x - surface.maxX
-                    : 0;
-                if (hDist > maxHDist) return false;
-            }
-            return true;
+            if (Math.abs(surface.y - this.y) > this.config.movement.maxTerrainDeltaPx) return false;
+            const nearestX = clamp(this.x, surface.minX, surface.maxX);
+            return Math.hypot(this.x - nearestX, this.y - surface.y) <= maxRadius;
         });
-        const target = randomItem(candidates.length ? candidates : [current ?? surfaces[0]]);
-        const targetX = randomBetween(target.minX, target.maxX);
-        const targetY = target.y;
+
+        // Walk stays on the same surface; cross-surface transitions always use jump/hopDown/climb.
+        const canWander = current && current.maxX > current.minX + 4;
+        const stayOnCurrent = canWander && (candidates.length === 0 || Math.random() < 0.55);
+
+        let target, targetX, targetY;
+        if (stayOnCurrent) {
+            target = current;
+            const mid = (target.minX + target.maxX) / 2;
+            // Wander toward opposite half to create back-and-forth motion.
+            if (this.x <= mid) {
+                targetX = randomBetween(Math.max(mid, target.minX + 2), target.maxX);
+            } else {
+                targetX = randomBetween(target.minX, Math.min(mid, target.maxX - 2));
+            }
+            targetY = target.y;
+        } else {
+            target = randomItem(candidates.length ? candidates : [current ?? surfaces[0]]);
+            targetX = randomBetween(target.minX, target.maxX);
+            targetY = target.y;
+        }
+
         const dy = targetY - this.y;
         const dx = targetX - this.x;
         const distance = Math.hypot(dx, dy);
 
-        // State transition by height delta: flat walk, upward jump/climb, downward hop-down.
-        let mode = Math.abs(dx) > 160 && Math.abs(dy) <= 5 ? 'run' : 'walk';
-        if (dy < -18) mode = Math.abs(dx) < 30 ? 'climb' : 'jump';
-        else if (dy < -6) mode = 'jump';
-        else if (dy > 6) mode = 'hopDown';
+        // Same surface → walk/run (no air crossing). Cross surface → always jump/hopDown/climb.
+        let mode;
+        if (stayOnCurrent) {
+            mode = distance > 120 ? 'run' : 'walk';
+        } else if (dy < -18) {
+            mode = Math.abs(dx) < 30 ? 'climb' : 'jump';
+        } else if (dy < 0) {
+            mode = 'jump';
+        } else {
+            mode = 'hopDown';
+        }
 
         const duration = mode === 'walk'
             ? clamp(distance * this.config.movement.walkDurationPerPx, 4200, 14000)
             : mode === 'run'
                 ? clamp(distance * this.config.movement.runDurationPerPx, 3000, 9000)
-            : mode === 'climb'
-                ? clamp(Math.abs(dy) * 70 + Math.abs(dx) * 28, 1800, 3600)
-                : clamp(distance * 34, 1400, 2600);
+                : mode === 'climb'
+                    ? clamp(Math.abs(dy) * 70 + Math.abs(dx) * 28, 1800, 3600)
+                    : clamp(distance * 34, 1400, 2600);
 
         this.direction = targetX >= this.x ? 1 : -1;
         this.mode = mode;
@@ -281,6 +300,7 @@ export class PattieRoamingController {
             startedAt: performance.now(),
             duration,
             arcPx: mode === 'jump' ? this.config.movement.jumpArcPx : mode === 'hopDown' ? 12 : 0,
+            surfaces, // cached surfaces for cliff-edge detection during walk/run
         };
     }
 
@@ -288,8 +308,7 @@ export class PattieRoamingController {
         const m = this.terrainMotion;
         const elapsed = performance.now() - m.startedAt;
         const t = Math.min(1, elapsed / m.duration);
-        // walk/run: linear (constant speed) so legs match movement — no sliding
-        // jump/climb/hopDown: ease-in-out for natural arc feel
+        // walk/run: linear so legs match movement; jump/climb/hopDown: ease-in-out
         const eased = (m.mode === 'walk' || m.mode === 'run')
             ? t
             : t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -298,6 +317,19 @@ export class PattieRoamingController {
         this.y = m.startY + (m.endY - m.startY) * eased;
         if (m.mode === 'jump' || m.mode === 'hopDown') {
             this.y -= Math.sin(Math.PI * t) * m.arcPx;
+        }
+
+        // Cliff edge safety: snap Y to terrain surface during walk/run; stop if off-surface.
+        if ((m.mode === 'walk' || m.mode === 'run') && t < 0.98) {
+            const under = (m.surfaces || []).find(s => this.x >= s.minX - 3 && this.x <= s.maxX + 3);
+            if (under) {
+                this.y = under.y;
+            } else {
+                this.terrainMotion = null;
+                this.direction *= -1;
+                this.setMode('idle');
+                return;
+            }
         }
 
         const chart = this.getZones().find((zone) => zone.id === 'chart-zone');

@@ -244,11 +244,37 @@ function buildAnalysisCard() {
     const card = el('div', 'mp-minimap');
     card.innerHTML = `
         <div class="mp-minimap-title">실시간 분석 맵</div>
-        <canvas id="mp-map-canvas" width="148" height="108"></canvas>
-        <div class="mp-map-legend">
-            <span style="color:#5b9bd5">실적 데이터</span>
-            <span style="color:#ed7d31">요약 그래프</span>
-            <span style="color:#111;font-weight:bold">분석 포인트</span>
+        <div class="mp-minimap-body">
+            <div class="mp-minimap-col mp-minimap-col--data">
+                <div class="mp-minimap-col-hd" style="color:#5b9bd5">실적 데이터</div>
+                <div class="mp-minimap-kpis">
+                    <div class="mp-minimap-kpi">
+                        <span class="mp-mk-label">온라인</span>
+                        <span class="mp-mk-val" style="color:#5b9bd5">+14%</span>
+                    </div>
+                    <div class="mp-minimap-kpi">
+                        <span class="mp-mk-label">오프라인</span>
+                        <span class="mp-mk-val" style="color:#ed7d31">+9%</span>
+                    </div>
+                    <div class="mp-minimap-kpi">
+                        <span class="mp-mk-label">목표달성</span>
+                        <span class="mp-mk-val" style="color:#217346">82%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="mp-minimap-col mp-minimap-col--chart">
+                <div class="mp-minimap-col-hd" style="color:#ed7d31">요약 그래프</div>
+                <canvas id="mp-map-canvas"></canvas>
+            </div>
+            <div class="mp-minimap-col mp-minimap-col--points">
+                <div class="mp-minimap-col-hd" style="color:#333;font-weight:bold">분석 포인트</div>
+                <ul class="mp-minimap-pts">
+                    <li>Q1 대비 +12%</li>
+                    <li>피크 W4</li>
+                    <li>추세 상승</li>
+                    <li>W6 최고치</li>
+                </ul>
+            </div>
         </div>`;
     return card;
 }
@@ -267,8 +293,8 @@ function renderRealtimeAnalysis() {
     const canvas = document.getElementById('mp-map-canvas');
     if (!canvas?.parentElement) return;
     const rect = canvas.parentElement.getBoundingClientRect();
-    const width = Math.max(120, rect.width - 20);
-    const height = Math.max(72, rect.height - 58);
+    const width = Math.max(40, rect.width - 4);
+    const height = Math.max(40, rect.height - 16);
     if (width <= 0 || height <= 0) {
         requestAnimationFrame(renderRealtimeAnalysis);
         return;

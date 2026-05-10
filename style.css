@@ -974,7 +974,7 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 /* ?? 李⑦듃 ??????????????????????????????????????????? */
 .mp-chart {
     position: absolute;
-    left: 520px;
+    left: 400px;
     top: 360px;
     width: 430px;
     height: 230px;
@@ -1049,7 +1049,7 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 .mp-bar {
     position: absolute;
     bottom: 0;
-    width: 27px;
+    width: 32px;
     border-radius: 2px 2px 0 0;
     transition: height 0.7s ease-out;
     min-height: 18px;
@@ -1057,11 +1057,11 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
     box-sizing: border-box;
 }
 .mp-bar-online {
-    left: calc(50% - 24px);
+    left: calc(50% - 26px);
     background: linear-gradient(to top, #79b9e3, #b7dbf2);
 }
 .mp-bar-offline {
-    left: calc(50% - 5px);
+    left: calc(50% - 7px);
     background: linear-gradient(to top, #eba06b, #f6c39c);
     opacity: 0.94;
 }
@@ -1079,11 +1079,12 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
     height: 150px;
     border: 1px solid #c8c6c4;
     background: #fff;
-    padding: 10px;
+    padding: 8px 10px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     box-shadow: 2px 2px 6px rgba(0,0,0,0.08);
+    overflow: hidden;
 }
 
 .mp-minimap-title {
@@ -1092,25 +1093,111 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
     color: #217346;
     border-bottom: 1px solid #e1dfdd;
     padding-bottom: 4px;
-    margin-bottom: 2px;
+    flex-shrink: 0;
+}
+
+/* Horizontal 3-column body */
+.mp-minimap-body {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.mp-minimap-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.mp-minimap-col--data   { flex: 0 0 68px; }
+.mp-minimap-col--chart  { flex: 1; }
+.mp-minimap-col--points { flex: 0 0 64px; }
+
+.mp-minimap-col-hd {
+    font-size: 9px;
+    font-weight: bold;
+    color: #888;
+    border-bottom: 1px solid #e1dfdd;
+    padding-bottom: 2px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+}
+
+.mp-minimap-kpis {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.mp-minimap-kpi {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9px;
+    gap: 2px;
+}
+
+.mp-mk-label {
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mp-mk-val {
+    font-weight: bold;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.mp-minimap-pts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mp-minimap-pts li {
+    font-size: 9px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 7px;
+    position: relative;
+}
+
+.mp-minimap-pts li::before {
+    content: '\00B7';
+    position: absolute;
+    left: 0;
+    color: #217346;
+    font-weight: bold;
 }
 
 #mp-map-canvas {
     border: 1px solid #e1dfdd;
     border-radius: 2px;
     display: block;
+    width: 100%;
     flex: 1;
-    min-height: 72px;
-    max-width: 100%;
+    min-height: 0;
 }
 
-.mp-minimap-legend,
 .mp-map-legend {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    gap: 8px;
     font-size: 9px;
     color: #666;
+    flex-shrink: 0;
 }
 .mml-table  { color: #5b9bd5; }
 .mml-chart  { color: #ed7d31; }
@@ -1222,6 +1309,10 @@ body.dark-mode .mp-chart-title { color: #90cdf4; border-color: #444; }
 body.dark-mode .mp-lbl { color: #aaa; }
 body.dark-mode .mp-val  { color: #888; }
 body.dark-mode .mp-minimap { background: #2d2d2d; border-color: #444; }
+body.dark-mode .mp-minimap-col-hd { border-color: #444; }
+body.dark-mode .mp-mk-label { color: #aaa; }
+body.dark-mode .mp-minimap-pts li { color: #ccc; }
+body.dark-mode .mp-minimap-pts li::before { color: #4CAF50; }
 body.dark-mode .mp-bubble  { background: #2d2d2d; border-color: #555; color: #d4d4d4; }
 body.dark-mode #mp-map-canvas { border-color: #444; }
 body.dark-mode .pattie-settings-button,
