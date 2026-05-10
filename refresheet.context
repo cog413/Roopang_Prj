@@ -183,3 +183,5 @@
 - Test sprite generation normalizes each frame's alpha bounds to a shared center line and bottom line before building sprite sheets.
 - Weekly sales chart NPC movement uses a chart-local absolute coordinate system. Valid terrain surfaces are the chart floor and each bar's top surface, calculated from `getBoundingClientRect()`.
 - Upward movement selects `jump` or `climb`; downward movement uses `hopDown` with a small arc. The NPC must never target arbitrary points outside chart terrain surfaces.
+- Chart NPC initial placement must use the chart floor surface, not bar top surfaces, because bar height animation may still be at 0% on first render.
+- Walk/run tuning must adjust both coordinate duration and sprite frame duration so the pet does not visually slide.

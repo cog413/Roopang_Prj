@@ -45,20 +45,21 @@ export class PattieSprite {
         }
     }
 
-    async play(animationKey, { restart = false, once = false, next = 'walk' } = {}) {
+    async play(animationKey, { restart = false, once = false, next = 'walk', frameDurationMs = null } = {}) {
         if (!restart && this.animationKey === animationKey && this.animation) return;
         this.animationKey = animationKey;
         this.animation = await this.loader.getAnimation(this.characterKey, animationKey);
         this.frame = 0;
         this.once = once;
         this.nextAnimation = next;
+        this.frameDurationOverride = frameDurationMs;
         this.applyFrame();
         this.startFrameTimer();
     }
 
     startFrameTimer() {
         clearInterval(this.frameTimer);
-        const duration = this.animation?.frameDurationMs || 500;
+        const duration = this.frameDurationOverride || this.animation?.frameDurationMs || 500;
         this.frameTimer = setInterval(() => {
             const count = this.animation?.frameCount || 1;
             this.frame += 1;
