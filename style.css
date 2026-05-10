@@ -1014,7 +1014,7 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 .mp-bar {
     position: absolute;
     bottom: 0;
-    width: 18px;
+    width: 27px;
     border-radius: 2px 2px 0 0;
     transition: height 0.7s ease-out;
     min-height: 18px;
@@ -1022,11 +1022,11 @@ body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
     box-sizing: border-box;
 }
 .mp-bar-online {
-    left: calc(50% - 15px);
+    left: calc(50% - 24px);
     background: linear-gradient(to top, #79b9e3, #b7dbf2);
 }
 .mp-bar-offline {
-    left: calc(50% - 3px);
+    left: calc(50% - 5px);
     background: linear-gradient(to top, #eba06b, #f6c39c);
     opacity: 0.94;
 }

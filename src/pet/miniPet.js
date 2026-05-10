@@ -22,13 +22,13 @@ const PROJECT_ROWS = [
 ];
 
 const WEEKLY_SALES = [
-    { label: 'W1', online: 22, offline: 15, onlineVal: '2.2', offlineVal: '1.5' },
-    { label: 'W2', online: 48, offline: 38, onlineVal: '4.8', offlineVal: '3.8' },
-    { label: 'W3', online: 35, offline: 26, onlineVal: '3.5', offlineVal: '2.6' },
-    { label: 'W4', online: 62, offline: 50, onlineVal: '6.2', offlineVal: '5.0' },
-    { label: 'W5', online: 50, offline: 40, onlineVal: '5.0', offlineVal: '4.0' },
-    { label: 'W6', online: 72, offline: 60, onlineVal: '7.2', offlineVal: '6.0' },
-    { label: 'W7', online: 28, offline: 20, onlineVal: '2.8', offlineVal: '2.0' },
+    { label: 'W1', online: 30, offline: 22, onlineVal: '3.0', offlineVal: '2.2' },
+    { label: 'W2', online: 42, offline: 32, onlineVal: '4.2', offlineVal: '3.2' },
+    { label: 'W3', online: 54, offline: 44, onlineVal: '5.4', offlineVal: '4.4' },
+    { label: 'W4', online: 64, offline: 52, onlineVal: '6.4', offlineVal: '5.2' },
+    { label: 'W5', online: 56, offline: 44, onlineVal: '5.6', offlineVal: '4.4' },
+    { label: 'W6', online: 68, offline: 56, onlineVal: '6.8', offlineVal: '5.6' },
+    { label: 'W7', online: 55, offline: 42, onlineVal: '5.5', offlineVal: '4.2' },
 ];
 
 const TREND_TARGET = [72, 75, 78, 80, 83, 86];

@@ -62,10 +62,6 @@ export class PattieRoamingController {
             itemKeys: this.profile.equipped_item_keys,
         });
         await this.sprite.mount(this.root);
-        this.nameplate = document.createElement('div');
-        this.nameplate.className = 'pattie-nameplate';
-        this.nameplate.textContent = this.profile.nickname || DEFAULT_PROFILE.nickname;
-        this.root.appendChild(this.nameplate);
         this.speechBubble = document.createElement('div');
         this.speechBubble.className = 'pattie-speech';
         this.root.appendChild(this.speechBubble);
@@ -220,14 +216,23 @@ export class PattieRoamingController {
             return;
         }
 
-        // Terrain target selection: floor or one bar top surface, with x constrained to that surface.
+        // Terrain target selection: floor or adjacent bar surface only.
         const current = this.findNearestSurface(surfaces);
+        const maxHDist = this.config.movement.maxJumpDistancePx ?? 62;
         const candidates = surfaces.filter((surface) => {
             if (surface.id === current?.id) return false;
             const heightDelta = Math.abs(surface.y - this.y);
-            return heightDelta <= this.config.movement.maxTerrainDeltaPx;
+            if (heightDelta > this.config.movement.maxTerrainDeltaPx) return false;
+            // For bar targets, restrict horizontal distance to adjacent columns only.
+            if (surface.kind === 'bar') {
+                const hDist = this.x < surface.minX ? surface.minX - this.x
+                    : this.x > surface.maxX ? this.x - surface.maxX
+                    : 0;
+                if (hDist > maxHDist) return false;
+            }
+            return true;
         });
-        const target = randomItem(candidates.length ? candidates : surfaces);
+        const target = randomItem(candidates.length ? candidates : [current ?? surfaces[0]]);
         const targetX = randomBetween(target.minX, target.maxX);
         const targetY = target.y;
         const dy = targetY - this.y;
@@ -268,7 +273,7 @@ export class PattieRoamingController {
             endY: targetY,
             startedAt: performance.now(),
             duration,
-            arcPx: mode === 'jump' ? 22 : mode === 'hopDown' ? 12 : 0,
+            arcPx: mode === 'jump' ? this.config.movement.jumpArcPx : mode === 'hopDown' ? 12 : 0,
         };
     }
 
@@ -570,10 +575,11 @@ export class PattieRoamingController {
     }
 
     updateNameplate() {
-        if (!this.nameplate) return;
         const size = this.config.movement.spriteSize;
-        this.nameplate.style.left = `${Math.round(this.x)}px`;
-        this.nameplate.style.top = `${Math.round(this.y)}px`;
+        if (this.nameplate) {
+            this.nameplate.style.left = `${Math.round(this.x)}px`;
+            this.nameplate.style.top = `${Math.round(this.y)}px`;
+        }
         if (this.speechBubble) {
             this.speechBubble.style.left = `${Math.round(this.x + size / 2)}px`;
             this.speechBubble.style.top = `${Math.round(this.y - 18)}px`;
