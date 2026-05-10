@@ -40,9 +40,7 @@ export class PattieRoamingController {
         this.zone = null;
         this.mode = 'idle';
         this.jumpMotion = null;
-        this.climbTargetY = null;
         this.chartBarIndex = 0;
-        this.chartAction = 'jump';
         this.terrainMotion = null;
         this.lastInteractionAt = Date.now();
         this.lastDecisionAt = 0;
@@ -139,7 +137,7 @@ export class PattieRoamingController {
     }
 
     decide() {
-        if (this.terrainMotion || this.jumpMotion || this.mode === 'climb') return;
+        if (this.terrainMotion || this.jumpMotion) return;
         // Sleep remains locked for two decision cycles before any re-pick.
         if (this.sleepLockCycles > 0) {
             this.sleepLockCycles -= 1;
@@ -157,13 +155,11 @@ export class PattieRoamingController {
         }
 
         const mode = weightedPick(this.zone?.weights || this.config.zones[0].weights);
-        if (mode === 'climb' && this.findTargetBar()) {
-            this.startClimb(this.findTargetBar());
-        } else if (mode === 'jump') {
-            this.startJump(this.zone?.id === 'chart-zone' ? this.findNextBarPlatform() : null);
+        if (mode === 'jump') {
+            this.startJump(null);
         } else {
-            this.setMode(this.zone?.id === 'chart-zone' && mode === 'walk' ? 'idle' : mode);
-            if (this.zone?.id !== 'chart-zone' && Math.random() < 0.35) this.direction *= -1;
+            this.setMode(mode);
+            if (Math.random() < 0.35) this.direction *= -1;
         }
     }
 
@@ -179,13 +175,8 @@ export class PattieRoamingController {
             return;
         }
 
-        const step = this.mode === 'walk'
-            ? this.config.movement.stepPx
-            : this.mode === 'climb'
-                ? this.config.movement.climbStepPx
-                : 0;
+        const step = this.mode === 'walk' ? this.config.movement.stepPx : 0;
         if (this.mode === 'walk') this.x += step * this.direction;
-        if (this.mode === 'climb') this.y -= step;
 
         const size = this.config.movement.spriteSize;
         const root = this.rootRect();
@@ -198,16 +189,6 @@ export class PattieRoamingController {
         if (this.x <= minX || this.x >= maxX) this.direction *= -1;
         this.x = clamp(this.x, minX, maxX);
         this.y = clamp(this.y, minY, maxY);
-        if (this.mode === 'climb' && this.climbTargetY !== null && this.y <= this.climbTargetY) {
-            this.y = this.climbTargetY;
-            this.climbTargetY = null;
-            this.setMode('idle');
-            return;
-        }
-        if (this.mode === 'climb' && this.y <= minY + 4) {
-            this.setMode('idle');
-            this.direction *= -1;
-        }
     }
 
     setMode(mode) {
@@ -224,9 +205,9 @@ export class PattieRoamingController {
         }
 
         const current = this.findNearestSurface(surfaces);
-        const maxRadius = 100; // unified euclidean radius for all cross-surface targets
+        const maxRadius = 80; // euclidean radius for cross-surface target selection
 
-        // Other surfaces within 100px radius and within height delta.
+        // Other surfaces within 80px radius and within height delta.
         const candidates = surfaces.filter((surface) => {
             if (surface.id === current?.id) return false;
             if (Math.abs(surface.y - this.y) > this.config.movement.maxTerrainDeltaPx) return false;
@@ -234,9 +215,9 @@ export class PattieRoamingController {
             return Math.hypot(this.x - nearestX, this.y - surface.y) <= maxRadius;
         });
 
-        // Walk stays on the same surface; cross-surface transitions always use jump/hopDown/climb.
+        // Walk stays on the same surface; cross-surface uses jump/hopDown only (no climb).
         const canWander = current && current.maxX > current.minX + 4;
-        const stayOnCurrent = canWander && (candidates.length === 0 || Math.random() < 0.55);
+        const stayOnCurrent = canWander && (candidates.length === 0 || Math.random() < 0.72);
 
         let target, targetX, targetY;
         if (stayOnCurrent) {
@@ -259,12 +240,10 @@ export class PattieRoamingController {
         const dx = targetX - this.x;
         const distance = Math.hypot(dx, dy);
 
-        // Same surface → walk/run (no air crossing). Cross surface → always jump/hopDown/climb.
+        // Same surface → walk/run. Cross surface → jump (up) or hopDown (down/level). No climb.
         let mode;
         if (stayOnCurrent) {
             mode = distance > 120 ? 'run' : 'walk';
-        } else if (dy < -18) {
-            mode = Math.abs(dx) < 30 ? 'climb' : 'jump';
         } else if (dy < 0) {
             mode = 'jump';
         } else {
@@ -275,15 +254,18 @@ export class PattieRoamingController {
             ? clamp(distance * this.config.movement.walkDurationPerPx, 4200, 14000)
             : mode === 'run'
                 ? clamp(distance * this.config.movement.runDurationPerPx, 3000, 9000)
-                : mode === 'climb'
-                    ? clamp(Math.abs(dy) * 70 + Math.abs(dx) * 28, 1800, 3600)
-                    : clamp(distance * 34, 1400, 2600);
+                : clamp(distance * 34, 1400, 2600);
+
+        // Arc scales with distance: near hops stay flat, far jumps rise proportionally.
+        const arcPx = (mode === 'jump' || mode === 'hopDown')
+            ? clamp(distance * 0.12, 2, 10)
+            : 0;
 
         this.direction = targetX >= this.x ? 1 : -1;
         this.mode = mode;
         this.sprite.play(mode === 'hopDown' ? 'jump' : mode, {
             restart: true,
-            once: !['walk', 'run', 'climb'].includes(mode),
+            once: !['walk', 'run'].includes(mode),
             next: 'idle',
             frameDurationMs: mode === 'walk'
                 ? this.config.movement.walkFrameDurationMs
@@ -299,9 +281,9 @@ export class PattieRoamingController {
             endY: targetY,
             startedAt: performance.now(),
             duration,
-            arcPx: mode === 'jump' ? this.config.movement.jumpArcPx : mode === 'hopDown' ? 12 : 0,
-            surfaces, // cached surfaces for cliff-edge detection during walk/run
-            surfaceId: stayOnCurrent ? target.id : null, // pin Y-snap to correct surface
+            arcPx,
+            surfaces,
+            surfaceId: stayOnCurrent ? target.id : null,
         };
     }
 
@@ -309,7 +291,7 @@ export class PattieRoamingController {
         const m = this.terrainMotion;
         const elapsed = performance.now() - m.startedAt;
         const t = Math.min(1, elapsed / m.duration);
-        // walk/run: linear so legs match movement; jump/climb/hopDown: ease-in-out
+        // walk/run: linear so legs match movement; jump/hopDown: ease-in-out
         const eased = (m.mode === 'walk' || m.mode === 'run')
             ? t
             : t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -384,18 +366,6 @@ export class PattieRoamingController {
             this.jumpMotion = null;
             this.setMode(this.zone?.id === 'chart-zone' ? 'idle' : 'walk');
         }
-    }
-
-    startClimb(targetBar = null) {
-        const bar = targetBar || this.findNearestBar();
-        if (bar) {
-            const size = this.config.movement.spriteSize;
-            this.x = clamp(bar.left - size + 10, 0, this.root.clientWidth - size);
-            this.y = clamp(bar.bottom - size, 0, this.root.clientHeight - size);
-            this.climbTargetY = clamp(bar.top - size + 4, 0, this.root.clientHeight - size);
-        }
-        this.mode = 'climb';
-        this.sprite.play('climb', { restart: true });
     }
 
     happy() {
@@ -573,12 +543,6 @@ export class PattieRoamingController {
             x: target.left + target.width / 2 - size / 2,
             y: target.top - size + 6,
         };
-    }
-
-    nextChartAction() {
-        const action = this.chartAction;
-        this.chartAction = action === 'jump' ? 'climb' : 'jump';
-        return action;
     }
 
     rootRect() {
