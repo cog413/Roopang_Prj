@@ -1,180 +1,180 @@
-## 🔁 Chat Log 기반 정책 업데이트 규칙
+﻿## ?봺 Chat Log 湲곕컲 ?뺤콉 ?낅뜲?댄듃 洹쒖튃
 
-- chat_log.md의 "반영 필요 사항"을 주기적으로 검토한다
-- 아래 항목은 반드시 정책에 반영한다:
+- chat_log.md??"諛섏쁺 ?꾩슂 ?ы빆"??二쇨린?곸쑝濡?寃?좏븳??
+- ?꾨옒 ??ぉ? 諛섎뱶???뺤콉??諛섏쁺?쒕떎:
 
-1. 인증/로그인 구조
-2. KPI/UX 규칙
-3. API 설계
-4. DB 구조
-5. UI 패턴 (엑셀 UI 포함)
+1. ?몄쬆/濡쒓렇??援ъ“
+2. KPI/UX 洹쒖튃
+3. API ?ㅺ퀎
+4. DB 援ъ“
+5. UI ?⑦꽩 (?묒? UI ?ы븿)
 
-- 단순 구현이 아닌 "반복되거나 구조적인 결정"만 반영한다
-
----
-
-## 운영 규칙
-
-1. 대화 종료 시 `chat_log.md`에 자동 append한다.
-2. CLI 종류를 `gemini`, `claude`, `codex`, `gpt` 중 하나로 명시한다.
-3. 기록에는 시간을 포함한다.
-4. 정책 반영 필요 사항을 반드시 판단한다.
-5. 필요 시 `refresheet.context` 업데이트 또는 반영 제안을 수행한다.
+- ?⑥닚 援ы쁽???꾨땶 "諛섎났?섍굅??援ъ“?곸씤 寃곗젙"留?諛섏쁺?쒕떎
 
 ---
 
-## 신규 CLI 온보딩 규칙
+## ?댁쁺 洹쒖튃
 
-- 새로운 AI CLI가 프로젝트에 진입하면 먼저 `refresheet.context`와 `chat_log.md`를 읽고 현재 정책, 히스토리, 미해결 사항을 파악한다.
-- 작업 전에는 `refresheet.context`를 우선 기준으로 삼고, `chat_log.md`는 최근 의사결정과 진행 맥락 확인용으로 사용한다.
-- 히스토리를 모두 raw 로그처럼 재현하지 않고, 최신 정책과 반복적으로 등장한 구조적 결정을 작업 기준으로 삼는다.
-
----
-
-## 엑셀 UI 배경 규칙
-
-- 2048, SDK 등 게임 탭의 빈 영역도 흰 화면으로 남기지 않고 엑셀 격자 배경이 계속 보여야 한다.
-- 실제 게임/대시보드 콘텐츠는 배경 격자보다 위 레이어에 배치하고, 배경 격자는 클릭이나 키보드 상호작용을 막지 않아야 한다.
-- 게임 보드는 `.sheet-layout` flex stretch로 늘어나면 실제 셀 아래 흰 박스가 생기므로 `.game-grid`는 실제 셀 크기에 맞춰 `align-self: flex-start`를 유지한다.
+1. ???醫낅즺 ??`chat_log.md`???먮룞 append?쒕떎.
+2. CLI 醫낅쪟瑜?`gemini`, `claude`, `codex`, `gpt` 以??섎굹濡?紐낆떆?쒕떎.
+3. 湲곕줉?먮뒗 ?쒓컙???ы븿?쒕떎.
+4. ?뺤콉 諛섏쁺 ?꾩슂 ?ы빆??諛섎뱶???먮떒?쒕떎.
+5. ?꾩슂 ??`refresheet.context` ?낅뜲?댄듃 ?먮뒗 諛섏쁺 ?쒖븞???섑뻾?쒕떎.
 
 ---
 
-## Google OAuth / D1 인증 정책
+## ?좉퇋 CLI ?⑤낫??洹쒖튃
 
-- Google OAuth 성공 후 Worker는 Google userinfo의 `sub`, `email`, `name`, `picture`를 기준으로 D1 사용자 상태를 갱신한다.
-- `users.google_sub`를 우선 식별자로 사용하고, 기존 email-only 유저가 있으면 신규 중복 생성 대신 `google_sub`를 연결한다.
-- 신규 사용자는 `auth_events.event_type = 'signup'`, 기존 사용자는 `auth_events.event_type = 'login'`, 로그아웃은 `auth_events.event_type = 'logout'`로 기록한다.
-- 프론트 로그인 상태와 `/api/me` 응답 필드는 `user_id`, `email`, `nickname`, `avatar_url`, `last_login_at`, `is_new_user`로 맞춘다.
+- ?덈줈??AI CLI媛 ?꾨줈?앺듃??吏꾩엯?섎㈃ 癒쇱? `refresheet.context`? `chat_log.md`瑜??쎄퀬 ?꾩옱 ?뺤콉, ?덉뒪?좊━, 誘명빐寃??ы빆???뚯븙?쒕떎.
+- ?묒뾽 ?꾩뿉??`refresheet.context`瑜??곗꽑 湲곗??쇰줈 ?쇨퀬, `chat_log.md`??理쒓렐 ?섏궗寃곗젙怨?吏꾪뻾 留λ씫 ?뺤씤?⑹쑝濡??ъ슜?쒕떎.
+- ?덉뒪?좊━瑜?紐⑤몢 raw 濡쒓렇泥섎읆 ?ы쁽?섏? ?딄퀬, 理쒖떊 ?뺤콉怨?諛섎났?곸쑝濡??깆옣??援ъ“??寃곗젙???묒뾽 湲곗??쇰줈 ?쇰뒗??
 
 ---
 
-## ReadMe 시트 UI 규칙
+## ?묒? UI 諛곌꼍 洹쒖튃
 
-- ReadMe 시트는 카드형 문서 UI가 아니라 엑셀 셀에 직접 입력한 표처럼 보여야 한다.
-- KPI, SOP, 시트 안내 문구는 셀 병합/채우기/라벨 셀 패턴으로 표현하고, 문서 박스나 인증서형 장식은 사용하지 않는다.
-- ReadMe 하단에는 "마우스를 올렸을 때 반응하는 버튼만 진짜입니다. (예: 보기 탭)" 안내를 유지한다.
-- 상단 `보기` 탭은 다크모드 토글의 실제 버튼으로 동작한다.
-- 우측 계정 버튼은 비로그인 시 Google 로그인 버튼이고, 로그인 후 `/api/me`의 `nickname` 또는 `email`에서 추출한 이니셜/초성을 표시한다.
+- 2048, SDK ??寃뚯엫 ??쓽 鍮??곸뿭?????붾㈃?쇰줈 ?④린吏 ?딄퀬 ?묒? 寃⑹옄 諛곌꼍??怨꾩냽 蹂댁뿬???쒕떎.
+- ?ㅼ젣 寃뚯엫/??쒕낫??肄섑뀗痢좊뒗 諛곌꼍 寃⑹옄蹂대떎 ???덉씠?댁뿉 諛곗튂?섍퀬, 諛곌꼍 寃⑹옄???대┃?대굹 ?ㅻ낫???곹샇?묒슜??留됱? ?딆븘???쒕떎.
+- 寃뚯엫 蹂대뱶??`.sheet-layout` flex stretch濡??섏뼱?섎㈃ ?ㅼ젣 ? ?꾨옒 ??諛뺤뒪媛 ?앷린誘濡?`.game-grid`???ㅼ젣 ? ?ш린??留욎떠 `align-self: flex-start`瑜??좎??쒕떎.
+
+---
+
+## Google OAuth / D1 ?몄쬆 ?뺤콉
+
+- Google OAuth ?깃났 ??Worker??Google userinfo??`sub`, `email`, `name`, `picture`瑜?湲곗??쇰줈 D1 ?ъ슜???곹깭瑜?媛깆떊?쒕떎.
+- `users.google_sub`瑜??곗꽑 ?앸퀎?먮줈 ?ъ슜?섍퀬, 湲곗〈 email-only ?좎?媛 ?덉쑝硫??좉퇋 以묐났 ?앹꽦 ???`google_sub`瑜??곌껐?쒕떎.
+- ?좉퇋 ?ъ슜?먮뒗 `auth_events.event_type = 'signup'`, 湲곗〈 ?ъ슜?먮뒗 `auth_events.event_type = 'login'`, 濡쒓렇?꾩썐? `auth_events.event_type = 'logout'`濡?湲곕줉?쒕떎.
+- ?꾨줎??濡쒓렇???곹깭? `/api/me` ?묐떟 ?꾨뱶??`user_id`, `email`, `nickname`, `avatar_url`, `last_login_at`, `is_new_user`濡?留욎텣??
+
+---
+
+## ReadMe ?쒗듃 UI 洹쒖튃
+
+- ReadMe ?쒗듃??移대뱶??臾몄꽌 UI媛 ?꾨땲???묒? ???吏곸젒 ?낅젰???쒖쿂??蹂댁뿬???쒕떎.
+- KPI, SOP, ?쒗듃 ?덈궡 臾멸뎄??? 蹂묓빀/梨꾩슦湲??쇰꺼 ? ?⑦꽩?쇰줈 ?쒗쁽?섍퀬, 臾몄꽌 諛뺤뒪???몄쬆?쒗삎 ?μ떇? ?ъ슜?섏? ?딅뒗??
+- ReadMe ?섎떒?먮뒗 "留덉슦?ㅻ? ?щ졇????諛섏쓳?섎뒗 踰꾪듉留?吏꾩쭨?낅땲?? (?? 蹂닿린 ??" ?덈궡瑜??좎??쒕떎.
+- ?곷떒 `蹂닿린` ??? ?ㅽ겕紐⑤뱶 ?좉????ㅼ젣 踰꾪듉?쇰줈 ?숈옉?쒕떎.
+- ?곗륫 怨꾩젙 踰꾪듉? 鍮꾨줈洹몄씤 ??Google 濡쒓렇??踰꾪듉?닿퀬, 濡쒓렇????`/api/me`??`nickname` ?먮뒗 `email`?먯꽌 異붿텧???대땲??珥덉꽦???쒖떆?쒕떎.
 ---
 
 ## Interactive/Auth Runtime Rules
 
-- Cloudflare Pages 배포에서는 `/api/*` 요청이 `functions/api/[[path]].js`를 통해 `src/worker/index.js`로 전달되어야 로그인 기능이 활성화된다.
-- 실제 동작하는 영역만 hover/outline/cursor 등 인터랙티브 피드백을 준다.
-- 리본의 붙여넣기, 자르기, 복사, 정렬, 폰트 등 가짜 Excel 컨트롤은 hover 반응을 주지 않는다.
-- 실제 동작하는 영역은 `보기` 탭, 로그인 버튼, 하단 시트 탭, 미니미 대화 버튼, 2048 그리드 크기 선택, SDK 난이도 선택이다.
-- 미니미 수동 대화가 표시되는 5초 동안 자동 말풍선은 억제하고, 새 수동 입력은 즉시 새 문구로 교체한다.
+- Cloudflare Pages 諛고룷?먯꽌??`/api/*` ?붿껌??`functions/api/[[path]].js`瑜??듯빐 `src/worker/index.js`濡??꾨떖?섏뼱??濡쒓렇??湲곕뒫???쒖꽦?붾맂??
+- ?ㅼ젣 ?숈옉?섎뒗 ?곸뿭留?hover/outline/cursor ???명꽣?숉떚釉??쇰뱶諛깆쓣 以??
+- 由щ낯??遺숈뿬?ｊ린, ?먮Ⅴ湲? 蹂듭궗, ?뺣젹, ?고듃 ??媛吏?Excel 而⑦듃濡ㅼ? hover 諛섏쓳??二쇱? ?딅뒗??
+- ?ㅼ젣 ?숈옉?섎뒗 ?곸뿭? `蹂닿린` ?? 濡쒓렇??踰꾪듉, ?섎떒 ?쒗듃 ?? 誘몃땲誘????踰꾪듉, 2048 洹몃━???ш린 ?좏깮, SDK ?쒖씠???좏깮?대떎.
+- 誘몃땲誘??섎룞 ??붽? ?쒖떆?섎뒗 5珥??숈븞 ?먮룞 留먰뭾?좎? ?듭젣?섍퀬, ???섎룞 ?낅젰? 利됱떆 ??臾멸뎄濡?援먯껜?쒕떎.
 ---
 
 ## Pages OAuth Secret Rules
 
-- 이 프로젝트는 Cloudflare Pages 배포 기준이다.
-- `wrangler.toml`에는 `pages_build_output_dir = "."`를 유지하고 Worker용 `main` 설정과 혼용하지 않는다.
-- Google 로그인 활성화에는 Pages production secret `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`이 필요하다.
-- 필요 시 `GOOGLE_REDIRECT_URI`도 Pages production secret 또는 env var로 등록한다.
-- secret이 없으면 Worker는 `auth_config_missing` 503을 반환해야 하며 raw `internal_error`로 노출하지 않는다.
+- ???꾨줈?앺듃??Cloudflare Pages 諛고룷 湲곗??대떎.
+- `wrangler.toml`?먮뒗 `pages_build_output_dir = "."`瑜??좎??섍퀬 Worker??`main` ?ㅼ젙怨??쇱슜?섏? ?딅뒗??
+- Google 濡쒓렇???쒖꽦?붿뿉??Pages production secret `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`???꾩슂?섎떎.
+- ?꾩슂 ??`GOOGLE_REDIRECT_URI`??Pages production secret ?먮뒗 env var濡??깅줉?쒕떎.
+- secret???놁쑝硫?Worker??`auth_config_missing` 503??諛섑솚?댁빞 ?섎ŉ raw `internal_error`濡??몄텧?섏? ?딅뒗??
 
 ---
 
-## 단축 커맨드 규칙
+## ?⑥텞 而ㅻ㎤??洹쒖튃
 
-- `#SMCP#` : 현재 변경사항을 **sub와 main 양쪽**에 commit & push한다.
-  - 순서: main 커밋/푸시 → sub에 merge → sub 커밋/푸시
-- `#SCP#` : 현재 변경사항을 **sub에만** commit & push한다.
-- 별도 메시지가 없으면 변경 내용 기반으로 커밋 메시지를 자동 작성한다.
-
----
-
-## 글로벌 버전 재활용성 원칙
-
-- Refresheet는 KR 버전 외 글로벌 버전을 별도 출시할 계획이다. 신규 기능 설계 시 항상 재활용성을 고려한다.
-- 사용자에게 노출되는 모든 한국어 텍스트(워딩, 버튼, 안내문)는 HTML/JS에 직접 박지 않고 상수 객체나 별도 파일로 분리한다.
-- 직장인 컨셉 고유 워딩(예: "이달의 사원", "매출 순위", "팀장님이 괴롭혀")은 locale 설정으로 교체 가능하도록 구조화한다.
-- 게임 로직, 포인트 경제, 펫 시스템은 locale 중립적으로 유지한다. 컨셉 워딩과 시스템 로직을 혼재시키지 않는다.
-- 가짜 업무표 내용(회사명, 부서명, 수치, 직함)은 locale별로 교체할 수 있도록 데이터 객체화를 목표로 한다.
-- 회사/조직 개념은 국가별 커스텀이 필요하므로 "company" 구조는 플러그인형으로 설계한다.
-- 당장 i18n 라이브러리 도입이 아니어도 괜찮다. 텍스트를 분리하는 습관 자체가 핵심이다.
+- `#SMCP#` : ?꾩옱 蹂寃쎌궗??쓣 **sub? main ?묒そ**??commit & push?쒕떎.
+  - ?쒖꽌: main 而ㅻ컠/?몄떆 ??sub??merge ??sub 而ㅻ컠/?몄떆
+- `#SCP#` : ?꾩옱 蹂寃쎌궗??쓣 **sub?먮쭔** commit & push?쒕떎.
+- 蹂꾨룄 硫붿떆吏媛 ?놁쑝硫?蹂寃??댁슜 湲곕컲?쇰줈 而ㅻ컠 硫붿떆吏瑜??먮룞 ?묒꽦?쒕떎.
 
 ---
 
-## 직장인 컨셉 워딩 정책
+## 湲濡쒕쾶 踰꾩쟾 ?ы솢?⑹꽦 ?먯튃
 
-- 이 앱의 모든 경쟁/성과 관련 UI는 직장인 컨셉 워딩을 유지한다. 게이밍 용어를 그대로 쓰지 않는다.
-- 랭킹 워딩 기준:
+- Refresheet??KR 踰꾩쟾 ??湲濡쒕쾶 踰꾩쟾??蹂꾨룄 異쒖떆??怨꾪쉷?대떎. ?좉퇋 湲곕뒫 ?ㅺ퀎 ????긽 ?ы솢?⑹꽦??怨좊젮?쒕떎.
+- ?ъ슜?먯뿉寃??몄텧?섎뒗 紐⑤뱺 ?쒓뎅???띿뒪???뚮뵫, 踰꾪듉, ?덈궡臾???HTML/JS??吏곸젒 諛뺤? ?딄퀬 ?곸닔 媛앹껜??蹂꾨룄 ?뚯씪濡?遺꾨━?쒕떎.
+- 吏곸옣??而⑥뀎 怨좎쑀 ?뚮뵫(?? "?대떖???ъ썝", "留ㅼ텧 ?쒖쐞", "??λ떂??愿대∼?")? locale ?ㅼ젙?쇰줈 援먯껜 媛?ν븯?꾨줉 援ъ“?뷀븳??
+- 寃뚯엫 濡쒖쭅, ?ъ씤??寃쎌젣, ???쒖뒪?쒖? locale 以묐┰?곸쑝濡??좎??쒕떎. 而⑥뀎 ?뚮뵫怨??쒖뒪??濡쒖쭅???쇱옱?쒗궎吏 ?딅뒗??
+- 媛吏??낅Т???댁슜(?뚯궗紐? 遺?쒕챸, ?섏튂, 吏곹븿)? locale蹂꾨줈 援먯껜?????덈룄濡??곗씠??媛앹껜?붾? 紐⑺몴濡??쒕떎.
+- ?뚯궗/議곗쭅 媛쒕뀗? 援??蹂?而ㅼ뒪????꾩슂?섎?濡?"company" 援ъ“???뚮윭洹몄씤?뺤쑝濡??ㅺ퀎?쒕떎.
+- ?뱀옣 i18n ?쇱씠釉뚮윭由??꾩엯???꾨땲?대룄 愿쒖갖?? ?띿뒪?몃? 遺꾨━?섎뒗 ?듦? ?먯껜媛 ?듭떖?대떎.
 
-| 게임 일반 용어 | Refresheet 워딩 |
+---
+
+## 吏곸옣??而⑥뀎 ?뚮뵫 ?뺤콉
+
+- ???깆쓽 紐⑤뱺 寃쎌웳/?깃낵 愿??UI??吏곸옣??而⑥뀎 ?뚮뵫???좎??쒕떎. 寃뚯씠諛??⑹뼱瑜?洹몃?濡??곗? ?딅뒗??
+- ??궧 ?뚮뵫 湲곗?:
+
+| 寃뚯엫 ?쇰컲 ?⑹뼱 | Refresheet ?뚮뵫 |
 |---|---|
-| 회사 랭킹 | 매출 순위 / 부서 실적 현황 |
-| 개인 랭킹 | 이달의 사원 / 성과 우수자 |
-| 일간 랭킹 | 오늘의 실적 |
-| 주간 랭킹 | 주간 성과 리포트 |
-| 월간 랭킹 | 이달의 사원 |
-| 포인트 | 실적 포인트 / 성과 지수 |
-| 레벨업 | 승진 |
-| 캐릭터 선택 | 사원증 발급 |
+| ?뚯궗 ??궧 | 留ㅼ텧 ?쒖쐞 / 遺???ㅼ쟻 ?꾪솴 |
+| 媛쒖씤 ??궧 | ?대떖???ъ썝 / ?깃낵 ?곗닔??|
+| ?쇨컙 ??궧 | ?ㅻ뒛???ㅼ쟻 |
+| 二쇨컙 ??궧 | 二쇨컙 ?깃낵 由ы룷??|
+| ?붽컙 ??궧 | ?대떖???ъ썝 |
+| ?ъ씤??| ?ㅼ쟻 ?ъ씤??/ ?깃낵 吏??|
+| ?덈꺼??| ?뱀쭊 |
+| 罹먮┃???좏깮 | ?ъ썝利?諛쒓툒 |
 
-- 위 워딩은 글로벌 버전에서 locale 교체 대상이다.
+- ???뚮뵫? 湲濡쒕쾶 踰꾩쟾?먯꽌 locale 援먯껜 ??곸씠??
 
 ---
 
 ## OAuth Runtime Verification Rules
 
-- Cloudflare Wrangler 인증 성공과 Google OAuth 앱 secret 등록은 별개로 본다.
-- Google 로그인 장애 점검 시 `npx.cmd wrangler whoami`가 성공하더라도 Pages production secret `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 존재 여부를 따로 확인한다.
-- `refresheet-prj` production에서 `/api/auth/google/start`가 `auth_config_missing`을 반환하면 코드 문제가 아니라 런타임 OAuth secret 누락을 우선 의심한다.
-- `refresheetkr.com`과 `refresheet.com`은 서로 다른 Pages 프로젝트 상태일 수 있으므로 API 라우터 반영 여부를 도메인별로 확인한다.
+- Cloudflare Wrangler ?몄쬆 ?깃났怨?Google OAuth ??secret ?깅줉? 蹂꾧컻濡?蹂몃떎.
+- Google 濡쒓렇???μ븷 ?먭? ??`npx.cmd wrangler whoami`媛 ?깃났?섎뜑?쇰룄 Pages production secret `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 議댁옱 ?щ?瑜??곕줈 ?뺤씤?쒕떎.
+- `refresheet-prj` production?먯꽌 `/api/auth/google/start`媛 `auth_config_missing`??諛섑솚?섎㈃ 肄붾뱶 臾몄젣媛 ?꾨땲???고???OAuth secret ?꾨씫???곗꽑 ?섏떖?쒕떎.
+- `refresheetkr.com`怨?`refresheet.com`? ?쒕줈 ?ㅻⅨ Pages ?꾨줈?앺듃 ?곹깭?????덉쑝誘濡?API ?쇱슦??諛섏쁺 ?щ?瑜??꾨찓?몃퀎濡??뺤씤?쒕떎.
 
 ---
 
 ## Google OAuth Secret Input Rule
 
-- PowerShell에서 `wrangler pages secret put` 실행 시 Ctrl+V 직접 입력으로 제어 문자가 들어갈 수 있으므로 `Get-Clipboard` 파이프 방식으로 값을 넣는다.
-- Pages secret 변경 후에는 production 배포와 `/api/auth/google/start` 302 redirect 여부를 확인한다.
-- ReadMe 오른쪽 보조 컬럼은 SOP/안내 텍스트가 깨지지 않도록 420px 수준의 폭을 유지한다.
+- PowerShell?먯꽌 `wrangler pages secret put` ?ㅽ뻾 ??Ctrl+V 吏곸젒 ?낅젰?쇰줈 ?쒖뼱 臾몄옄媛 ?ㅼ뼱媛????덉쑝誘濡?`Get-Clipboard` ?뚯씠??諛⑹떇?쇰줈 媛믪쓣 ?ｋ뒗??
+- Pages secret 蹂寃??꾩뿉??production 諛고룷? `/api/auth/google/start` 302 redirect ?щ?瑜??뺤씤?쒕떎.
+- ReadMe ?ㅻⅨ履?蹂댁“ 而щ읆? SOP/?덈궡 ?띿뒪?멸? 源⑥?吏 ?딅룄濡?420px ?섏?????쓣 ?좎??쒕떎.
 
 ---
 
 ## ReadMe Column Width Rule
 
-- ReadMe 오른쪽 보조 컬럼(SOP, 시트 안내, 참고사항)은 긴 문장 가독성을 위해 500px 수준을 기준 폭으로 유지한다.
-- 전체 폭이 부담될 때는 오른쪽 컬럼을 줄이기보다 왼쪽 KPI/랭킹 컬럼을 소폭 조정한다.
+- ReadMe ?ㅻⅨ履?蹂댁“ 而щ읆(SOP, ?쒗듃 ?덈궡, 李멸퀬?ы빆)? 湲?臾몄옣 媛?낆꽦???꾪빐 500px ?섏???湲곗? ??쑝濡??좎??쒕떎.
+- ?꾩껜 ??씠 遺?대맆 ?뚮뒗 ?ㅻⅨ履?而щ읆??以꾩씠湲곕낫???쇱そ KPI/??궧 而щ읆???뚰룺 議곗젙?쒕떎.
 
 ---
 
 ## ReadMe Side Column / Row Header Rule
 
-- 최신 기준: ReadMe 오른쪽 보조 컬럼(SOP, 시트 안내, 참고사항)은 왼쪽 메인 컬럼과 같은 720px 폭을 유지한다.
-- 오른쪽 보조 컬럼의 SOP/가이드/참고 텍스트는 줄바꿈을 막아 엑셀에 입력된 한 줄 텍스트처럼 보이게 한다.
-- row header 숫자 칸은 `height: 25px`만 두지 말고 `flex: 0 0 25px`로 고정해 모든 시트의 25px 셀 격자와 맞춘다.
+- 理쒖떊 湲곗?: ReadMe ?ㅻⅨ履?蹂댁“ 而щ읆(SOP, ?쒗듃 ?덈궡, 李멸퀬?ы빆)? ?쇱そ 硫붿씤 而щ읆怨?媛숈? 720px ??쓣 ?좎??쒕떎.
+- ?ㅻⅨ履?蹂댁“ 而щ읆??SOP/媛?대뱶/李멸퀬 ?띿뒪?몃뒗 以꾨컮轅덉쓣 留됱븘 ?묒????낅젰????以??띿뒪?몄쿂??蹂댁씠寃??쒕떎.
+- row header ?レ옄 移몄? `height: 25px`留??먯? 留먭퀬 `flex: 0 0 25px`濡?怨좎젙??紐⑤뱺 ?쒗듃??25px ? 寃⑹옄? 留욎텣??
 
 ---
 
 ## Pattie Management Sheet Rules
 
-- Pattie 캐릭터 asset은 `public/assets/patties/manifest.json`과 `PattieAssetLoader`를 통해 접근한다.
-- 현재 Pages 배포는 빌드 없이 루트가 서빙되므로 Pattie 런타임 URL은 `/public/assets/patties/...`를 기준으로 한다.
-- rabbit/dog/cat은 `manually_command/character_image.png`의 32x32 도트 실루엣, 색상, 표정, 검은 외곽선을 유지한다.
-- 관리시트 지형은 `data-pattie-zone="sheet|chart|card|blocked"`와 `data-pattie-terrain="chart-bar"`로 선언한다.
-- D1에는 이미지 바이너리를 저장하지 않고 `character_assets`, `pattie_items`, `user_pattie_items`, `avatars.character_key`, `avatars.equipped_item_keys`로 metadata/src만 저장한다.
-- 예시 아이템 `sunglasses`, `bee_suit`는 cosmetic 전용이며 점수/랭킹에 영향을 주지 않는다.
+- Pattie 罹먮┃??asset? `public/assets/patties/manifest.json`怨?`PattieAssetLoader`瑜??듯빐 ?묎렐?쒕떎.
+- ?꾩옱 Pages 諛고룷??鍮뚮뱶 ?놁씠 猷⑦듃媛 ?쒕튃?섎?濡?Pattie ?고???URL? `/public/assets/patties/...`瑜?湲곗??쇰줈 ?쒕떎.
+- rabbit/dog/cat? `manually_command/character_image.png`??32x32 ?꾪듃 ?ㅻ（?? ?됱긽, ?쒖젙, 寃? ?멸낸?좎쓣 ?좎??쒕떎.
+- 愿由ъ떆??吏?뺤? `data-pattie-zone="sheet|chart|card|blocked"`? `data-pattie-terrain="chart-bar"`濡??좎뼵?쒕떎.
+- D1?먮뒗 ?대?吏 諛붿씠?덈━瑜???ν븯吏 ?딄퀬 `character_assets`, `pattie_items`, `user_pattie_items`, `avatars.character_key`, `avatars.equipped_item_keys`濡?metadata/src留???ν븳??
+- ?덉떆 ?꾩씠??`sunglasses`, `bee_suit`??cosmetic ?꾩슜?대ŉ ?먯닔/??궧???곹뼢??二쇱? ?딅뒗??
 
 ---
 
-## Mong Test Asset Rules
+## Production Corgi Sprite Sheet Asset Rules
 
-- 64x64 mong 테스트 asset은 `public/assets/patties_mong_test/`에 분리한다.
-- 최종 Pattie asset(`public/assets/patties/`)과 mong 테스트 asset을 섞지 않는다.
-- mong 테스트 manifest는 `/public/assets/patties_mong_test/manifest.json`이며 frameWidth/frameHeight는 64다.
-- chartZone jump는 `data-pattie-terrain="chart-bar"` 막대들을 x축 순서로 읽고 다음 막대 상단으로 이동해야 한다.
+- 64x64 mong ?뚯뒪??asset? `public/assets/corgi/`??遺꾨━?쒕떎.
+- 理쒖쥌 Pattie asset(`public/assets/patties/`)怨?mong ?뚯뒪??asset???욎? ?딅뒗??
+- mong ?뚯뒪??manifest??`/public/assets/corgi/manifest.json`?대ŉ frameWidth/frameHeight??64??
+- chartZone jump??`data-pattie-terrain="chart-bar"` 留됰??ㅼ쓣 x異??쒖꽌濡??쎄퀬 ?ㅼ쓬 留됰? ?곷떒?쇰줈 ?대룞?댁빞 ?쒕떎.
 
 ---
 
 ## Moving Guide / Mong Runtime Rules
 
-- `manually_command/moving.pptx`의 첫 페이지 `@` 가이드는 관리시트 Pattie 이동 기준으로 본다.
-- mong 테스트 sprite는 원본 64x64를 유지하되 화면 렌더 크기는 엑셀 셀 정도인 25x25를 기준으로 한다.
-- 주간 매출 추이 그래프 박스 안에서 이동할 때는 일반 walk보다 bar-to-bar jump 또는 climb을 우선한다.
-- `.proj-table`은 프로젝트명/마감기한 텍스트가 삐져나오지 않도록 전용 column width를 유지한다.
+- `manually_command/moving.pptx`??泥??섏씠吏 `@` 媛?대뱶??愿由ъ떆??Pattie ?대룞 湲곗??쇰줈 蹂몃떎.
+- mong ?뚯뒪??sprite???먮낯 64x64瑜??좎??섎릺 ?붾㈃ ?뚮뜑 ?ш린???묒? ? ?뺣룄??25x25瑜?湲곗??쇰줈 ?쒕떎.
+- 二쇨컙 留ㅼ텧 異붿씠 洹몃옒??諛뺤뒪 ?덉뿉???대룞???뚮뒗 ?쇰컲 walk蹂대떎 bar-to-bar jump ?먮뒗 climb???곗꽑?쒕떎.
+- `.proj-table`? ?꾨줈?앺듃紐?留덇컧湲고븳 ?띿뒪?멸? ?먯졇?섏삤吏 ?딅룄濡??꾩슜 column width瑜??좎??쒕떎.
 ---
 
 ## Mong Chart Box Runtime Rule
@@ -192,62 +192,62 @@
 
 ---
 
-## Pattie 이동 물리 설계 원칙 (슬라이딩 방지)
+## Pattie ?대룞 臾쇰━ ?ㅺ퀎 ?먯튃 (?щ씪?대뵫 諛⑹?)
 
-> 이 섹션은 Codex가 반복적으로 잘못 구현한 부분을 Claude가 수정하면서 정립한 원칙이다. 반드시 읽고 적용할 것.
+> ???뱀뀡? Codex媛 諛섎났?곸쑝濡??섎せ 援ы쁽??遺遺꾩쓣 Claude媛 ?섏젙?섎㈃???뺣┰???먯튃?대떎. 諛섎뱶???쎄퀬 ?곸슜??寃?
 
-### 왜 캐릭터가 슬라이딩(미끄러지듯 이동)하는가
+### ??罹먮┃?곌? ?щ씪?대뵫(誘몃걚?ъ????대룞)?섎뒗媛
 
-- `updateTerrainMotion()`은 매 rAF(60fps)마다 위치를 보간(lerp)한다.
-- `walkFrameDurationMs`가 크면(예: 1240ms) 다리 애니메이션은 1초에 1회도 안 바뀐다.
-- 결과: 위치는 60fps로 유리처럼 부드럽게 이동하지만, 다리는 거의 안 움직여 미끄러지는 것처럼 보인다.
+- `updateTerrainMotion()`? 留?rAF(60fps)留덈떎 ?꾩튂瑜?蹂닿컙(lerp)?쒕떎.
+- `walkFrameDurationMs`媛 ?щ㈃(?? 1240ms) ?ㅻ━ ?좊땲硫붿씠?섏? 1珥덉뿉 1?뚮룄 ??諛붾먮떎.
+- 寃곌낵: ?꾩튂??60fps濡??좊━泥섎읆 遺?쒕읇寃??대룞?섏?留? ?ㅻ━??嫄곗쓽 ???吏곸뿬 誘몃걚?ъ???寃껋쿂??蹂댁씤??
 
-### 핵심 수정 원칙
+### ?듭떖 ?섏젙 ?먯튃
 
-1. **walk/run은 linear easing** — easeInOut을 walk에 쓰면 가속·감속이 생겨 캐릭터가 '둥실' 뜨는 느낌이 난다. walk/run은 등속(linear, `t` 그대로 사용)이어야 다리 모션과 위치 이동이 자연스럽게 맞는다.
-2. **jump/climb/hopDown만 easeInOut** — 포물선 호 동작에는 ease가 자연스럽다.
-3. **walkFrameDurationMs는 350~400ms 이하** — 다리 애니메이션이 이동 속도에 가시적으로 맞아야 쯔꾸루(RPG Maker) 느낌이 난다. 1000ms 이상은 무조건 슬라이딩처럼 보인다.
-4. **runFrameDurationMs는 200~250ms** — 달릴 때는 더 빠른 발걸음이 필요하다.
-5. **walkDurationPerPx는 420~520ms/px** — 너무 빠르면(200ms 이하) 캐릭터가 순간이동처럼 보이고, 너무 느리면(600ms 이상) 지루하다.
+1. **walk/run? linear easing** ??easeInOut??walk???곕㈃ 媛?띉룰컧?띿씠 ?앷꺼 罹먮┃?곌? '?μ떎' ?⑤뒗 ?먮굦???쒕떎. walk/run? ?깆냽(linear, `t` 洹몃?濡??ъ슜)?댁뼱???ㅻ━ 紐⑥뀡怨??꾩튂 ?대룞???먯뿰?ㅻ읇寃?留욌뒗??
+2. **jump/climb/hopDown留?easeInOut** ???щЪ?????숈옉?먮뒗 ease媛 ?먯뿰?ㅻ읇??
+3. **walkFrameDurationMs??350~400ms ?댄븯** ???ㅻ━ ?좊땲硫붿씠?섏씠 ?대룞 ?띾룄??媛?쒖쟻?쇰줈 留욎븘??易붽씀猷?RPG Maker) ?먮굦???쒕떎. 1000ms ?댁긽? 臾댁“嫄??щ씪?대뵫泥섎읆 蹂댁씤??
+4. **runFrameDurationMs??200~250ms** ???щ┫ ?뚮뒗 ??鍮좊Ⅸ 諛쒓구?뚯씠 ?꾩슂?섎떎.
+5. **walkDurationPerPx??420~520ms/px** ???덈Т 鍮좊Ⅴ硫?200ms ?댄븯) 罹먮┃?곌? ?쒓컙?대룞泥섎읆 蹂댁씠怨? ?덈Т ?먮━硫?600ms ?댁긽) 吏猷⑦븯??
 
-### 현재 확정된 값 (pattieWorldConfig.js)
+### ?꾩옱 ?뺤젙??媛?(pattieWorldConfig.js)
 
 ```js
-walkDurationPerPx: 460,     // 이동 속도 (ms/px)
+walkDurationPerPx: 460,     // ?대룞 ?띾룄 (ms/px)
 runDurationPerPx: 256,
-walkFrameDurationMs: 350,   // 다리 애니메이션 프레임 간격
+walkFrameDurationMs: 350,   // ?ㅻ━ ?좊땲硫붿씠???꾨젅??媛꾧꺽
 runFrameDurationMs: 220,
 ```
 
-### easing 코드 (PattieRoamingController.js updateTerrainMotion)
+### easing 肄붾뱶 (PattieRoamingController.js updateTerrainMotion)
 
 ```js
 const eased = (m.mode === 'walk' || m.mode === 'run')
-    ? t   // linear — 슬라이딩 없음
-    : t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // jump/climb만 ease
+    ? t   // linear ???щ씪?대뵫 ?놁쓬
+    : t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // jump/climb留?ease
 ```
 
 ---
 
-## 관리시트 주간매출 차트 — 지형 설계 원칙
+## 愿由ъ떆??二쇨컙留ㅼ텧 李⑦듃 ??吏???ㅺ퀎 ?먯튃
 
-### 바 높이를 설계할 때의 제약
+### 諛??믪씠瑜??ㅺ퀎???뚯쓽 ?쒖빟
 
-캐릭터가 바 위에 올라서는 지형으로 작동하려면 아래 두 config 값을 반드시 지켜야 한다.
+罹먮┃?곌? 諛??꾩뿉 ?щ씪?쒕뒗 吏?뺤쑝濡??묐룞?섎젮硫??꾨옒 ??config 媛믪쓣 諛섎뱶??吏耳쒖빞 ?쒕떎.
 
-| 설정 | 값 | 의미 |
+| ?ㅼ젙 | 媛?| ?섎? |
 |---|---|---|
-| `maxBarHeightFromFloorPx` | 132px | 이보다 높은 바는 지형으로 인식 안 됨 |
-| `maxTerrainDeltaPx` | 96px | 인접 지형 간 점프 가능 높이 차 최대값 |
+| `maxBarHeightFromFloorPx` | 132px | ?대낫???믪? 諛붾뒗 吏?뺤쑝濡??몄떇 ????|
+| `maxTerrainDeltaPx` | 96px | ?몄젒 吏??媛??먰봽 媛???믪씠 李?理쒕?媛?|
 
-- mp-bars 컨테이너 실질 높이 ≈ 156px
-- 바 height%가 85% 이상이면 픽셀 높이가 132px를 넘어 지형에서 제외될 수 있다
-- 인접한 두 바의 높이 차(px)가 96을 넘으면 캐릭터가 그 사이를 직접 이동 못하고 막힌다
+- mp-bars 而⑦뀒?대꼫 ?ㅼ쭏 ?믪씠 ??156px
+- 諛?height%媛 85% ?댁긽?대㈃ ?쎌? ?믪씠媛 132px瑜??섏뼱 吏?뺤뿉???쒖쇅?????덈떎
+- ?몄젒????諛붿쓽 ?믪씠 李?px)媛 96???섏쑝硫?罹먮┃?곌? 洹??ъ씠瑜?吏곸젒 ?대룞 紐삵븯怨?留됲엺??
 
-### 확정된 WEEKLY_SALES 높이 (계단형 불규칙 패턴)
+### ?뺤젙??WEEKLY_SALES ?믪씠 (怨꾨떒??遺덇퇋移??⑦꽩)
 
 ```js
-// W1(낮)→W2(중)→W3(약간낮)→W4(높)→W5(중)→W6(최고)→W7(낮)
+// W1(???뭌2(以??뭌3(?쎄컙???뭌4(???뭌5(以??뭌6(理쒓퀬)?뭌7(??
 { label: 'W1', online: 28, offline: 20 },
 { label: 'W2', online: 55, offline: 44 },
 { label: 'W3', online: 42, offline: 33 },
@@ -257,28 +257,37 @@ const eased = (m.mode === 'walk' || m.mode === 'run')
 { label: 'W7', online: 38, offline: 28 },
 ```
 
-- 인접 바 최대 델타: W6→W7 약 67px → maxTerrainDeltaPx(96) 이내 ✓
-- 모든 바 최대 높이: W6 online ≈ 125px → maxBarHeightFromFloorPx(132) 이내 ✓
-- 패턴: 낮→높→낮 반복으로 캐릭터가 계단처럼 오르내리는 동선이 생긴다
+- ?몄젒 諛?理쒕? ?명?: W6?뭌7 ??67px ??maxTerrainDeltaPx(96) ?대궡 ??
+- 紐⑤뱺 諛?理쒕? ?믪씠: W6 online ??125px ??maxBarHeightFromFloorPx(132) ?대궡 ??
+- ?⑦꽩: ??넂?믠넂??諛섎났?쇰줈 罹먮┃?곌? 怨꾨떒泥섎읆 ?ㅻⅤ?대━???숈꽑???앷릿??
 
-### 바 지형 선언 방식
+### 諛?吏???좎뼵 諛⑹떇
 
 ```html
-<!-- data-pattie-terrain="chart-bar" 없으면 캐릭터가 바를 무시한다 -->
+<!-- data-pattie-terrain="chart-bar" ?놁쑝硫?罹먮┃?곌? 諛붾? 臾댁떆?쒕떎 -->
 <div class="mp-bar mp-bar-online" data-pattie-terrain="chart-bar" ...></div>
 ```
 
-- 차트 컨테이너에는 `data-pattie-zone="chart"` 필수
-- `getSortedBars()`는 `[data-pattie-terrain='chart-bar']`를 x축 순서로 정렬해서 읽는다
-- 지형 좌표는 chart 엘리먼트 기준 local 좌표다 (`getLocalRect` via offsetLeft/offsetTop 누적). viewport 기준 getBoundingClientRect를 쓰면 스크롤 시 좌표가 흔들린다.
+- 李⑦듃 而⑦뀒?대꼫?먮뒗 `data-pattie-zone="chart"` ?꾩닔
+- `getSortedBars()`??`[data-pattie-terrain='chart-bar']`瑜?x異??쒖꽌濡??뺣젹?댁꽌 ?쎈뒗??
+- 吏??醫뚰몴??chart ?섎━癒쇳듃 湲곗? local 醫뚰몴??(`getLocalRect` via offsetLeft/offsetTop ?꾩쟻). viewport 湲곗? getBoundingClientRect瑜??곕㈃ ?ㅽ겕濡???醫뚰몴媛 ?붾뱾由곕떎.
 
 ---
 
-## 신규 CLI가 반드시 알아야 할 작업 습관
+## ?좉퇋 CLI媛 諛섎뱶???뚯븘?????묒뾽 ?듦?
 
-1. **히스토리 먼저** — `git log --oneline -20`으로 최근 작업 맥락 파악 후 시작한다.
-2. **#SMCP# 커맨드** — main 커밋/푸시 → sub 머지/푸시. sub에 충돌 나면 `git checkout --theirs`로 main 버전 채택한다.
-3. **wrangler secret 주입** — `CLOUDFLARE_API_TOKEN`이 환경변수로 있으면 `wrangler login`이 거부된다. secret 입력 시 파이프 방식 사용(`Get-Clipboard | ...`).
-4. **D1 migration 적용** — `wrangler d1 migrations apply`가 7403이면 토큰 권한 부족. `wrangler d1 execute db_game_info --command "..."` 직접 실행으로 우회한다.
-5. **CSS에서 퍼센트 높이 주의** — mp-bar의 height%는 mp-bar-pair 기준이고, mp-bar-pair는 mp-col의 100%다. 픽셀 계산 시 mp-bars 실질 높이(≈156px)를 기준으로 한다.
-6. **easing 건드릴 때** — walk mode에 easeInOut 쓰는 순간 슬라이딩이 생긴다. 이미 linear로 확정됐으므로 되돌리지 말 것.
+1. **?덉뒪?좊━ 癒쇱?** ??`git log --oneline -20`?쇰줈 理쒓렐 ?묒뾽 留λ씫 ?뚯븙 ???쒖옉?쒕떎.
+2. **#SMCP# 而ㅻ㎤??* ??main 而ㅻ컠/?몄떆 ??sub 癒몄?/?몄떆. sub??異⑸룎 ?섎㈃ `git checkout --theirs`濡?main 踰꾩쟾 梨꾪깮?쒕떎.
+3. **wrangler secret 二쇱엯** ??`CLOUDFLARE_API_TOKEN`???섍꼍蹂?섎줈 ?덉쑝硫?`wrangler login`??嫄곕??쒕떎. secret ?낅젰 ???뚯씠??諛⑹떇 ?ъ슜(`Get-Clipboard | ...`).
+4. **D1 migration ?곸슜** ??`wrangler d1 migrations apply`媛 7403?대㈃ ?좏겙 沅뚰븳 遺議? `wrangler d1 execute db_game_info --command "..."` 吏곸젒 ?ㅽ뻾?쇰줈 ?고쉶?쒕떎.
+5. **CSS?먯꽌 ?쇱꽱???믪씠 二쇱쓽** ??mp-bar??height%??mp-bar-pair 湲곗??닿퀬, mp-bar-pair??mp-col??100%?? ?쎌? 怨꾩궛 ??mp-bars ?ㅼ쭏 ?믪씠(??56px)瑜?湲곗??쇰줈 ?쒕떎.
+6. **easing 嫄대뱶由???* ??walk mode??easeInOut ?곕뒗 ?쒓컙 ?щ씪?대뵫???앷릿?? ?대? linear濡??뺤젙?먯쑝誘濡??섎룎由ъ? 留?寃?
+---
+
+## Production Corgi Asset Loader Rule
+
+- Production Mong/Corgi sprite sheet originals live in `manually_command/export`.
+- The source sprite sheets are Aseprite exports with 1px padding and must not be edited.
+- Runtime static copies live in `public/assets/corgi/` and are referenced through `public/assets/corgi/manifest.json`.
+- Frame counts differ by animation and must be inferred from actual image dimensions.
+- Sprite slicing must account for source padding/spacing; fix code when image structure and code assumptions conflict.

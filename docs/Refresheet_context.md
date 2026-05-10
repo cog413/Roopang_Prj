@@ -1,4 +1,4 @@
-# Refresheet Context
+﻿# Refresheet Context
 
 Updated: 2026-05-04
 
@@ -10,38 +10,38 @@ Authentication API work lives in `src/worker/index.js`. It is a Cloudflare Worke
 
 ```text
 Refresheet_Prj/
-├── index.html
-├── style.css
-├── package.json
-├── CHANGELOG.md
-├── docs/
-│   └── Refresheet_context.md
-└── src/
-    ├── main.js
-    ├── layout/
-    │   └── excelLayout.js
-    ├── stealth/
-    │   └── bossKey.js
-    ├── pet/
-    │   ├── miniPet.js
-    │   └── petEngine.js
-    └── games/
-        ├── sudoku/
-        │   └── sudoku.js
-        └── game2048/
-            ├── index.js
-            ├── logic.js
-            └── ui.js
+?쒋?? index.html
+?쒋?? style.css
+?쒋?? package.json
+?쒋?? CHANGELOG.md
+?쒋?? docs/
+??  ?붴?? Refresheet_context.md
+?붴?? src/
+    ?쒋?? main.js
+    ?쒋?? layout/
+    ??  ?붴?? excelLayout.js
+    ?쒋?? stealth/
+    ??  ?붴?? bossKey.js
+    ?쒋?? pet/
+    ??  ?쒋?? miniPet.js
+    ??  ?붴?? petEngine.js
+    ?붴?? games/
+        ?쒋?? sudoku/
+        ??  ?붴?? sudoku.js
+        ?붴?? game2048/
+            ?쒋?? index.js
+            ?쒋?? logic.js
+            ?붴?? ui.js
 ```
 
 ## Active Sheets
 
 - `README`: rest-right declaration screen.
-- `관리시트`: formerly `미니미`; contains the single black-and-white dotted pet, fake performance tables, chart, minimap, and conversation buttons.
+- `愿由ъ떆??: formerly `誘몃땲誘?; contains the single black-and-white dotted pet, fake performance tables, chart, minimap, and conversation buttons.
 - `Sheet1`: Sudoku game disguised as Excel work.
 - `Sheet2`: 2048 game disguised as Excel work.
 
-The old `My_Pet` sheet has been removed. Its conversation behavior now lives inside `관리시트`.
+The old `My_Pet` sheet has been removed. Its conversation behavior now lives inside `愿由ъ떆??.
 
 ## Pet System
 
@@ -49,8 +49,9 @@ Pattie update:
 
 - The management sheet now has a Pattie world layer over the fake Excel habitat.
 - `src/patties/PattieAssetLoader.js` loads `public/assets/patties/manifest.json`.
-- Mong 64x64 temporary test mode loads `/public/assets/patties_mong_test/manifest.json`; keep this separate from final Pattie assets.
-- `src/patties/PattieSprite.js` renders 32x32 transparent PNG sprite sheets with `image-rendering: pixelated`.
+- Mong/Corgi production sprite sheets load `/public/assets/corgi/manifest.json`.
+- Production sprite sheet originals live in `manually_command/export`; they are Aseprite exports with 1px padding and must not be modified.
+- `src/patties/PattieSprite.js` renders transparent PNG sprite sheets with `image-rendering: pixelated`, inferred frame counts, and padding-aware frame slicing.
 - `src/patties/PattieRoamingController.js` manages walk/idle/sleep/happy/jump/climb behavior and chart-bar climbing.
 - `src/patties/pattieWorldConfig.js` defines `sheet`, `chart`, `card`, and `blocked` terrain rules.
 - Pattie settings are saved through `/api/pattie`; DB migration is `docs/migrations/005_pattie_assets_items.sql`.
@@ -67,16 +68,16 @@ Pattie update:
 - Uses delegated click handling for pet buttons.
 - Supports `STRESS`, `MANAGER`, `TIRED`, `HARD`, `ENCOURAGE`, `SECRET`, and `GREETING` scenarios.
 - Randomizes responses within each scenario.
-- Shows responses in the `관리시트` pet bubble and mirrors the action in the formula bar with `=PET.TALK("TYPE")`.
+- Shows responses in the `愿由ъ떆?? pet bubble and mirrors the action in the formula bar with `=PET.TALK("TYPE")`.
 
 Current conversation buttons:
 
-- `팀장님이 괴롭혀`
-- `팀장님이 힘들게 해`
-- `너무 피곤해`
-- `너무 힘들어`
-- `응원해줘`
-- `비밀작전`
+- `??λ떂??愿대∼?`
+- `??λ떂???섎뱾寃???
+- `?덈Т ?쇨낀??
+- `?덈Т ?섎뱾??
+- `?묒썝?댁쨾`
+- `鍮꾨??묒쟾`
 
 ## Layout And Navigation
 
@@ -85,13 +86,13 @@ Current conversation buttons:
 Formula bar states:
 
 - README: `=DECLARATION("RIGHT_TO_REST")`
-- 관리시트: `=MANAGE.PET.STATUS(B2:F22)`
+- 愿由ъ떆?? `=MANAGE.PET.STATUS(B2:F22)`
 - Sheet1: `=SUDOKU.INIT(A1:I9)`
 - Sheet2: `=SUM(A1:D4)*2048`
 
 ## Games
 
-Sudoku lives in `src/games/sudoku/sudoku.js` (async `initSudoku()`). On load it fetches `GET /api/games/sudoku/next?difficulty=normal` (Cloudflare Worker, not yet deployed). If the API returns a puzzle, the 81-character `puzzle` and `solution` strings are parsed into 9×9 arrays. If the API is unavailable a hardcoded offline fallback puzzle is used. Win detection compares the full board to `solutionBoard` when available, otherwise checks that all 81 cells are filled. Invalid moves show the validation modal.
+Sudoku lives in `src/games/sudoku/sudoku.js` (async `initSudoku()`). On load it fetches `GET /api/games/sudoku/next?difficulty=normal` (Cloudflare Worker, not yet deployed). If the API returns a puzzle, the 81-character `puzzle` and `solution` strings are parsed into 9횞9 arrays. If the API is unavailable a hardcoded offline fallback puzzle is used. Win detection compares the full board to `solutionBoard` when available, otherwise checks that all 81 cells are filled. Invalid moves show the validation modal.
 
 2048 remains split into:
 

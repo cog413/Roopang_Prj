@@ -31,3 +31,11 @@
 - 엑셀 UI 위장 껍데기 구현 (리본 메뉴, 수식 입력줄, 그리드 등)
 - 스도쿠 및 2048 게임 기본 로직 구현
 - 긴급 전환 키(Esc)를 통한 보스 키(Boss Key) 기능 적용
+## [Unreleased] - 2026-05-10
+### Changed
+- Switched Mong/Corgi runtime assets from temporary generated sheets to production Aseprite sprite sheets copied from `manually_command/export` into `public/assets/corgi/`.
+- Updated `PattieAssetLoader` to infer animation frame counts from actual sprite sheet dimensions instead of relying on shared hardcoded frame counts.
+- Updated `PattieSprite` frame slicing to account for sprite sheet padding/spacing so 1px-padded Aseprite exports do not bleed adjacent frames.
+
+### Removed
+- Removed the temporary generated Mong sprite asset folder and generator flow from runtime asset loading.

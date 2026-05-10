@@ -1,0 +1,52 @@
+{
+  "version": "corgi-aseprite-001",
+  "source": "public",
+  "isTestAsset": false,
+  "basePath": "/public/assets/corgi",
+  "sourceOriginalPath": "manually_command/export",
+  "spriteSheet": {
+    "frameWidth": 64,
+    "frameHeight": 64,
+    "framePaddingPx": 1,
+    "frameSpacingX": 0,
+    "frameSpacingY": 0,
+    "renderWidth": 25,
+    "renderHeight": 25,
+    "frameCountMode": "infer-from-image-size"
+  },
+  "characters": {
+    "mong": {
+      "displayName": "Mong Corgi",
+      "animationAliases": {
+        "climb": "jump"
+      },
+      "animations": {
+        "idle": {
+          "src": "/public/assets/corgi/mong_idle.png",
+          "frameDurationMs": 520
+        },
+        "walk": {
+          "src": "/public/assets/corgi/mong_walk..png",
+          "frameDurationMs": 1240
+        },
+        "run": {
+          "src": "/public/assets/corgi/mong_run.png",
+          "frameDurationMs": 860
+        },
+        "sleep": {
+          "src": "/public/assets/corgi/mong_sleep.png",
+          "frameDurationMs": 720
+        },
+        "happy": {
+          "src": "/public/assets/corgi/mong_happy.png",
+          "frameDurationMs": 360
+        },
+        "jump": {
+          "src": "/public/assets/corgi/mong_jump.png",
+          "frameDurationMs": 140
+        }
+      }
+    }
+  },
+  "items": {}
+}

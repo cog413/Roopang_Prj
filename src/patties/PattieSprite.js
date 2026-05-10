@@ -80,13 +80,21 @@ export class PattieSprite {
         const height = this.animation.frameHeight || 32;
         const renderWidth = this.animation.renderWidth || width;
         const renderHeight = this.animation.renderHeight || height;
+        const scaleX = renderWidth / width;
+        const scaleY = renderHeight / height;
+        const imageWidth = this.animation.imageWidth || (this.animation.frameCount || 1) * width;
+        const imageHeight = this.animation.imageHeight || height;
+        const spacingX = this.animation.frameSpacingX || 0;
+        const spacingY = this.animation.frameSpacingY || 0;
+        const sourceX = (this.animation.sourcePaddingX || 0) + this.frame * (width + spacingX);
+        const sourceY = (this.animation.sourcePaddingY || 0) + this.frame * spacingY;
         this.el.style.width = `${renderWidth}px`;
         this.el.style.height = `${renderHeight}px`;
         this.baseEl.style.width = `${renderWidth}px`;
         this.baseEl.style.height = `${renderHeight}px`;
         this.baseEl.style.backgroundImage = `url("${this.animation.src}")`;
-        this.baseEl.style.backgroundPosition = `-${this.frame * renderWidth}px 0`;
-        this.baseEl.style.backgroundSize = `${(this.animation.frameCount || 1) * renderWidth}px ${renderHeight}px`;
+        this.baseEl.style.backgroundPosition = `-${sourceX * scaleX}px -${sourceY * scaleY}px`;
+        this.baseEl.style.backgroundSize = `${imageWidth * scaleX}px ${imageHeight * scaleY}px`;
         this.itemLayer.style.width = `${renderWidth}px`;
         this.itemLayer.style.height = `${renderHeight}px`;
     }

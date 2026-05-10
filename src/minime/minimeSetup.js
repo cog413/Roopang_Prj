@@ -151,8 +151,11 @@ async function renderChoices() {
         const key = card.dataset.preview;
         const anim = await pattieAssetLoader.getAnimation(key, 'idle');
         if (anim) {
+            const scaleX = (anim.renderWidth || anim.frameWidth) / anim.frameWidth;
+            const scaleY = (anim.renderHeight || anim.frameHeight) / anim.frameHeight;
             card.style.backgroundImage = `url("${anim.src}")`;
-            card.style.backgroundSize = `${anim.frameCount * anim.frameWidth}px ${anim.frameHeight}px`;
+            card.style.backgroundPosition = `-${(anim.sourcePaddingX || 0) * scaleX}px -${(anim.sourcePaddingY || 0) * scaleY}px`;
+            card.style.backgroundSize = `${(anim.imageWidth || anim.frameCount * anim.frameWidth) * scaleX}px ${(anim.imageHeight || anim.frameHeight) * scaleY}px`;
         }
     }
 }

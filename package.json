@@ -9,7 +9,6 @@
     "fetch:sudoku": "node scripts/fetch_sudoku_hf_bank.mjs --limit 3000 --output ./data/sudoku_bank.csv",
     "seed:sudoku": "node scripts/generate_sudoku_bank.mjs --input ./data/sudoku_bank.csv --output ./sudoku_bulk_seed.sql",
     "pattie:generate-test-assets": "node scripts/generate-pattie-test-assets.js",
-    "pattie:generate-mong-test-assets": "node scripts/generate-mong-test-assets.js",
     "pattie:clean-assets": "node scripts/clean-pattie-assets.js",
     "pattie:replace-assets": "node scripts/replace-pattie-assets.js"
   },

@@ -774,3 +774,32 @@ AI는 아래를 판단해야 한다:
 **6. 반영 필요 사항 (중요)**
 - 실제 화면 테스트는 headless browser로 탭 전환까지 수행해 DOM 좌표를 검증한다.
 - chart NPC 초기화는 hidden sheet 상태에서 수행하지 않는다.
+### [2026-05-10 20:41] (CLI: codex)
+
+**1. 목표**
+- Claude 이후 상태를 점검하고, Mong/Corgi runtime asset을 임시 테스트 sprite가 아니라 `manually_command/export` 원본 기반 production sprite sheet로 전환한다.
+
+**2. 현재 상태**
+- `manually_command/export`에는 Aseprite에서 padding 1px 기준으로 export된 원본 sprite sheet가 있다.
+- 원본 파일은 수정하지 않고 `public/assets/corgi/`로 그대로 복사했다.
+
+**3. 문제**
+- 기존 코드가 `/public/assets/corgi/manifest.json`이 아니라 임시 테스트 manifest를 바라보던 문제가 있었다.
+- 기존 `PattieSprite`는 padding 없는 sprite sheet를 가정해 background-position을 계산했다.
+- 기존 test generator와 임시 asset 폴더가 남아 있어 runtime asset 구조와 실제 원본 asset 구조가 불일치했다.
+
+**4. 시도한 것**
+- `public/assets/corgi/manifest.json`을 추가하고 기본 loader manifest를 해당 경로로 변경했다.
+- `PattieAssetLoader`가 실제 PNG naturalWidth/naturalHeight를 읽어 frameCount, source padding을 추론하도록 수정했다.
+- `PattieSprite`가 `sourcePaddingX/Y`, `frameSpacingX/Y`, `imageWidth/Height`를 반영해 frame을 자르도록 수정했다.
+- `public/assets/corgi/*.png`와 `manually_command/export/*.png`의 파일 해시가 동일함을 확인했다.
+
+**5. 해결 / 인사이트**
+- idle 2f, walk 6f, run 10f, sleep 7f, happy 6f, jump 10f로 실제 sheet 크기에서 프레임 수가 추론된다.
+- idle sheet는 실제 파일 크기상 padX/padY 2로 추론되고, 나머지는 padX/padY 1로 추론된다.
+
+**6. 반영 필요 사항 (중요)**
+- 원본 sprite sheet는 `manually_command/export`에 두고 절대 수정하지 않는다.
+- runtime은 `public/assets/corgi/manifest.json`만 바라본다.
+- 애니메이션별 frameCount는 하드코딩하지 않고 실제 이미지 크기에서 추론한다.
+- sprite sheet padding/spacing은 코드에서 처리한다.
