@@ -188,3 +188,97 @@
 - Chart NPC platform coordinates must be chart-local (`offsetLeft`/`offsetTop` accumulated to the chart root), not viewport coordinates, to avoid jitter during Excel sheet scrolling.
 - Chart NPC initialization must wait until the management sheet is visible and the chart has non-zero dimensions; hidden-sheet initialization can leave the sprite at `translate(0, 0)`.
 - For browser-visible UI movement bugs, verify with headless browser tab switching and DOM coordinate snapshots before finalizing.
+
+
+---
+
+## Pattie 이동 물리 설계 원칙 (슬라이딩 방지)
+
+> 이 섹션은 Codex가 반복적으로 잘못 구현한 부분을 Claude가 수정하면서 정립한 원칙이다. 반드시 읽고 적용할 것.
+
+### 왜 캐릭터가 슬라이딩(미끄러지듯 이동)하는가
+
+- `updateTerrainMotion()`은 매 rAF(60fps)마다 위치를 보간(lerp)한다.
+- `walkFrameDurationMs`가 크면(예: 1240ms) 다리 애니메이션은 1초에 1회도 안 바뀐다.
+- 결과: 위치는 60fps로 유리처럼 부드럽게 이동하지만, 다리는 거의 안 움직여 미끄러지는 것처럼 보인다.
+
+### 핵심 수정 원칙
+
+1. **walk/run은 linear easing** — easeInOut을 walk에 쓰면 가속·감속이 생겨 캐릭터가 '둥실' 뜨는 느낌이 난다. walk/run은 등속(linear, `t` 그대로 사용)이어야 다리 모션과 위치 이동이 자연스럽게 맞는다.
+2. **jump/climb/hopDown만 easeInOut** — 포물선 호 동작에는 ease가 자연스럽다.
+3. **walkFrameDurationMs는 350~400ms 이하** — 다리 애니메이션이 이동 속도에 가시적으로 맞아야 쯔꾸루(RPG Maker) 느낌이 난다. 1000ms 이상은 무조건 슬라이딩처럼 보인다.
+4. **runFrameDurationMs는 200~250ms** — 달릴 때는 더 빠른 발걸음이 필요하다.
+5. **walkDurationPerPx는 420~520ms/px** — 너무 빠르면(200ms 이하) 캐릭터가 순간이동처럼 보이고, 너무 느리면(600ms 이상) 지루하다.
+
+### 현재 확정된 값 (pattieWorldConfig.js)
+
+```js
+walkDurationPerPx: 460,     // 이동 속도 (ms/px)
+runDurationPerPx: 256,
+walkFrameDurationMs: 350,   // 다리 애니메이션 프레임 간격
+runFrameDurationMs: 220,
+```
+
+### easing 코드 (PattieRoamingController.js updateTerrainMotion)
+
+```js
+const eased = (m.mode === 'walk' || m.mode === 'run')
+    ? t   // linear — 슬라이딩 없음
+    : t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // jump/climb만 ease
+```
+
+---
+
+## 관리시트 주간매출 차트 — 지형 설계 원칙
+
+### 바 높이를 설계할 때의 제약
+
+캐릭터가 바 위에 올라서는 지형으로 작동하려면 아래 두 config 값을 반드시 지켜야 한다.
+
+| 설정 | 값 | 의미 |
+|---|---|---|
+| `maxBarHeightFromFloorPx` | 132px | 이보다 높은 바는 지형으로 인식 안 됨 |
+| `maxTerrainDeltaPx` | 96px | 인접 지형 간 점프 가능 높이 차 최대값 |
+
+- mp-bars 컨테이너 실질 높이 ≈ 156px
+- 바 height%가 85% 이상이면 픽셀 높이가 132px를 넘어 지형에서 제외될 수 있다
+- 인접한 두 바의 높이 차(px)가 96을 넘으면 캐릭터가 그 사이를 직접 이동 못하고 막힌다
+
+### 확정된 WEEKLY_SALES 높이 (계단형 불규칙 패턴)
+
+```js
+// W1(낮)→W2(중)→W3(약간낮)→W4(높)→W5(중)→W6(최고)→W7(낮)
+{ label: 'W1', online: 28, offline: 20 },
+{ label: 'W2', online: 55, offline: 44 },
+{ label: 'W3', online: 42, offline: 33 },
+{ label: 'W4', online: 70, offline: 59 },
+{ label: 'W5', online: 58, offline: 47 },
+{ label: 'W6', online: 80, offline: 68 },
+{ label: 'W7', online: 38, offline: 28 },
+```
+
+- 인접 바 최대 델타: W6→W7 약 67px → maxTerrainDeltaPx(96) 이내 ✓
+- 모든 바 최대 높이: W6 online ≈ 125px → maxBarHeightFromFloorPx(132) 이내 ✓
+- 패턴: 낮→높→낮 반복으로 캐릭터가 계단처럼 오르내리는 동선이 생긴다
+
+### 바 지형 선언 방식
+
+```html
+<!-- data-pattie-terrain="chart-bar" 없으면 캐릭터가 바를 무시한다 -->
+<div class="mp-bar mp-bar-online" data-pattie-terrain="chart-bar" ...></div>
+```
+
+- 차트 컨테이너에는 `data-pattie-zone="chart"` 필수
+- `getSortedBars()`는 `[data-pattie-terrain='chart-bar']`를 x축 순서로 정렬해서 읽는다
+- 지형 좌표는 chart 엘리먼트 기준 local 좌표다 (`getLocalRect` via offsetLeft/offsetTop 누적). viewport 기준 getBoundingClientRect를 쓰면 스크롤 시 좌표가 흔들린다.
+
+---
+
+## 신규 CLI가 반드시 알아야 할 작업 습관
+
+1. **히스토리 먼저** — `git log --oneline -20`으로 최근 작업 맥락 파악 후 시작한다.
+2. **#SMCP# 커맨드** — main 커밋/푸시 → sub 머지/푸시. sub에 충돌 나면 `git checkout --theirs`로 main 버전 채택한다.
+3. **wrangler secret 주입** — `CLOUDFLARE_API_TOKEN`이 환경변수로 있으면 `wrangler login`이 거부된다. secret 입력 시 파이프 방식 사용(`Get-Clipboard | ...`).
+4. **D1 migration 적용** — `wrangler d1 migrations apply`가 7403이면 토큰 권한 부족. `wrangler d1 execute db_game_info --command "..."` 직접 실행으로 우회한다.
+5. **CSS에서 퍼센트 높이 주의** — mp-bar의 height%는 mp-bar-pair 기준이고, mp-bar-pair는 mp-col의 100%다. 픽셀 계산 시 mp-bars 실질 높이(≈156px)를 기준으로 한다.
+6. **easing 건드릴 때** — walk mode에 easeInOut 쓰는 순간 슬라이딩이 생긴다. 이미 linear로 확정됐으므로 되돌리지 말 것.
