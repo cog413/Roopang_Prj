@@ -136,13 +136,19 @@ function buildDOM() {
 
     const table = buildSalesTable();
     const projectTable = buildProjectTable();
+    const dashboardMain = el('div', 'mp-dashboard-main-section');
+    const analysisRow = el('div', 'mp-analysis-row');
     const trend = buildTrendChart();
     trend.dataset.pattieZone = 'card';
     const analysis = buildAnalysisCard();
     analysis.dataset.pattieZone = 'card';
     const chart = buildWeeklySalesChart();
 
-    habitat.append(table, projectTable, trend, analysis, chart);
+    analysisRow.append(trend, analysis);
+    dashboardMain.append(projectTable, analysisRow);
+    habitat.append(table, dashboardMain, chart);
+    requestAnimationFrame(renderRealtimeAnalysis);
+    observeRealtimeAnalysis();
 }
 
 function buildSalesTable() {
@@ -245,6 +251,81 @@ function buildAnalysisCard() {
             <span style="color:#111;font-weight:bold">분석 포인트</span>
         </div>`;
     return card;
+}
+
+let analysisObserver = null;
+
+function observeRealtimeAnalysis() {
+    if (analysisObserver || !window.ResizeObserver) return;
+    const canvas = document.getElementById('mp-map-canvas');
+    if (!canvas?.parentElement) return;
+    analysisObserver = new ResizeObserver(() => renderRealtimeAnalysis());
+    analysisObserver.observe(canvas.parentElement);
+}
+
+function renderRealtimeAnalysis() {
+    const canvas = document.getElementById('mp-map-canvas');
+    if (!canvas?.parentElement) return;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const width = Math.max(120, rect.width - 20);
+    const height = Math.max(72, rect.height - 58);
+    if (width <= 0 || height <= 0) {
+        requestAnimationFrame(renderRealtimeAnalysis);
+        return;
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    const pad = { left: 24, right: 10, top: 12, bottom: 22 };
+    const innerW = width - pad.left - pad.right;
+    const innerH = height - pad.top - pad.bottom;
+    const values = [28, 44, 38, 58, 52, 69, 63];
+    const max = 80;
+
+    ctx.strokeStyle = '#d9e2ec';
+    ctx.lineWidth = 1;
+    ctx.font = '9px Segoe UI, sans-serif';
+    for (let i = 0; i <= 3; i += 1) {
+        const y = pad.top + (innerH / 3) * i;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(width - pad.right, y);
+        ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#5b9bd5';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    values.forEach((value, index) => {
+        const x = pad.left + (innerW / (values.length - 1)) * index;
+        const y = pad.top + innerH * (1 - value / max);
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.fillStyle = '#ed7d31';
+    values.forEach((value, index) => {
+        const x = pad.left + (innerW / (values.length - 1)) * index;
+        const y = pad.top + innerH * (1 - value / max);
+        ctx.beginPath();
+        ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.fillStyle = '#44546a';
+    ['W1', 'W3', 'W5', 'W7'].forEach((label, index) => {
+        const x = pad.left + (innerW / 3) * index;
+        ctx.fillText(label, x - 6, height - 7);
+    });
 }
 
 function row(values, className) {

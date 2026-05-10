@@ -44,8 +44,14 @@ async function onMinimeSheetShown() {
 }
 
 function ensureSettingsButton() {
+    const chart = document.getElementById('mp-chart');
     const habitat = document.getElementById('mini-pet-habitat');
-    if (!habitat || settingsButton) return;
+    const parent = chart || habitat;
+    if (!parent) return;
+    if (settingsButton) {
+        if (!parent.contains(settingsButton)) parent.appendChild(settingsButton);
+        return;
+    }
     settingsButton = document.createElement('button');
     settingsButton.type = 'button';
     settingsButton.className = 'pattie-settings-button';
@@ -64,7 +70,7 @@ function ensureSettingsButton() {
         currentAvatar = avatar;
         showSetupFlow(avatar);
     });
-    habitat.appendChild(settingsButton);
+    parent.appendChild(settingsButton);
 }
 
 async function fetchPattie() {

@@ -291,3 +291,9 @@ const eased = (m.mode === 'walk' || m.mode === 'run')
 - Runtime static copies live in `public/assets/corgi/` and are referenced through `public/assets/corgi/manifest.json`.
 - Frame counts differ by animation and must be inferred from actual image dimensions.
 - Sprite slicing must account for source padding/spacing; fix code when image structure and code assumptions conflict.
+## Pattie Sprite/Dashboard Layout Policy
+
+- Pattie sprite rendering keeps two layers: outer collision/layout box follows `spriteSize` terrain math, inner sprite layer renders the source frame at native size and is visually scaled with CSS transform.
+- Chart bar landing corrections must apply only to bar surfaces, not floor surfaces, so floor terrain remains stable.
+- Management sheet dashboard overlap should be resolved with existing grid/flex grouping, not ad hoc margin offsets.
+- Realtime analysis visuals should render on the actual canvas with DPR-aware sizing instead of static pseudo placeholders.

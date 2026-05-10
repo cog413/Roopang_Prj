@@ -46,6 +46,7 @@ export class PattieRoamingController {
         this.terrainMotion = null;
         this.lastInteractionAt = Date.now();
         this.lastDecisionAt = 0;
+        this.sleepLockCycles = 0;
         this.raf = null;
         this.speechBubble = null;
         this.speechTimer = null;
@@ -139,8 +140,13 @@ export class PattieRoamingController {
 
     decide() {
         if (this.terrainMotion || this.jumpMotion || this.mode === 'climb') return;
+        // Sleep remains locked for two decision cycles before any re-pick.
+        if (this.sleepLockCycles > 0) {
+            this.sleepLockCycles -= 1;
+            return;
+        }
         this.zone = this.findCurrentZone() || this.pickNearestZone();
-        if (Date.now() - this.lastInteractionAt > this.config.movement.sleepAfterMs && Math.random() < 0.2) {
+        if (Date.now() - this.lastInteractionAt > this.config.movement.sleepAfterMs && Math.random() < 0.3) {
             this.setMode('sleep');
             return;
         }
@@ -205,6 +211,7 @@ export class PattieRoamingController {
     }
 
     setMode(mode) {
+        if (mode === 'sleep') this.sleepLockCycles = 2; // decisionMs 3600ms => about 7.2s minimum.
         this.mode = mode || 'idle';
         this.sprite.play(this.mode);
     }
@@ -479,7 +486,7 @@ export class PattieRoamingController {
             kind: 'bar',
             minX: bar.pairLeft + 1,
             maxX: bar.pairLeft + bar.pairWidth - size - 1,
-            y: bar.top - size,
+            y: bar.top - size + 6, // Sprite has transparent foot padding; bar surfaces only.
         })).filter((surface) => {
             const heightFromFloor = Math.abs(surface.y - floorY);
             return surface.maxX >= surface.minX && heightFromFloor <= this.config.movement.maxBarHeightFromFloorPx;

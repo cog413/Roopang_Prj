@@ -80,21 +80,23 @@ export class PattieSprite {
         const height = this.animation.frameHeight || 32;
         const renderWidth = this.animation.renderWidth || width;
         const renderHeight = this.animation.renderHeight || height;
-        const scaleX = renderWidth / width;
-        const scaleY = renderHeight / height;
         const imageWidth = this.animation.imageWidth || (this.animation.frameCount || 1) * width;
         const imageHeight = this.animation.imageHeight || height;
         const spacingX = this.animation.frameSpacingX || 0;
         const spacingY = this.animation.frameSpacingY || 0;
         const sourceX = (this.animation.sourcePaddingX || 0) + this.frame * (width + spacingX);
         const sourceY = (this.animation.sourcePaddingY || 0) + this.frame * spacingY;
+        // Outer element: collision/layout box stays at renderWidth × renderHeight
         this.el.style.width = `${renderWidth}px`;
         this.el.style.height = `${renderHeight}px`;
-        this.baseEl.style.width = `${renderWidth}px`;
-        this.baseEl.style.height = `${renderHeight}px`;
+        // Inner layer: renders at native frame size (no backgroundSize scaling).
+        // CSS transform: scale() downscales via GPU compositor — avoids sub-pixel math artifacts.
+        this.baseEl.style.width = `${width}px`;
+        this.baseEl.style.height = `${height}px`;
+        this.baseEl.style.transform = `scale(${renderWidth / width})`;
         this.baseEl.style.backgroundImage = `url("${this.animation.src}")`;
-        this.baseEl.style.backgroundPosition = `-${Math.round(sourceX * scaleX)}px -${Math.round(sourceY * scaleY)}px`;
-        this.baseEl.style.backgroundSize = `${Math.round(imageWidth * scaleX)}px ${Math.round(imageHeight * scaleY)}px`;
+        this.baseEl.style.backgroundPosition = `-${sourceX}px -${sourceY}px`;
+        this.baseEl.style.backgroundSize = `${imageWidth}px ${imageHeight}px`;
         this.itemLayer.style.width = `${renderWidth}px`;
         this.itemLayer.style.height = `${renderHeight}px`;
     }

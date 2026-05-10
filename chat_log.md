@@ -1,5 +1,31 @@
 # Chat Log (Auto-Managed)
 
+---
+
+### [2026-05-10 22:14] (CLI: codex)
+
+**1. 목표**
+- Claude가 이어받을 때 헷갈리지 않도록 `HANDOFF.md`와 `AGENT_GUIDELINES.md`의 주의사항을 점검하고 보강.
+
+**2. 현재 상태**
+- `HANDOFF.md`에 sprite asset, Pattie world, branch flow 기본 내용은 있었음.
+- `chat_log.md`와 `refresheet.context`에는 최근 sprite/dashboard 정책이 기록되어 있음.
+
+**3. 문제**
+- 이전 기준의 `backgroundPosition/backgroundSize Math.round()` 지침이 남아 있어 현재 B-plan과 충돌할 수 있었음.
+- 대시보드 레이아웃, sleep lock, bar landing 보정, canvas 렌더링의 구체적 주의사항이 `HANDOFF.md`에 부족했음.
+
+**4. 시도한 것**
+- `HANDOFF.md`의 sprite 지침을 현재 B-plan 기준으로 수정.
+- `AGENT_GUIDELINES.md`의 asset rule도 중복 0.5 scaling 금지로 정리.
+
+**5. 해결 / 인사이트**
+- Claude는 `HANDOFF.md`를 먼저 읽으면 sprite native layer/outer collision box 분리, bar-only +6 보정, sleep 2-cycle lock, grid 기반 대시보드 배치를 확인할 수 있음.
+
+**6. 반영 필요 사항 (중요)**
+- 향후 sprite 관련 수정 시 JS에서 background 좌표를 다시 0.5배로 줄이면 안 됨.
+- 실시간 분석 canvas를 pseudo-element placeholder로 되돌리면 안 됨.
+
 ### [2026-05-04 23:33] (CLI: codex)
 
 **1. 목표**
@@ -653,6 +679,9 @@ AI는 아래를 판단해야 한다:
 - mong 테스트 asset은 원본 frame size와 render size를 분리한다.
 - 관리시트 chartZone에서는 bar 이동을 jump/climb 중심으로 유지한다.
 - 프로젝트 표는 텍스트 길이에 맞춰 `.proj-table` 전용 컬럼 폭을 유지한다.
+
+---
+
 ### [2026-05-10 15:54] (CLI: codex)
 
 **1. 목표**
@@ -679,6 +708,9 @@ AI는 아래를 판단해야 한다:
 **6. 반영 필요 사항 (중요)**
 - Pattie/Mong은 그래프 박스 내부에서만 이동하는 화면에서는 chart-zone 전용 bar-to-bar 시퀀스를 사용한다.
 - 64x64 원본 도트 애셋은 스프라이트 시트 생성 시 중심/바닥선 정렬 보정을 거친다.
+
+---
+
 ### [2026-05-10 16:13] (CLI: codex)
 
 **1. 목표**
@@ -702,6 +734,9 @@ AI는 아래를 판단해야 한다:
 
 **6. 반영 필요 사항 (중요)**
 - 그래프 NPC는 카드 root 내부 absolute 좌표계를 기준으로 구현하고, 지형 계산은 JS의 surface 데이터로 관리한다.
+
+---
+
 ### [2026-05-10 16:27] (CLI: codex)
 
 **1. 목표**
@@ -727,6 +762,9 @@ AI는 아래를 판단해야 한다:
 **6. 반영 필요 사항 (중요)**
 - 그래프 NPC 초기 배치는 항상 바닥 플랫폼 기준이어야 하며, 막대 height animation 완료 전 막대 top을 초기 좌표로 쓰지 않는다.
 - walk/run은 좌표 이동 속도와 frameDuration을 함께 조절해 미끄러짐을 피한다.
+
+---
+
 ### [2026-05-10 16:39] (CLI: codex)
 
 **1. 목표**
@@ -749,6 +787,9 @@ AI는 아래를 판단해야 한다:
 
 **6. 반영 필요 사항 (중요)**
 - 그래프 내부 NPC는 viewport 좌표가 아니라 chart-local 좌표를 기본으로 사용한다.
+
+---
+
 ### [2026-05-10 17:02] (CLI: codex)
 
 **1. 목표**
@@ -774,6 +815,9 @@ AI는 아래를 판단해야 한다:
 **6. 반영 필요 사항 (중요)**
 - 실제 화면 테스트는 headless browser로 탭 전환까지 수행해 DOM 좌표를 검증한다.
 - chart NPC 초기화는 hidden sheet 상태에서 수행하지 않는다.
+
+---
+
 ### [2026-05-10 20:41] (CLI: codex)
 
 **1. 목표**
@@ -803,3 +847,114 @@ AI는 아래를 판단해야 한다:
 - runtime은 `public/assets/corgi/manifest.json`만 바라본다.
 - 애니메이션별 frameCount는 하드코딩하지 않고 실제 이미지 크기에서 추론한다.
 - sprite sheet padding/spacing은 코드에서 처리한다.
+
+---
+
+### [2026-05-10 21:30] (CLI: claude)
+
+**1. 목표**
+- 막대그래프 지형 버그 수정: 캐릭터가 막대 위에 올라가지 못하는 문제
+- 막대 너비 1.5배 확장, 인접 막대만 이동 가능하도록 점프 범위 제한
+- 픽셀 아트 렌더링 비대칭(눈이 짝짝이) 문제 수정 및 sub-pixel drift 제거
+- 말풍선 캐릭터 위치 추적, 그래프 제목에 반려동물 이름 표시
+- 버튼 패널 위치 조정(top 650px → 400px), 황색 이름 박스 제거
+- 문서 통합 (CHANGELOG.md → chat_log.md, HANDOFF_TMP.md → HANDOFF.md, AGENT_GUIDELINES.md 신규 생성)
+
+**2. 현재 상태**
+- production Aseprite sprite sheet(64×64) 전환 완료 상태에서 시작
+- manifest `renderWidth: 25`, config `spriteSize: 25`
+
+**3. 문제**
+- `mp-bar` CSS 폭(18px) < `spriteSize`(25px) → `maxX = pairLeft + 18 - 25 - 1 < minX` → 모든 막대 surface 필터링 → 캐릭터 막대 미탑승
+- `renderWidth=25`, 원본 64px → scale=0.390625(비정수) → nearest-neighbor 픽셀 비균일 샘플링 → 눈 비대칭
+- `backgroundPosition`/`backgroundSize` 소수점 값 → sub-pixel drift
+- 인접 bar 이외 2-3개 막대 건너뛰기 허용됨
+
+**4. 시도한 것**
+- `getSortedBars()`에서 bar 부모(`mp-bar-pair`) rect를 함께 캡처, `pairLeft`/`pairWidth` 기준으로 surface 계산
+- `renderWidth=32`(2x 정수 다운스케일), manifest 및 config `spriteSize` 업데이트
+- `applyFrame()`과 `minimeSetup.js`에 `Math.round()` 적용
+- `maxJumpDistancePx: 62` 추가, bar 종류에만 `hDist` 체크 적용해 인접 막대 only 이동
+- `.pattie-speech` CSS 생성(녹색 테두리 #70ad47, 말꼬리 ::after/::before), `updateNameplate()`에서 rAF마다 위치 추적
+- `updateChartTitle(nickname)`, `truncateName()`으로 그래프 제목에 펫 이름 표시(한국어 10자, 영어 20자)
+- WEEKLY_SALES 계단형 높이(인접 diff ≤ 14%), 막대 너비 18→27px
+- 노란 nameplate 박스 제거
+
+**5. 해결 / 인사이트**
+- 지형 버그: 부모 pair rect 사용으로 `maxX >= minX` 보장 → 모든 막대 정상 surface 등록
+- 픽셀 아트 비대칭: 정수 배율(64→32, 0.5x)로 nearest-neighbor 균일 샘플링
+- sub-pixel drift: `Math.round()`로 `backgroundPosition`/`backgroundSize` 정수화
+- walk sliding: `walkFrameDurationMs: 350`(기존 1240)으로 이동과 다리 프레임 속도 동기화
+- 커밋 `37e84bb`으로 main/sub 양쪽 반영
+
+**6. 반영 필요 사항 (중요)**
+- `spriteSize`와 `renderWidth`는 정수 배율 관계 유지(64px → 32px = 0.5x)
+- surface 계산은 `mp-bar`가 아닌 `mp-bar-pair` 기준
+- walk/run `frameDurationMs`는 이동 속도와 반드시 같이 조정
+- 말풍선과 캐릭터 이름은 nameplate가 아닌 speech bubble + 그래프 제목으로 분리 관리
+
+---
+
+## 📋 Version History
+
+(Merged from CHANGELOG.md — 2026-05-10)
+
+### [v1.2.0] - 2026-05-02
+- 스도쿠 게임 중복 입력(가로/세로/3×3 블록) 검증 로직 구현
+- 엑셀 "데이터 유효성 검사" 경고창을 완벽히 위장한 모달 팝업 추가
+- Flexbox 위장 장표를 엑셀 피벗 테이블 스타일(Grid)로 전면 개편, 픽셀 단위 셀 격자 동기화
+
+### [v1.1.1] - 2026-05-02
+- 스도쿠/2048 게임 보드 정렬 수정 (padding/gap 조정)
+- 좌/우측에 결재 대기 문서·영업 현황 위장 장표 추가
+
+### [v1.1.0] - 2026-05-02
+- 우상단 리본 메뉴에 다크/라이트 모드 버튼 추가 (JH 아이콘)
+- 2048 시트에 '연간 부서 실적 요약' 위장 데이터·차트 추가
+- 스도쿠 시트에 '프로젝트 Task 진행 현황' 위장 표 추가
+- 2048 점수 → 위장 '총 누적 실적' 차트 연동
+- 스도쿠 진행률 → 위장 '해결된 Task 수' 연동
+- CSS Variables로 다크 테마 지원
+
+### [v1.0.0] - 2026-05-02
+- 엑셀 UI 위장 껍데기 구현 (리본 메뉴, 수식 입력줄, 그리드)
+- 스도쿠 및 2048 게임 기본 로직 구현
+- Esc 키 보스 키(Boss Key) 기능 구현
+
+### [Unreleased] - 2026-05-10
+- Mong/Corgi runtime asset을 임시 생성 sheet에서 Aseprite 원본 production sprite sheet로 전환
+- `PattieAssetLoader`가 실제 PNG naturalWidth/Height에서 frameCount·padding을 추론하도록 개선
+- `PattieSprite` frame slicing이 1px Aseprite padding을 반영하도록 수정
+- 임시 mong sprite asset 폴더 및 generator 제거
+- 브라우저 탭 제목을 "Refresheet_Prj - Excel"에서 "SneakTime - Refresheet"으로 변경 (`index.html` `<title>` 태그)
+---
+
+### [2026-05-10 22:06] (CLI: codex)
+
+**1. 목표**
+- Pattie/Corgi sprite 화질, chart bar 착지, sleep/idle 빈도, 관리시트 대시보드 겹침, 실시간 분석 canvas, 토닥이 설정 버튼 위치를 한 번에 최소 수정.
+
+**2. 현재 상태**
+- `PattieSprite`는 내부 sprite layer를 원본 frame 크기로 렌더하고 외부 collision/layout 박스는 render size로 유지.
+- 관리시트 주요 프로젝트 테이블과 분석 카드 레이아웃은 `mp-dashboard-main-section` / `mp-analysis-row` grid 구조로 정리.
+
+**3. 문제**
+- 기존 분석 카드/트렌드 카드가 absolute 배치로 프로젝트 테이블 우측에 붙어 겹침 가능성이 있었음.
+- 실시간 분석은 canvas가 숨겨지고 pseudo 배경만 보여 실제 DPR 렌더링이 되지 않았음.
+- sleep/idle weight는 단순 증가 시 전체 weight 합계가 커져 walk 비중 재조정이 필요했음.
+
+**4. 시도한 것**
+- `src/patties/*`, `src/pet/miniPet.js`, `src/minime/minimeSetup.js`, `style.css`만 범위 내 최소 수정.
+- JS syntax check와 정적 서버 asset 응답 확인 수행.
+
+**5. 해결 / 인사이트**
+- sprite는 64px 원본 layer를 CSS transform으로 축소하고 background size/position은 원본 좌표를 유지.
+- bar surface y에만 `+6` 보정을 적용하고 floor surface는 유지.
+- sleep lock 2 decision cycle과 inactive sleep 30% 적용.
+- sheet/card zone idle/sleep은 1.5배 반영하되 합계 100 기준으로 walk 비중을 낮춤.
+- 실시간 분석 canvas는 ResizeObserver와 DPR scaling으로 렌더링.
+- 토닥이 설정 버튼은 `mp-chart` 내부 우상단으로 이동.
+
+**6. 반영 필요 사항 (중요)**
+- 캐릭터 sprite는 내부 원본 레이어와 외부 collision box를 분리 유지한다.
+- 대시보드 카드 배치는 absolute margin 보정보다 grid/flex 구조로 겹침을 해소한다.

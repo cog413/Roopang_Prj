@@ -5,7 +5,7 @@ export const pattieWorldConfig = {
             type: 'walkable',
             selector: "[data-pattie-zone='sheet']",
             behavior: ['walk', 'idle', 'jump'],
-            weights: { walk: 65, idle: 25, jump: 5, sleep: 5 },
+            weights: { walk: 65, idle: 38, jump: 5, sleep: 8 },
         },
         {
             id: 'chart-zone',
@@ -19,7 +19,7 @@ export const pattieWorldConfig = {
             type: 'platform',
             selector: "[data-pattie-zone='card']",
             behavior: ['walk', 'idle', 'jump'],
-            weights: { walk: 50, idle: 30, jump: 10, sleep: 10 },
+            weights: { walk: 50, idle: 45, jump: 10, sleep: 15 },
         },
         {
             id: 'blocked-zone',
