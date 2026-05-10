@@ -5,8 +5,8 @@ import { pattieWorldConfig } from './pattieWorldConfig.js';
 let controller = null;
 
 const DEFAULT_PROFILE = {
-    nickname: '토닥이',
-    character_key: 'rabbit',
+    nickname: 'Mong',
+    character_key: 'mong',
     equipped_item_keys: [],
 };
 
@@ -35,11 +35,11 @@ export class PattieRoamingController {
         this.profile = { ...DEFAULT_PROFILE };
         this.x = 100;
         this.y = 250;
-        this.baseY = this.y;
         this.direction = 1;
         this.active = false;
         this.zone = null;
         this.mode = 'walk';
+        this.jumpMotion = null;
         this.lastInteractionAt = Date.now();
         this.lastDecisionAt = 0;
         this.raf = null;
@@ -69,6 +69,7 @@ export class PattieRoamingController {
         this.root = root;
         this.root.classList.add('pattie-world');
         if (this.sprite && !this.root.contains(this.sprite.el)) this.root.appendChild(this.sprite.el);
+        if (this.nameplate && !this.root.contains(this.nameplate)) this.root.appendChild(this.nameplate);
         this.placeAtFirstZone();
     }
 
@@ -119,7 +120,7 @@ export class PattieRoamingController {
     tick(now) {
         if (!this.active) return;
         if (now - this.lastDecisionAt > this.config.movement.decisionMs) {
-            this.decide(now);
+            this.decide();
             this.lastDecisionAt = now;
         }
         this.move();
@@ -128,9 +129,9 @@ export class PattieRoamingController {
         this.raf = requestAnimationFrame(this.boundTick);
     }
 
-    decide(now) {
+    decide() {
         this.zone = this.findCurrentZone() || this.pickNearestZone();
-        if (Date.now() - this.lastInteractionAt > this.config.movement.sleepAfterMs && Math.random() < 0.25) {
+        if (Date.now() - this.lastInteractionAt > this.config.movement.sleepAfterMs && Math.random() < 0.2) {
             this.setMode('sleep');
             return;
         }
@@ -139,7 +140,7 @@ export class PattieRoamingController {
         if (mode === 'climb' && this.findNearestBar()) {
             this.startClimb();
         } else if (mode === 'jump') {
-            this.startJump();
+            this.startJump(this.zone?.id === 'chart-zone' ? this.findNextBarPlatform() : null);
         } else {
             this.setMode(mode);
             if (Math.random() < 0.35) this.direction *= -1;
@@ -149,19 +150,30 @@ export class PattieRoamingController {
     move() {
         const zone = this.zone || this.pickNearestZone();
         if (!zone) return;
-        const step = this.mode === 'walk' ? this.config.movement.stepPx : this.mode === 'climb' ? 0.45 : 0;
+        if (this.mode === 'jump' && this.jumpMotion) {
+            this.updateJumpMotion();
+            return;
+        }
+
+        const step = this.mode === 'walk'
+            ? this.config.movement.stepPx
+            : this.mode === 'climb'
+                ? this.config.movement.climbStepPx
+                : 0;
         if (this.mode === 'walk') this.x += step * this.direction;
         if (this.mode === 'climb') this.y -= step;
 
+        const size = this.config.movement.spriteSize;
+        const root = this.rootRect();
         const bounds = zone.bounds;
-        const minX = Math.max(0, bounds.left - this.rootRect().left + 3);
-        const maxX = Math.max(minX, bounds.right - this.rootRect().left - 34);
-        const minY = Math.max(0, bounds.top - this.rootRect().top + 4);
-        const maxY = Math.max(minY, bounds.bottom - this.rootRect().top - 34);
+        const minX = Math.max(0, bounds.left - root.left + 3);
+        const maxX = Math.max(minX, bounds.right - root.left - size);
+        const minY = Math.max(0, bounds.top - root.top + 4);
+        const maxY = Math.max(minY, bounds.bottom - root.top - size);
 
         if (this.x <= minX || this.x >= maxX) this.direction *= -1;
         this.x = clamp(this.x, minX, maxX);
-        if (this.mode !== 'jump') this.y = clamp(this.y, minY, maxY);
+        this.y = clamp(this.y, minY, maxY);
         if (this.mode === 'climb' && this.y <= minY + 4) {
             this.setMode('walk');
             this.direction *= -1;
@@ -173,24 +185,49 @@ export class PattieRoamingController {
         this.sprite.play(this.mode);
     }
 
-    startJump() {
+    startJump(target = null) {
+        const size = this.config.movement.spriteSize;
+        const fallback = {
+            x: this.x + this.direction * 34,
+            y: this.y,
+        };
+        const end = target || fallback;
+        this.direction = end.x >= this.x ? 1 : -1;
         this.mode = 'jump';
-        this.baseY = this.y;
         this.sprite.play('jump', { restart: true, once: true, next: 'walk' });
-        const up = this.baseY - 16;
-        this.y = up;
-        setTimeout(() => {
-            this.y = this.baseY;
-            if (this.mode === 'jump') this.setMode('walk');
-        }, 650);
+        this.jumpMotion = {
+            startX: this.x,
+            startY: this.y,
+            endX: clamp(end.x, 0, Math.max(0, this.root.scrollWidth - size)),
+            endY: clamp(end.y, 0, Math.max(0, this.root.scrollHeight - size)),
+            startedAt: performance.now(),
+            duration: this.config.movement.jumpDurationMs,
+        };
+    }
+
+    updateJumpMotion() {
+        const m = this.jumpMotion;
+        const elapsed = performance.now() - m.startedAt;
+        const t = Math.min(1, elapsed / m.duration);
+        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        const arc = Math.sin(Math.PI * t) * this.config.movement.jumpArcPx;
+        this.x = m.startX + (m.endX - m.startX) * eased;
+        this.y = m.startY + (m.endY - m.startY) * eased - arc;
+        if (t >= 1) {
+            this.x = m.endX;
+            this.y = m.endY;
+            this.jumpMotion = null;
+            this.setMode('walk');
+        }
     }
 
     startClimb() {
         const bar = this.findNearestBar();
         if (bar) {
             const root = this.rootRect();
-            this.x = clamp(bar.left - root.left - 24, 0, this.root.scrollWidth - 34);
-            this.y = clamp(bar.bottom - root.top - 34, 0, this.root.scrollHeight - 34);
+            const size = this.config.movement.spriteSize;
+            this.x = clamp(bar.left - root.left - size + 10, 0, this.root.scrollWidth - size);
+            this.y = clamp(bar.bottom - root.top - size, 0, this.root.scrollHeight - size);
         }
         this.mode = 'climb';
         this.sprite.play('climb', { restart: true });
@@ -204,7 +241,7 @@ export class PattieRoamingController {
         fetch('/api/minime/interact', { method: 'POST', credentials: 'include' }).catch(() => {});
         setTimeout(() => {
             if (this.mode === 'happy') this.setMode('walk');
-        }, 1200);
+        }, 1300);
     }
 
     handleSpeech(event) {
@@ -216,7 +253,7 @@ export class PattieRoamingController {
         if (!zone) return;
         const root = this.rootRect();
         this.x = zone.bounds.left - root.left + 40;
-        this.y = zone.bounds.top - root.top + 220;
+        this.y = zone.bounds.top - root.top + 200;
         this.zone = zone;
         this.sprite?.setPosition(this.x, this.y, this.direction);
         this.updateNameplate();
@@ -224,8 +261,9 @@ export class PattieRoamingController {
 
     findCurrentZone() {
         const root = this.rootRect();
-        const px = root.left + this.x + 16;
-        const py = root.top + this.y + 16;
+        const size = this.config.movement.spriteSize;
+        const px = root.left + this.x + size / 2;
+        const py = root.top + this.y + size / 2;
         return this.getZones().find((zone) => {
             const b = zone.bounds;
             return zone.type !== 'blocked' && px >= b.left && px <= b.right && py >= b.top && py <= b.bottom;
@@ -247,13 +285,35 @@ export class PattieRoamingController {
     }
 
     findNearestBar() {
-        const bars = Array.from(this.root.querySelectorAll(this.config.terrainRules.chartBar.selector));
+        const bars = this.getSortedBars();
         if (!bars.length) return null;
         const root = this.rootRect();
-        const centerX = root.left + this.x + 16;
-        return bars
+        const size = this.config.movement.spriteSize;
+        const centerX = root.left + this.x + size / 2;
+        return bars.sort((a, b) => Math.abs(centerX - (a.left + a.width / 2)) - Math.abs(centerX - (b.left + b.width / 2)))[0];
+    }
+
+    getSortedBars() {
+        return Array.from(this.root.querySelectorAll(this.config.terrainRules.chartBar.selector))
             .map((bar) => bar.getBoundingClientRect())
-            .sort((a, b) => Math.abs(centerX - (a.left + a.width / 2)) - Math.abs(centerX - (b.left + b.width / 2)))[0];
+            .filter((rect) => rect.width > 0 && rect.height > 0)
+            .sort((a, b) => a.left - b.left);
+    }
+
+    findNextBarPlatform() {
+        const bars = this.getSortedBars();
+        if (!bars.length) return null;
+        const root = this.rootRect();
+        const size = this.config.movement.spriteSize;
+        const centerX = root.left + this.x + size / 2;
+        const forward = this.direction >= 0
+            ? bars.find((bar) => bar.left + bar.width / 2 > centerX + 6)
+            : [...bars].reverse().find((bar) => bar.left + bar.width / 2 < centerX - 6);
+        const target = forward || (this.direction >= 0 ? bars[0] : bars[bars.length - 1]);
+        return {
+            x: target.left + target.width / 2 - root.left - size / 2,
+            y: target.top - root.top - size + 6,
+        };
     }
 
     rootRect() {
@@ -268,7 +328,7 @@ export class PattieRoamingController {
 }
 
 function normalizeProfile(profile) {
-    const character = ['rabbit', 'dog', 'cat'].includes(profile.character_key)
+    const character = ['mong', 'rabbit', 'dog', 'cat'].includes(profile.character_key)
         ? profile.character_key
         : mapLegacyCharacter(profile.character_type);
     const items = Array.isArray(profile.equipped_item_keys)
@@ -285,10 +345,11 @@ function normalizeProfile(profile) {
 }
 
 function mapLegacyCharacter(characterType) {
+    if (characterType === 'mong') return 'mong';
     if (characterType === 'type_b') return 'dog';
     if (characterType === 'cat') return 'cat';
     if (characterType === 'dog') return 'dog';
-    return 'rabbit';
+    return 'mong';
 }
 
 function weightedPick(weights) {

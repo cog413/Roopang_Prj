@@ -157,3 +157,12 @@
 - 관리시트 지형은 `data-pattie-zone="sheet|chart|card|blocked"`와 `data-pattie-terrain="chart-bar"`로 선언한다.
 - D1에는 이미지 바이너리를 저장하지 않고 `character_assets`, `pattie_items`, `user_pattie_items`, `avatars.character_key`, `avatars.equipped_item_keys`로 metadata/src만 저장한다.
 - 예시 아이템 `sunglasses`, `bee_suit`는 cosmetic 전용이며 점수/랭킹에 영향을 주지 않는다.
+
+---
+
+## Mong Test Asset Rules
+
+- 64x64 mong 테스트 asset은 `public/assets/patties_mong_test/`에 분리한다.
+- 최종 Pattie asset(`public/assets/patties/`)과 mong 테스트 asset을 섞지 않는다.
+- mong 테스트 manifest는 `/public/assets/patties_mong_test/manifest.json`이며 frameWidth/frameHeight는 64다.
+- chartZone jump는 `data-pattie-terrain="chart-bar"` 막대들을 x축 순서로 읽고 다음 막대 상단으로 이동해야 한다.

@@ -318,7 +318,7 @@ async function handleSavePattie(request, env) {
 
     const body = await request.json().catch(() => ({}));
     const nickname = typeof body.nickname === 'string' ? body.nickname.trim().slice(0, 20) : null;
-    const characterKey = ['rabbit', 'dog', 'cat'].includes(body.character_key) ? body.character_key : 'rabbit';
+    const characterKey = ['mong', 'rabbit', 'dog', 'cat'].includes(body.character_key) ? body.character_key : 'mong';
     const equippedItems = Array.isArray(body.equipped_item_keys)
         ? body.equipped_item_keys.filter((key) => ['sunglasses', 'bee_suit'].includes(key)).slice(0, 4)
         : [];
@@ -380,11 +380,11 @@ function normalizePattieRow(row) {
         equipped = [];
     }
     const legacy = row.character_type === 'type_b' ? 'dog' : row.character_type;
-    const characterKey = ['rabbit', 'dog', 'cat'].includes(row.character_key)
+    const characterKey = ['mong', 'rabbit', 'dog', 'cat'].includes(row.character_key)
         ? row.character_key
-        : ['rabbit', 'dog', 'cat'].includes(legacy)
+        : ['mong', 'rabbit', 'dog', 'cat'].includes(legacy)
             ? legacy
-            : 'rabbit';
+            : 'mong';
     return {
         nickname: row.nickname,
         character_type: row.character_type,

@@ -28,6 +28,19 @@ public/assets/patties/
 
 현재 프로젝트는 빌드 없이 루트가 그대로 배포되므로 런타임 URL은 `/public/assets/patties/...`를 사용한다. `PattieAssetLoader`는 public manifest를 우선 사용한다. 추후 D1 API manifest나 R2 URL로 바뀌어도 loader의 인터페이스는 유지한다.
 
+## Mong 64x64 테스트 Asset
+
+현재 mong 단일 캐릭터 테스트는 최종 asset과 섞지 않고 아래 폴더를 사용한다.
+
+```text
+public/assets/patties_mong_test/
+  manifest.json
+  _test/README.md
+  mong/{idle,walk,run,sleep,happy,jump,climb}.png
+```
+
+원본은 `manually_command/export/idle`, `run`, `walk`의 64x64 PNG이며 `scripts/generate-mong-test-assets.js`로 테스트 sprite sheet를 재생성한다. frameDurationMs는 260~420ms 범위로 두고, 2D 아기자기한 움직임을 위해 이동 속도는 낮게 유지한다.
+
 ## 관리시트 지형
 
 - `sheetZone`: 왼쪽 표/셀 영역. 기본 walk, idle, jump.
@@ -45,7 +58,7 @@ HTML에는 `data-pattie-zone="sheet|chart|card|blocked"`를 붙인다. 막대그
 - cardZone: walk 50%, idle 30%, jump 10%, sleep 10%
 - 클릭/케어 액션: happy 우선 발동
 - chart bar 근처: climb 중 y 좌표를 JS에서 서서히 상승
-- jump: JS에서 y 좌표를 잠깐 올렸다가 원래 platform y로 복귀
+- jump: chartZone에서는 `data-pattie-terrain="chart-bar"` 막대들을 x축 순서로 읽고 다음 막대 상단으로 포물선 이동
 
 ## 아이템
 
