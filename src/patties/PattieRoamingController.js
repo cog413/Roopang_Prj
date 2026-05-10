@@ -301,6 +301,7 @@ export class PattieRoamingController {
             duration,
             arcPx: mode === 'jump' ? this.config.movement.jumpArcPx : mode === 'hopDown' ? 12 : 0,
             surfaces, // cached surfaces for cliff-edge detection during walk/run
+            surfaceId: stayOnCurrent ? target.id : null, // pin Y-snap to correct surface
         };
     }
 
@@ -319,11 +320,12 @@ export class PattieRoamingController {
             this.y -= Math.sin(Math.PI * t) * m.arcPx;
         }
 
-        // Cliff edge safety: snap Y to terrain surface during walk/run; stop if off-surface.
-        if ((m.mode === 'walk' || m.mode === 'run') && t < 0.98) {
-            const under = (m.surfaces || []).find(s => this.x >= s.minX - 3 && this.x <= s.maxX + 3);
-            if (under) {
-                this.y = under.y;
+        // Cliff edge safety: lock Y to the surface the walk started on; stop if character leaves it.
+        // Uses surfaceId to avoid matching the floor (which spans full chart width) when walking on a bar.
+        if ((m.mode === 'walk' || m.mode === 'run') && t < 0.98 && m.surfaceId) {
+            const src = (m.surfaces || []).find(s => s.id === m.surfaceId);
+            if (src && this.x >= src.minX - 3 && this.x <= src.maxX + 3) {
+                this.y = src.y;
             } else {
                 this.terrainMotion = null;
                 this.direction *= -1;
