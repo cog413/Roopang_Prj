@@ -35,10 +35,13 @@ export const pattieWorldConfig = {
         cardEdge: { canJump: true, canStand: true },
     },
     movement: {
-        frameDurationMs: 500,
-        stepPx: 1.35,
-        decisionMs: 2600,
+        frameDurationMs: 320,
+        stepPx: 0.58,
+        climbStepPx: 0.42,
+        decisionMs: 2400,
         sleepAfterMs: 45000,
-        spriteSize: 32,
+        spriteSize: 64,
+        jumpDurationMs: 980,
+        jumpArcPx: 34,
     },
 };

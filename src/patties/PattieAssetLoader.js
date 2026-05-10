@@ -1,4 +1,4 @@
-const DEFAULT_MANIFEST_URL = '/public/assets/patties/manifest.json';
+const DEFAULT_MANIFEST_URL = '/public/assets/patties_mong_test/manifest.json';
 
 export class PattieAssetLoader {
     constructor({ manifestUrl = DEFAULT_MANIFEST_URL } = {}) {
@@ -16,7 +16,11 @@ export class PattieAssetLoader {
 
     async getCharacter(characterKey = 'rabbit') {
         const manifest = await this.loadManifest();
-        return manifest.characters?.[characterKey] || manifest.characters?.rabbit || null;
+        return manifest.characters?.[characterKey]
+            || manifest.characters?.mong
+            || manifest.characters?.rabbit
+            || Object.values(manifest.characters || {})[0]
+            || null;
     }
 
     async getAnimation(characterKey = 'rabbit', animationKey = 'idle') {

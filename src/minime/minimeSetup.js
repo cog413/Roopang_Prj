@@ -6,6 +6,7 @@ let settingsButton = null;
 export let currentAvatar = null;
 
 const CHARACTER_LABELS = {
+    mong: 'Mong 테스트',
     rabbit: '토끼 Pattie',
     dog: '강아지 토닥이',
     cat: '고양이 Pattie',
@@ -179,7 +180,7 @@ function fillForm(avatar) {
         card.classList.toggle('selected', card.dataset.type === characterKey);
     });
     if (!setupEl.querySelector('.ms-char-card.selected')) {
-        setupEl.querySelector('[data-type="rabbit"]')?.classList.add('selected');
+        setupEl.querySelector('[data-type="mong"]')?.classList.add('selected');
     }
     const equipped = Array.isArray(avatar?.equipped_item_keys) ? avatar.equipped_item_keys : [];
     setupEl.querySelectorAll('#ms-item-list input[type="checkbox"]').forEach(input => {
@@ -223,6 +224,6 @@ export function applyAvatarToScene(avatar) {
 
 function mapLegacyCharacter(characterType) {
     if (characterType === 'type_b') return 'dog';
-    if (characterType === 'dog' || characterType === 'cat') return characterType;
-    return 'rabbit';
+    if (characterType === 'mong' || characterType === 'dog' || characterType === 'cat') return characterType;
+    return 'mong';
 }

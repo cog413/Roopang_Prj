@@ -587,3 +587,36 @@ AI는 아래를 판단해야 한다:
 - 코드에서는 개별 PNG를 하드코딩하지 않고 manifest/AssetLoader를 통한다.
 - D1에는 이미지 바이너리를 저장하지 않고 src/metadata만 저장한다.
 - 관리시트 지형은 sheet/chart/card/blocked zone과 chart-bar terrain attribute를 기준으로 확장한다.
+
+---
+
+### [2026-05-10 15:04] (CLI: codex)
+
+**1. 목표**
+- `manually_command/export`에 들어온 64x64 mong idle/run/walk 원본을 기반으로 sleep, happy, jump, climb 테스트 애니메이션을 만들고 관리시트에 실제 적용한다.
+
+**2. 현재 상태**
+- 원본 프레임은 `manually_command/export/idle`, `run`, `walk`에 64x64 PNG로 존재한다.
+- 기존 Pattie 런타임은 manifest 기반 sprite sheet를 읽고 관리시트 chartZone에서 jump/climb을 지원한다.
+
+**3. 문제**
+- 기존 테스트 asset은 32x32 rabbit/dog/cat 기준이었고, mong 64x64 테스트 asset과 최종 asset을 분리 관리할 구조가 필요했다.
+- 기존 jump는 제자리 점프에 가까워 연속된 막대그래프 상단으로 이동하는 느낌이 부족했다.
+
+**4. 시도한 것**
+- `scripts/generate-mong-test-assets.js`를 추가해 원본 64x64 프레임에서 mong 테스트 sprite sheet를 생성했다.
+- 출력 경로를 `public/assets/patties_mong_test/`로 분리했다.
+- `manifest.json`에 mong idle/walk/run/sleep/happy/jump/climb의 frameCount, frameWidth 64, frameHeight 64, frameDurationMs 260~420ms를 기록했다.
+- PattieAssetLoader 기본 manifest를 mong 테스트 manifest로 전환했다.
+- PattieSprite와 CSS를 64x64 프레임 크기에 대응하도록 보완했다.
+- chartZone jump는 `data-pattie-terrain="chart-bar"` 막대들을 x축 순서로 읽고 다음 막대 상단으로 포물선 이동하도록 개선했다.
+
+**5. 해결 / 인사이트**
+- mong 테스트 asset은 최종 Pattie asset과 별도 폴더에서 관리되므로 나중에 통째로 교체/삭제하기 쉽다.
+- 2D 아기자기한 속도감을 위해 walk 320ms, run 260ms, happy/climb 300ms, jump 280ms, sleep 420ms로 설정했다.
+- 관리시트의 막대그래프 지형은 climb뿐 아니라 bar-to-bar jump 대상이 된다.
+
+**6. 반영 필요 사항 (중요)**
+- mong 테스트 asset은 `public/assets/patties_mong_test`에만 둔다.
+- 최종 asset과 테스트 asset을 섞지 않는다.
+- 64x64 mong 테스트 기간에는 `PattieAssetLoader` 기본 manifest가 `/public/assets/patties_mong_test/manifest.json`을 읽는다.

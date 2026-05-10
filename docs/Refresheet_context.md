@@ -49,6 +49,7 @@ Pattie update:
 
 - The management sheet now has a Pattie world layer over the fake Excel habitat.
 - `src/patties/PattieAssetLoader.js` loads `public/assets/patties/manifest.json`.
+- Mong 64x64 temporary test mode loads `/public/assets/patties_mong_test/manifest.json`; keep this separate from final Pattie assets.
 - `src/patties/PattieSprite.js` renders 32x32 transparent PNG sprite sheets with `image-rendering: pixelated`.
 - `src/patties/PattieRoamingController.js` manages walk/idle/sleep/happy/jump/climb behavior and chart-bar climbing.
 - `src/patties/pattieWorldConfig.js` defines `sheet`, `chart`, `card`, and `blocked` terrain rules.
