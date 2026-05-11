@@ -79,8 +79,8 @@ function buildUI(grid) {
     elInput.autocomplete = 'off';
     elInput.spellcheck = false;
     elInput.placeholder = '여기에 입력하세요...';
-    elInput.addEventListener('keydown', onInputKeydown);
-    const skipBtn = el('button', 'tg-skip-btn', 'Skip (Esc)');
+    elInput.addEventListener('keydown', onInputKeydown, true);
+    const skipBtn = el('button', 'tg-skip-btn', 'Skip (Tab)');
     skipBtn.addEventListener('click', skipSentence);
     elInputRow.append(inputLabel, elInput, skipBtn);
     elInputRow.style.display = 'none';
@@ -213,7 +213,7 @@ function updateSentenceText() {
 function onInputKeydown(e) {
     if (!roundActive) return;
     if (e.key === 'Enter') { e.preventDefault(); submitCurrent(); }
-    else if (e.key === 'Escape') { e.preventDefault(); skipSentence(); }
+    else if (e.key === 'Tab') { e.preventDefault(); skipSentence(); }
 }
 
 function submitCurrent() {
@@ -304,7 +304,7 @@ async function endRound() {
             document.dispatchEvent(new CustomEvent('refresheet:score-saved'));
             loadRanking(currentRankPeriod);
         } else {
-            eligEl.textContent = '연습 플레이입니다. 시간당 보상 가능 횟수를 초과하여 포인트와 랭킹에 반영되지 않습니다.';
+            eligEl.textContent = '시간당 보상 가능 횟수를 초과하여 포인트와 랭킹에 반영되지 않습니다.';
             eligEl.className = 'tg-eligibility-msg ineligible';
         }
     } catch {
