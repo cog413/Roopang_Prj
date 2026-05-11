@@ -2604,6 +2604,8 @@ body.dark-mode .ob-consent-row a { color: #6dba8a; }
 }
 .tg-start-btn:hover { background: #1a5c38; }
 .tg-msg { font-size: 11px; color: #c00; min-height: 16px; margin-bottom: 8px; }
+.tg-ticket-info { font-size: 11px; color: #666; margin-top: 8px; text-align: center; }
+body.dark-mode .tg-ticket-info { color: #aaa; }
 
 /* Status table */
 .tg-status-table {

@@ -89,6 +89,7 @@ export async function initSudoku() {
     const sudokuTab = document.querySelector('.tab[data-sheet="sudoku"]');
     if (sudokuTab) {
         sudokuTab.addEventListener('click', () => {
+            refreshTicketDisplay();
             if (loginPopupShown) return;
             loginPopupShown = true;
             setTimeout(() => {
@@ -151,6 +152,11 @@ export async function initSudoku() {
         appendNote(table, '난이도를 선택할 수 있습니다.');
         appendNote(table, '더 높은 난이도의 문제를 풀면 더 높은 점수를 받을 수 있어요.');
         appendNote(table, '더 빠른 시간 안에 정확히 풀면 더 높은 점수를 받을 수 있어요.');
+
+        const ticketCell = document.createElement('div');
+        ticketCell.className = 'fake-table-cell note';
+        ticketCell.id = 'sudoku-ticket-cell';
+        table.appendChild(ticketCell);
 
         return table;
     }
@@ -364,9 +370,11 @@ export async function initSudoku() {
                 if (res.status === 429) {
                     const d = await res.json().catch(() => ({}));
                     if (formulaInput) formulaInput.value = `=LIMIT.REACHED("이번 시간 3판 완료 · ${d.resets_at_kst || '다음 정시'} 초기화")`;
+                    refreshTicketDisplay();
                     return;
                 }
                 document.dispatchEvent(new CustomEvent('refresheet:score-saved'));
+                refreshTicketDisplay();
             }).catch(() => {});
         }
     }
@@ -407,6 +415,19 @@ export async function initSudoku() {
         if (bars[0]) bars[0].style.height = `${(DIFFICULTY_MULT[currentDifficulty] || 1) / 2.0 * 100}%`;
         if (bars[1]) bars[1].style.height = `${Math.max(5, 100 - Math.min(100, elapsed / 6))}%`;
         if (bars[2]) bars[2].style.height = `${Math.max(5, 100 - mistakeCount * 15)}%`;
+    }
+
+    async function refreshTicketDisplay() {
+        const ticketEl = document.getElementById('sudoku-ticket-cell');
+        if (!ticketEl || !window.refresheetAuth?.authenticated) {
+            if (ticketEl) ticketEl.textContent = '';
+            return;
+        }
+        try {
+            const res = await fetch('/api/scores/today', { credentials: 'include' });
+            const d = await res.json();
+            ticketEl.textContent = `티켓 ${d.hourly_plays_remaining ?? 0} / 3 · 매 정시 갱신`;
+        } catch { ticketEl.textContent = ''; }
     }
 
     function isValidMove(row, col, value) {

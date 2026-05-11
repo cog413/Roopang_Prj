@@ -17,7 +17,7 @@ let roundActive = false;
 // DOM refs — set once in buildUI()
 let elSentence, elInput, elTimeCell, elLastCell, elTotalCell;
 let elStatusBar, elInputRow, elMainArea, elMsg;
-let elRankingBody;
+let elRankingBody, elTicket;
 let currentRankPeriod = 'daily';
 
 export function initTypingGame() {
@@ -110,6 +110,10 @@ function buildUI(grid) {
     rankSection.append(rankTabs, rankTable);
 
     grid.append(header, elStatusBar, elMainArea, elInputRow, rankSection);
+
+    const typingTab = document.querySelector('.tab[data-sheet="typing"]');
+    if (typingTab) typingTab.addEventListener('click', refreshTicketEl, { once: false });
+
     loadRanking('daily');
 }
 
@@ -119,7 +123,9 @@ function renderIdle() {
     elMainArea.innerHTML = '';
     elMainArea.className = 'tg-main-area tg-idle';
     const hint = el('div', 'tg-idle-hint', '유형을 선택하고 시작을 누르세요');
-    elMainArea.appendChild(hint);
+    elTicket = el('div', 'tg-ticket-info', '');
+    elMainArea.append(hint, elTicket);
+    refreshTicketEl();
 }
 
 function renderSentenceArea() {
@@ -142,7 +148,8 @@ function renderResultArea(finalScore) {
         el('div', 'tg-final-score', `${finalScore}점`),
     );
     const eligEl = el('div', 'tg-eligibility-msg');
-    box.appendChild(eligEl);
+    elTicket = el('div', 'tg-ticket-info', '');
+    box.append(eligEl, elTicket);
     const btns = el('div', 'tg-result-btns');
     const retry = el('button', 'tg-result-btn primary', '다시하기');
     const back  = el('button', 'tg-result-btn', '유형 선택으로 돌아가기');
@@ -287,6 +294,7 @@ async function endRound() {
     if (!window.refresheetAuth?.authenticated) {
         eligEl.textContent = '로그인 후 포인트와 랭킹에 반영됩니다.';
         eligEl.className = 'tg-eligibility-msg ineligible';
+        refreshTicketEl();
         return;
     }
 
@@ -311,6 +319,7 @@ async function endRound() {
         eligEl.textContent = '결과 저장에 실패했습니다.';
         eligEl.className = 'tg-eligibility-msg ineligible';
     }
+    refreshTicketEl();
 }
 
 async function loadRanking(period = 'daily') {
@@ -381,4 +390,14 @@ function showMsg(text) {
     elMsg.textContent = text;
     clearTimeout(showMsg._t);
     showMsg._t = setTimeout(() => { elMsg.textContent = ''; }, 2500);
+}
+
+async function refreshTicketEl() {
+    if (!elTicket) return;
+    if (!window.refresheetAuth?.authenticated) { elTicket.textContent = ''; return; }
+    try {
+        const res = await fetch('/api/scores/today', { credentials: 'include' });
+        const d = await res.json();
+        elTicket.textContent = `티켓 ${d.hourly_plays_remaining ?? 0} / 3 · 매 정시 갱신`;
+    } catch { elTicket.textContent = ''; }
 }

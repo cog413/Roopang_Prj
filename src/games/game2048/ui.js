@@ -55,6 +55,7 @@ export function initGame2048UI() {
     const tab2048 = document.querySelector('.tab[data-sheet="game2048"]');
     if (tab2048) {
         tab2048.addEventListener('click', () => {
+            refreshTicketDisplay();
             if (loginPopupShown) return;
             loginPopupShown = true;
             setTimeout(() => {
@@ -109,6 +110,11 @@ export function initGame2048UI() {
 
         appendNote(table, '그리드 크기(4x4 / 5x5)는 선택할 수 있습니다.');
         appendNote(table, '같은 매출을 달성해도 4x4가 더 높은 점수를 받습니다.');
+
+        const ticketCell = document.createElement('div');
+        ticketCell.className = 'fake-table-cell note';
+        ticketCell.id = 'g2048-ticket-cell';
+        table.appendChild(ticketCell);
 
         return table;
     }
@@ -261,12 +267,27 @@ export function initGame2048UI() {
                         if (res.status === 429) {
                             const d = await res.json().catch(() => ({}));
                             if (formulaInput) formulaInput.value = `=LIMIT.REACHED("이번 시간 3판 완료 · ${d.resets_at_kst || '다음 정시'} 초기화")`;
+                            refreshTicketDisplay();
                             return;
                         }
                         document.dispatchEvent(new CustomEvent('refresheet:score-saved'));
+                        refreshTicketDisplay();
                     }).catch(() => {});
                 }
             }
         }
+    }
+
+    async function refreshTicketDisplay() {
+        const ticketEl = document.getElementById('g2048-ticket-cell');
+        if (!ticketEl || !window.refresheetAuth?.authenticated) {
+            if (ticketEl) ticketEl.textContent = '';
+            return;
+        }
+        try {
+            const res = await fetch('/api/scores/today', { credentials: 'include' });
+            const d = await res.json();
+            ticketEl.textContent = `티켓 ${d.hourly_plays_remaining ?? 0} / 3 · 매 정시 갱신`;
+        } catch { ticketEl.textContent = ''; }
     }
 }
