@@ -1,11 +1,9 @@
-import { showLoginPopup, goToLogin } from '../../ui/loginPopup.js';
-
 const SCORE_MULTIPLIER = 10;
 const SKIP_PENALTY_BASE = 3;
 const ROUND_SECONDS = 60;
 
 let initialized = false;
-let phase = 'select'; // 'select' | 'playing' | 'result'
+let phase = 'idle'; // 'idle' | 'playing' | 'result'
 let selectedCategory = 'all';
 let sentences = [];
 let sentenceQueue = [];
@@ -16,54 +14,162 @@ let timeLeft = ROUND_SECONDS;
 let timerHandle = null;
 let roundActive = false;
 
+// DOM refs — set once in buildUI()
+let elSentence, elInput, elTimeCell, elLastCell, elTotalCell;
+let elStatusBar, elInputRow, elMainArea, elMsg;
+let elRankingBody;
+let currentRankPeriod = 'daily';
+
 export function initTypingGame() {
     if (initialized) return;
     initialized = true;
-
-    document.querySelectorAll('.tg-cat-btn').forEach(btn => {
-        btn.addEventListener('click', () => selectCategory(btn.dataset.category));
-    });
-
-    document.getElementById('tg-start-btn')?.addEventListener('click', startRound);
-    document.getElementById('tg-skip-btn')?.addEventListener('click', skipSentence);
-    document.getElementById('tg-retry-btn')?.addEventListener('click', () => goToSelect());
-    document.getElementById('tg-back-btn')?.addEventListener('click', () => goToSelect());
-
-    document.getElementById('tg-input')?.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); submitCurrent(); }
-        else if (e.key === 'Escape') { e.preventDefault(); skipSentence(); }
-    });
-
-    document.querySelectorAll('.tg-rank-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.tg-rank-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            loadRanking(tab.dataset.period);
-        });
-    });
-
-    selectCategory('all');
-    goToSelect();
+    const grid = document.getElementById('typing-grid');
+    if (!grid) return;
+    buildUI(grid);
 }
+
+// ── DOM construction ────────────────────────────────────────────
+
+function buildUI(grid) {
+    // ① Header: category buttons + start button
+    const header = el('div', 'tg-header');
+    const catRow = el('div', 'tg-cat-row');
+    [['all','전체'],['humor','유머'],['healing','힐링'],['quote','명언']].forEach(([cat, label]) => {
+        const btn = el('button', `tg-cat-btn${cat === 'all' ? ' active' : ''}`, label);
+        btn.dataset.category = cat;
+        btn.addEventListener('click', () => selectCategory(cat));
+        catRow.appendChild(btn);
+    });
+    const startBtn = el('button', 'tg-start-btn', '시작');
+    startBtn.id = 'tg-start-btn';
+    startBtn.addEventListener('click', startRound);
+    header.append(catRow, startBtn);
+
+    elMsg = el('div', 'tg-msg');
+    header.appendChild(elMsg);
+
+    // ② Status bar (잔여시간 | 직전획득점수 | 총계)
+    elStatusBar = el('div', 'tg-status-table');
+    [
+        ['tg-time-cell',  '잔여시간',    '01:00'],
+        ['tg-last-cell',  '직전획득점수', '-'],
+        ['tg-total-cell', '총계',        '0점'],
+    ].forEach(([id, label, init]) => {
+        const cell = el('div', 'tg-status-cell');
+        cell.append(el('div', 'tg-status-label', label), el('div', 'tg-status-val', init));
+        cell.querySelector('.tg-status-val').id = id;
+        elStatusBar.appendChild(cell);
+    });
+    elTimeCell  = elStatusBar.querySelector('#tg-time-cell');
+    elLastCell  = elStatusBar.querySelector('#tg-last-cell');
+    elTotalCell = elStatusBar.querySelector('#tg-total-cell');
+    elStatusBar.style.display = 'none';
+
+    // ③ Main area — switches between idle / sentence / result
+    elMainArea = el('div', 'tg-main-area');
+    renderIdle();
+
+    // ④ Input row
+    elInputRow = el('div', 'tg-input-row');
+    const inputLabel = el('div', 'tg-input-label', 'B1');
+    elInput = document.createElement('input');
+    elInput.id = 'tg-input';
+    elInput.className = 'tg-input';
+    elInput.type = 'text';
+    elInput.autocomplete = 'off';
+    elInput.spellcheck = false;
+    elInput.placeholder = '여기에 입력하세요...';
+    elInput.addEventListener('keydown', onInputKeydown);
+    const skipBtn = el('button', 'tg-skip-btn', 'Skip (Esc)');
+    skipBtn.addEventListener('click', skipSentence);
+    elInputRow.append(inputLabel, elInput, skipBtn);
+    elInputRow.style.display = 'none';
+
+    // ⑤ Ranking
+    const rankSection = el('div', 'tg-ranking-section');
+    const rankTabs = el('div', 'tg-ranking-tabs');
+    [['daily','오늘'],['weekly','이번 주']].forEach(([period, label]) => {
+        const tab = el('button', `tg-rank-tab${period === 'daily' ? ' active' : ''}`, label);
+        tab.dataset.period = period;
+        tab.addEventListener('click', () => {
+            rankSection.querySelectorAll('.tg-rank-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentRankPeriod = period;
+            loadRanking(period);
+        });
+        rankTabs.appendChild(tab);
+    });
+    const rankTable = document.createElement('table');
+    rankTable.className = 'tg-rank-table';
+    rankTable.innerHTML = '<thead><tr><th>순위</th><th>닉네임</th><th>점수</th><th>일시</th></tr></thead>';
+    const tbody = document.createElement('tbody');
+    tbody.id = 'tg-ranking-body';
+    tbody.innerHTML = '<tr><td colspan="4" class="tg-rank-empty">불러오는 중...</td></tr>';
+    elRankingBody = tbody;
+    rankTable.appendChild(tbody);
+    rankSection.append(rankTabs, rankTable);
+
+    grid.append(header, elStatusBar, elMainArea, elInputRow, rankSection);
+    loadRanking('daily');
+}
+
+// ── Main area renderers ─────────────────────────────────────────
+
+function renderIdle() {
+    elMainArea.innerHTML = '';
+    elMainArea.className = 'tg-main-area tg-idle';
+    const hint = el('div', 'tg-idle-hint', '유형을 선택하고 시작을 누르세요');
+    elMainArea.appendChild(hint);
+}
+
+function renderSentenceArea() {
+    elMainArea.innerHTML = '';
+    elMainArea.className = 'tg-main-area tg-playing';
+    const box = el('div', 'tg-sentence-box');
+    const label = el('div', 'tg-sentence-label', 'A1');
+    elSentence = el('div', 'tg-sentence');
+    box.append(label, elSentence);
+    elMainArea.appendChild(box);
+    updateSentenceText();
+}
+
+function renderResultArea(finalScore) {
+    elMainArea.innerHTML = '';
+    elMainArea.className = 'tg-main-area tg-result';
+    const box = el('div', 'tg-result-box');
+    box.append(
+        el('div', 'tg-result-label', '최종 점수'),
+        el('div', 'tg-final-score', `${finalScore}점`),
+    );
+    const eligEl = el('div', 'tg-eligibility-msg');
+    box.appendChild(eligEl);
+    const btns = el('div', 'tg-result-btns');
+    const retry = el('button', 'tg-result-btn primary', '다시하기');
+    const back  = el('button', 'tg-result-btn', '유형 선택으로 돌아가기');
+    retry.addEventListener('click', goToIdle);
+    back.addEventListener('click', goToIdle);
+    btns.append(retry, back);
+    box.appendChild(btns);
+    elMainArea.appendChild(box);
+    return eligEl;
+}
+
+// ── Game logic ──────────────────────────────────────────────────
 
 function selectCategory(cat) {
     selectedCategory = cat;
     document.querySelectorAll('.tg-cat-btn').forEach(b => b.classList.toggle('active', b.dataset.category === cat));
 }
 
-function goToSelect() {
+function goToIdle() {
     stopTimer();
     roundActive = false;
-    showPhase('select');
-    loadRanking('daily');
-}
-
-function showPhase(p) {
-    phase = p;
-    ['select', 'playing', 'result'].forEach(name => {
-        const el = document.getElementById(`tg-phase-${name}`);
-        if (el) el.style.display = name === p ? '' : 'none';
-    });
+    phase = 'idle';
+    elStatusBar.style.display = 'none';
+    elInputRow.style.display = 'none';
+    document.getElementById('tg-start-btn').textContent = '시작';
+    renderIdle();
+    loadRanking(currentRankPeriod);
 }
 
 async function startRound() {
@@ -84,57 +190,53 @@ async function startRound() {
     lastResultText = '';
     timeLeft = ROUND_SECONDS;
     roundActive = true;
+    phase = 'playing';
 
-    showPhase('playing');
-    renderSentence();
+    document.getElementById('tg-start-btn').textContent = '진행중...';
+    elStatusBar.style.display = '';
+    elInputRow.style.display = '';
+    renderSentenceArea();
     updateStatus();
     startTimer();
-    focusInput();
+    elInput.disabled = false;
+    elInput.value = '';
+    elInput.focus();
 }
 
-function renderSentence() {
-    const el = document.getElementById('tg-sentence');
-    if (!el) return;
-    if (currentIdx >= sentenceQueue.length) { endRound(); return; }
-    el.textContent = sentences[sentenceQueue[currentIdx]].content;
-    clearInput();
+function updateSentenceText() {
+    if (!elSentence) return;
+    if (currentIdx < sentenceQueue.length) {
+        elSentence.textContent = sentences[sentenceQueue[currentIdx]].content;
+    }
 }
 
-function clearInput() {
-    const inp = document.getElementById('tg-input');
-    if (inp) { inp.value = ''; inp.disabled = false; }
-}
-
-function focusInput() {
-    document.getElementById('tg-input')?.focus();
+function onInputKeydown(e) {
+    if (!roundActive) return;
+    if (e.key === 'Enter') { e.preventDefault(); submitCurrent(); }
+    else if (e.key === 'Escape') { e.preventDefault(); skipSentence(); }
 }
 
 function submitCurrent() {
     if (!roundActive || currentIdx >= sentenceQueue.length) return;
-    const inp = document.getElementById('tg-input');
-    if (!inp) return;
-    const typed = inp.value.trimEnd();
+    const typed = elInput.value.trimEnd();
     const s = sentences[sentenceQueue[currentIdx]];
-    const target = s.content;
     const base = s.length * SCORE_MULTIPLIER;
-
     let earned, label;
-    if (typed === target) {
+    if (typed === s.content) {
         earned = base;
         label = `Perfect ${earned}점`;
     } else {
-        const dist = levenshtein(typed, target);
+        const dist = levenshtein(typed, s.content);
         earned = Math.max(0, base - dist * SCORE_MULTIPLIER);
         label = `Good ${earned}점`;
     }
-
     totalScore += earned;
     lastResultText = label;
     currentIdx++;
+    elInput.value = '';
     updateStatus();
-
     if (currentIdx >= sentenceQueue.length) endRound();
-    else { renderSentence(); focusInput(); }
+    else { updateSentenceText(); elInput.focus(); }
 }
 
 function skipSentence() {
@@ -143,20 +245,17 @@ function skipSentence() {
     totalScore -= penalty;
     lastResultText = `Skip -${penalty}점`;
     currentIdx++;
+    elInput.value = '';
     updateStatus();
-
     if (currentIdx >= sentenceQueue.length) endRound();
-    else { renderSentence(); focusInput(); }
+    else { updateSentenceText(); elInput.focus(); }
 }
 
 function updateStatus() {
     const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-    const timeEl = document.getElementById('tg-time-cell');
-    const lastEl = document.getElementById('tg-last-score-cell');
-    const totalEl = document.getElementById('tg-total-score-cell');
-    if (timeEl) timeEl.textContent = fmt(timeLeft);
-    if (lastEl) lastEl.textContent = lastResultText || '-';
-    if (totalEl) totalEl.textContent = `${totalScore}점`;
+    if (elTimeCell)  elTimeCell.textContent  = fmt(timeLeft);
+    if (elLastCell)  elLastCell.textContent  = lastResultText || '-';
+    if (elTotalCell) elTotalCell.textContent = `${totalScore}점`;
 }
 
 function startTimer() {
@@ -176,21 +275,18 @@ async function endRound() {
     if (!roundActive) return;
     roundActive = false;
     stopTimer();
+    phase = 'result';
 
-    const inp = document.getElementById('tg-input');
-    if (inp) inp.disabled = true;
+    if (elInput) elInput.disabled = true;
+    elInputRow.style.display = 'none';
+    document.getElementById('tg-start-btn').textContent = '시작';
 
     const finalScore = Math.max(0, totalScore);
-
-    // Show result phase immediately, then update eligibility after API call
-    const scoreEl = document.getElementById('tg-final-score');
-    if (scoreEl) scoreEl.textContent = `${finalScore}점`;
-    const eligEl = document.getElementById('tg-eligibility-msg');
-    if (eligEl) { eligEl.textContent = ''; eligEl.className = 'tg-eligibility-msg'; }
-    showPhase('result');
+    const eligEl = renderResultArea(finalScore);
 
     if (!window.refresheetAuth?.authenticated) {
-        if (eligEl) { eligEl.textContent = '로그인 후 포인트와 랭킹에 반영됩니다.'; eligEl.className = 'tg-eligibility-msg ineligible'; }
+        eligEl.textContent = '로그인 후 포인트와 랭킹에 반영됩니다.';
+        eligEl.className = 'tg-eligibility-msg ineligible';
         return;
     }
 
@@ -202,34 +298,33 @@ async function endRound() {
             body: JSON.stringify({ score: finalScore, duration_seconds: ROUND_SECONDS }),
         });
         const data = await res.json().catch(() => ({}));
-        if (eligEl) {
-            if (data.eligible) {
-                eligEl.textContent = '포인트와 랭킹에 반영되었습니다.';
-                eligEl.className = 'tg-eligibility-msg eligible';
-                document.dispatchEvent(new CustomEvent('refresheet:score-saved'));
-            } else {
-                eligEl.textContent = '연습 플레이입니다. 시간당 보상 가능 횟수를 초과하여 포인트와 랭킹에 반영되지 않습니다.';
-                eligEl.className = 'tg-eligibility-msg ineligible';
-            }
+        if (data.eligible) {
+            eligEl.textContent = '포인트와 랭킹에 반영되었습니다.';
+            eligEl.className = 'tg-eligibility-msg eligible';
+            document.dispatchEvent(new CustomEvent('refresheet:score-saved'));
+            loadRanking(currentRankPeriod);
+        } else {
+            eligEl.textContent = '연습 플레이입니다. 시간당 보상 가능 횟수를 초과하여 포인트와 랭킹에 반영되지 않습니다.';
+            eligEl.className = 'tg-eligibility-msg ineligible';
         }
     } catch {
-        if (eligEl) { eligEl.textContent = '결과 저장에 실패했습니다.'; eligEl.className = 'tg-eligibility-msg ineligible'; }
+        eligEl.textContent = '결과 저장에 실패했습니다.';
+        eligEl.className = 'tg-eligibility-msg ineligible';
     }
 }
 
 async function loadRanking(period = 'daily') {
-    const tbody = document.getElementById('tg-ranking-body');
-    if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="4" class="tg-rank-empty">불러오는 중...</td></tr>';
+    if (!elRankingBody) return;
+    elRankingBody.innerHTML = '<tr><td colspan="4" class="tg-rank-empty">불러오는 중...</td></tr>';
     try {
         const res = await fetch(`/api/games/typing/ranking?period=${period}`, { credentials: 'include' });
         const data = await res.json();
         const rows = data.rows || [];
         if (!rows.length) {
-            tbody.innerHTML = '<tr><td colspan="4" class="tg-rank-empty">기록이 없습니다.</td></tr>';
+            elRankingBody.innerHTML = '<tr><td colspan="4" class="tg-rank-empty">기록이 없습니다.</td></tr>';
             return;
         }
-        tbody.innerHTML = rows.map((r, i) => `
+        elRankingBody.innerHTML = rows.map((r, i) => `
             <tr>
                 <td>${i + 1}</td>
                 <td>${esc(r.nickname)}</td>
@@ -237,9 +332,11 @@ async function loadRanking(period = 'daily') {
                 <td>${fmtDt(r.created_at)}</td>
             </tr>`).join('');
     } catch {
-        tbody.innerHTML = '<tr><td colspan="4" class="tg-rank-empty">불러오지 못했습니다.</td></tr>';
+        elRankingBody.innerHTML = '<tr><td colspan="4" class="tg-rank-empty">불러오지 못했습니다.</td></tr>';
     }
 }
+
+// ── Utilities ───────────────────────────────────────────────────
 
 function levenshtein(a, b) {
     const m = a.length, n = b.length;
@@ -260,8 +357,16 @@ function shuffle(arr) {
     return arr;
 }
 
+function el(tag, className = '', text = '') {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text) node.textContent = text;
+    return node;
+}
+
 function esc(s) {
-    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function fmtDt(str) {
@@ -272,9 +377,8 @@ function fmtDt(str) {
 }
 
 function showMsg(text) {
-    const el = document.getElementById('tg-msg');
-    if (!el) return;
-    el.textContent = text;
+    if (!elMsg) return;
+    elMsg.textContent = text;
     clearTimeout(showMsg._t);
-    showMsg._t = setTimeout(() => { el.textContent = ''; }, 2500);
+    showMsg._t = setTimeout(() => { elMsg.textContent = ''; }, 2500);
 }

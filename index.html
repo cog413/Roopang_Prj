@@ -405,72 +405,7 @@
                                     <div class="fake-table-cell label total">연간 평균</div><div class="fake-table-cell value total" style="color:#217346">94.0</div>
                                 </div>
                             </div>
-                            <div class="tg-main">
-                                <!-- Phase: category select -->
-                                <div id="tg-phase-select">
-                                    <div class="tg-title">한컴타자 연습</div>
-                                    <div class="tg-cat-row">
-                                        <button class="tg-cat-btn active" data-category="all">전체</button>
-                                        <button class="tg-cat-btn" data-category="humor">유머</button>
-                                        <button class="tg-cat-btn" data-category="healing">힐링</button>
-                                        <button class="tg-cat-btn" data-category="quote">명언</button>
-                                    </div>
-                                    <button id="tg-start-btn" class="tg-start-btn">시작</button>
-                                    <div id="tg-msg" class="tg-msg"></div>
-                                    <div class="tg-ranking-section">
-                                        <div class="tg-ranking-tabs">
-                                            <button class="tg-rank-tab active" data-period="daily">오늘</button>
-                                            <button class="tg-rank-tab" data-period="weekly">이번 주</button>
-                                        </div>
-                                        <table class="tg-rank-table">
-                                            <thead>
-                                                <tr><th>순위</th><th>닉네임</th><th>점수</th><th>일시</th></tr>
-                                            </thead>
-                                            <tbody id="tg-ranking-body">
-                                                <tr><td colspan="4" class="tg-rank-empty">불러오는 중...</td></tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <!-- Phase: playing -->
-                                <div id="tg-phase-playing" style="display:none;">
-                                    <div class="tg-status-table">
-                                        <div class="tg-status-cell">
-                                            <div class="tg-status-label">잔여시간</div>
-                                            <div class="tg-status-val" id="tg-time-cell">01:00</div>
-                                        </div>
-                                        <div class="tg-status-cell">
-                                            <div class="tg-status-label">직전획득점수</div>
-                                            <div class="tg-status-val" id="tg-last-score-cell">-</div>
-                                        </div>
-                                        <div class="tg-status-cell">
-                                            <div class="tg-status-label">총계</div>
-                                            <div class="tg-status-val" id="tg-total-score-cell">0점</div>
-                                        </div>
-                                    </div>
-                                    <div class="tg-sentence-box">
-                                        <div class="tg-sentence-label">A1</div>
-                                        <div id="tg-sentence" class="tg-sentence"></div>
-                                    </div>
-                                    <div class="tg-input-row">
-                                        <div class="tg-input-label">B1</div>
-                                        <input id="tg-input" class="tg-input" type="text" autocomplete="off" spellcheck="false" placeholder="여기에 입력하세요...">
-                                        <button id="tg-skip-btn" class="tg-skip-btn">Skip (Esc)</button>
-                                    </div>
-                                </div>
-                                <!-- Phase: result -->
-                                <div id="tg-phase-result" style="display:none;">
-                                    <div class="tg-result-box">
-                                        <div class="tg-result-label">최종 점수</div>
-                                        <div id="tg-final-score" class="tg-final-score">0점</div>
-                                        <div id="tg-eligibility-msg" class="tg-eligibility-msg"></div>
-                                        <div class="tg-result-btns">
-                                            <button id="tg-retry-btn" class="tg-result-btn primary">다시하기</button>
-                                            <button id="tg-back-btn" class="tg-result-btn">유형 선택으로 돌아가기</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <div id="typing-grid" class="game-grid tg"></div>
                             <div class="fake-dashboard side-right">
                                 <div class="fake-table">
                                     <div class="fake-table-header">직원 타이핑 역량 지수</div>

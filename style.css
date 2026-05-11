@@ -2551,13 +2551,15 @@ body.dark-mode .ob-consent-row { color: #aaa; }
 body.dark-mode .ob-consent-row a { color: #6dba8a; }
 
 /* ── Typing Game ──────────────────────────────────────────────── */
-.tg-main {
+.game-grid.tg {
     flex: 1;
     display: flex;
     flex-direction: column;
     padding: 16px 20px;
     min-width: 0;
     overflow-y: auto;
+    align-self: flex-start;
+    background: #fff;
 }
 .tg-title {
     font-size: 15px;
