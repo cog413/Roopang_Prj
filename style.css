@@ -2549,3 +2549,239 @@ body.dark-mode .us-referral-help { color: #aaa; }
 .ob-consent-error { font-size: 11px; color: #c00; margin-bottom: 4px; }
 body.dark-mode .ob-consent-row { color: #aaa; }
 body.dark-mode .ob-consent-row a { color: #6dba8a; }
+
+/* ── Typing Game ──────────────────────────────────────────────── */
+.tg-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 20px;
+    min-width: 0;
+    overflow-y: auto;
+}
+.tg-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #217346;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #c6efce;
+    padding-bottom: 6px;
+}
+.tg-cat-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+.tg-cat-btn {
+    border: 1px solid #bbb;
+    background: #fff;
+    padding: 4px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    color: #333;
+    transition: background 0.1s;
+}
+.tg-cat-btn.active,
+.tg-cat-btn:hover {
+    background: #217346;
+    color: #fff;
+    border-color: #217346;
+}
+.tg-start-btn {
+    padding: 6px 28px;
+    background: #217346;
+    color: #fff;
+    border: none;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 2px;
+    margin-bottom: 10px;
+}
+.tg-start-btn:hover { background: #1a5c38; }
+.tg-msg { font-size: 11px; color: #c00; min-height: 16px; margin-bottom: 8px; }
+
+/* Status table */
+.tg-status-table {
+    display: flex;
+    border: 1px solid #bbb;
+    margin-bottom: 16px;
+    background: #fff;
+    font-size: 12px;
+}
+.tg-status-cell {
+    flex: 1;
+    border-right: 1px solid #bbb;
+    padding: 0;
+}
+.tg-status-cell:last-child { border-right: none; }
+.tg-status-label {
+    background: #f2f2f2;
+    border-bottom: 1px solid #bbb;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: #555;
+    font-weight: bold;
+}
+.tg-status-val {
+    padding: 5px 8px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    color: #1a1a1a;
+    min-height: 24px;
+}
+
+/* Sentence display */
+.tg-sentence-box {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #bbb;
+    margin-bottom: 8px;
+    background: #fff;
+}
+.tg-sentence-label {
+    width: 32px;
+    background: #f2f2f2;
+    border-right: 1px solid #bbb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #888;
+    flex-shrink: 0;
+}
+.tg-sentence {
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #1a1a1a;
+    line-height: 1.6;
+    word-break: keep-all;
+    flex: 1;
+}
+
+/* Input row */
+.tg-input-row {
+    display: flex;
+    align-items: stretch;
+    border: 2px solid #217346;
+    margin-bottom: 12px;
+}
+.tg-input-label {
+    width: 32px;
+    background: #e2efda;
+    border-right: 1px solid #bbb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #217346;
+    flex-shrink: 0;
+}
+.tg-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    color: #1a1a1a;
+}
+.tg-input:disabled { background: #f7f7f7; color: #999; }
+.tg-skip-btn {
+    border: none;
+    border-left: 1px solid #bbb;
+    background: #f7f7f7;
+    padding: 0 14px;
+    font-size: 11px;
+    color: #666;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.tg-skip-btn:hover { background: #ffe0e0; color: #c00; }
+
+/* Result */
+.tg-result-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+    border: 1px solid #bbb;
+    background: #fff;
+    text-align: center;
+}
+.tg-result-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.tg-final-score {
+    font-size: 36px;
+    font-weight: bold;
+    color: #217346;
+    margin-bottom: 12px;
+}
+.tg-eligibility-msg {
+    font-size: 12px;
+    min-height: 18px;
+    margin-bottom: 18px;
+    color: #555;
+}
+.tg-eligibility-msg.eligible { color: #217346; }
+.tg-eligibility-msg.ineligible { color: #c00000; }
+.tg-result-btns { display: flex; gap: 8px; }
+.tg-result-btn {
+    padding: 6px 18px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #bbb;
+    background: #f7f7f7;
+    border-radius: 2px;
+}
+.tg-result-btn.primary { background: #217346; color: #fff; border-color: #217346; }
+.tg-result-btn:hover { background: #e9e9e9; }
+.tg-result-btn.primary:hover { background: #1a5c38; }
+
+/* Ranking section */
+.tg-ranking-section { margin-top: 18px; }
+.tg-ranking-tabs { display: flex; gap: 0; margin-bottom: 0; }
+.tg-rank-tab {
+    padding: 4px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #bbb;
+    background: #f2f2f2;
+    color: #555;
+    border-bottom: none;
+}
+.tg-rank-tab.active { background: #fff; color: #217346; font-weight: bold; border-bottom: 1px solid #fff; }
+.tg-rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    border: 1px solid #bbb;
+    background: #fff;
+}
+.tg-rank-table th {
+    background: #f2f2f2;
+    border: 1px solid #bbb;
+    padding: 4px 8px;
+    font-weight: bold;
+    color: #333;
+    text-align: left;
+}
+.tg-rank-table td {
+    border: 1px solid #e0e0e0;
+    padding: 4px 8px;
+    color: #1a1a1a;
+}
+.tg-rank-empty { color: #aaa; text-align: center; padding: 12px !important; }
+
+body.dark-mode .tg-cat-btn { background: #2a2a2a; border-color: #555; color: #ccc; }
+body.dark-mode .tg-cat-btn.active, body.dark-mode .tg-cat-btn:hover { background: #217346; color: #fff; }
+body.dark-mode .tg-status-table, body.dark-mode .tg-sentence-box,
+body.dark-mode .tg-rank-table, body.dark-mode .tg-result-box { background: #1e1e1e; border-color: #444; }
+body.dark-mode .tg-status-label, body.dark-mode .tg-sentence-label { background: #2a2a2a; border-color: #444; }
+body.dark-mode .tg-sentence, body.dark-mode .tg-status-val { color: #e0e0e0; }
+body.dark-mode .tg-input { background: #2a2a2a; color: #e0e0e0; }
+body.dark-mode .tg-skip-btn { background: #2a2a2a; border-color: #444; color: #aaa; }
+body.dark-mode .tg-rank-table th { background: #2a2a2a; border-color: #444; color: #ccc; }
+body.dark-mode .tg-rank-table td { border-color: #333; color: #ccc; }

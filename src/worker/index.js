@@ -97,6 +97,15 @@ export default {
             if (url.pathname === '/api/referral' && request.method === 'POST') {
                 return handleSaveReferral(request, env);
             }
+            if (url.pathname === '/api/games/typing/sentences' && request.method === 'GET') {
+                return handleTypingSentences(request, env);
+            }
+            if (url.pathname === '/api/games/typing/finish' && request.method === 'POST') {
+                return handleTypingFinish(request, env);
+            }
+            if (url.pathname === '/api/games/typing/ranking' && request.method === 'GET') {
+                return handleTypingRanking(request, env);
+            }
             if (url.pathname === '/api/dev-login' && request.method === 'POST') {
                 return handleDevLogin(request, env);
             }
@@ -450,7 +459,7 @@ async function handleSaveScore(request, env) {
     if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
 
     const body = await request.json().catch(() => ({}));
-    const gameType = ['sudoku', '2048', 'new_game'].includes(body.game_type) ? body.game_type : null;
+    const gameType = ['sudoku', '2048', 'new_game', 'typing_game'].includes(body.game_type) ? body.game_type : null;
     const score = Number.isInteger(body.score) ? body.score : 0;
     const durationSeconds = Number.isInteger(body.duration_seconds) ? body.duration_seconds : null;
 
@@ -1382,6 +1391,84 @@ function parseCookies(cookieHeader) {
             decodeURIComponent(part.slice(index + 1).trim()),
         ];
     }).filter(Boolean));
+}
+
+// ── Typing game handlers ────────────────────────────────────────────────────
+
+async function handleTypingSentences(request, env) {
+    const url = new URL(request.url);
+    const rawCat = url.searchParams.get('category') || 'all';
+    const allowed = ['humor', 'healing', 'quote', 'all'];
+    const category = allowed.includes(rawCat) ? rawCat : 'all';
+
+    const db = getDb(env);
+    const rows = category === 'all'
+        ? await db.prepare(`SELECT id, category, content, length FROM typing_contents WHERE is_active=1 ORDER BY RANDOM() LIMIT 200`).all()
+        : await db.prepare(`SELECT id, category, content, length FROM typing_contents WHERE is_active=1 AND category=? ORDER BY RANDOM() LIMIT 200`).bind(category).all();
+
+    return withCors(json({ sentences: rows.results || [] }));
+}
+
+async function handleTypingFinish(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
+
+    const body = await request.json().catch(() => ({}));
+    const score = Number.isInteger(body.score) ? Math.max(0, body.score) : 0;
+    const durationSeconds = Number.isInteger(body.duration_seconds) ? body.duration_seconds : 60;
+
+    const db = getDb(env);
+    const { start, end, nextHourKST } = kstHourBounds();
+
+    const hourlyRow = await db.prepare(
+        `SELECT COUNT(*) as cnt FROM game_scores WHERE user_id=? AND played_at>=? AND played_at<?`
+    ).bind(session.user_id, start, end).first();
+
+    const playsThisHour = hourlyRow?.cnt ?? 0;
+    const eligible = playsThisHour < 3;
+    const now = new Date().toISOString();
+
+    if (eligible) {
+        await db.prepare(
+            `INSERT INTO game_scores (id, user_id, game_type, score, played_at, duration_seconds) VALUES (?,?,?,?,?,?)`
+        ).bind(makeId('gsc'), session.user_id, 'typing_game', score, now, durationSeconds).run();
+        document.dispatchEvent?.(new CustomEvent('refresheet:score-saved'));
+    }
+
+    await db.prepare(
+        `INSERT INTO game_round_results (user_id, game_key, score, duration_seconds, is_point_eligible, is_ranking_eligible, created_at) VALUES (?,?,?,?,?,?,?)`
+    ).bind(session.user_id, 'typing_game', score, durationSeconds, eligible ? 1 : 0, eligible ? 1 : 0, now).run();
+
+    return withCors(json({
+        ok: true,
+        eligible,
+        plays_this_hour: playsThisHour + (eligible ? 1 : 0),
+        resets_at_kst: nextHourKST,
+    }));
+}
+
+async function handleTypingRanking(request, env) {
+    const url = new URL(request.url);
+    const period = url.searchParams.get('period') === 'weekly' ? 'weekly' : 'daily';
+    const { start } = kstPeriodBounds(period === 'daily' ? 'daily' : 'weekly');
+
+    const db = getDb(env);
+    const rows = await db.prepare(`
+        SELECT grr.score,
+               grr.created_at,
+               COALESCE(a.nickname, p.nickname, u.email) AS nickname
+        FROM game_round_results grr
+        JOIN users u ON u.user_id = grr.user_id
+        LEFT JOIN avatars a ON a.user_id = u.user_id
+        LEFT JOIN user_profiles p ON p.user_id = u.user_id
+        WHERE grr.game_key='typing_game'
+          AND grr.is_ranking_eligible=1
+          AND grr.created_at >= ?
+        ORDER BY grr.score DESC
+        LIMIT 20
+    `).bind(start).all();
+
+    return withCors(json({ rows: rows.results || [] }));
 }
 
 function makeCookie(name, value, options = {}) {

@@ -384,6 +384,107 @@
                         </div>
                     </div>
 
+                    <div id="typing-sheet" class="sheet-view" style="display: none;">
+                        <div class="sheet-layout">
+                            <div class="fake-dashboard side-left">
+                                <div class="fake-table">
+                                    <div class="fake-table-header">2026 업무 역량 강화 현황</div>
+                                    <div class="fake-table-cell label">문서작성 속도</div><div class="fake-table-cell value" style="color:#217346">향상중</div>
+                                    <div class="fake-table-cell label">타자 정확도</div><div class="fake-table-cell value" style="color:#217346">92.4%</div>
+                                    <div class="fake-table-cell label">집중도 지수</div><div class="fake-table-cell value" style="color:#ed7d31">보통</div>
+                                    <div class="fake-table-cell label">업무 효율</div><div class="fake-table-cell value">측정중</div>
+                                    <div class="fake-table-cell label">월간 목표</div><div class="fake-table-cell value" style="color:#217346">달성</div>
+                                    <div class="fake-table-cell label total">종합 역량 지수</div><div class="fake-table-cell value total">B+</div>
+                                </div>
+                                <div class="fake-table">
+                                    <div class="fake-table-header">분기별 교육 이수율 (%)</div>
+                                    <div class="fake-table-cell label">1분기</div><div class="fake-table-cell value" style="color:#217346">98.2</div>
+                                    <div class="fake-table-cell label">2분기</div><div class="fake-table-cell value" style="color:#217346">95.7</div>
+                                    <div class="fake-table-cell label">3분기</div><div class="fake-table-cell value" style="color:#ed7d31">88.1</div>
+                                    <div class="fake-table-cell label">4분기 (목표)</div><div class="fake-table-cell value">100.0</div>
+                                    <div class="fake-table-cell label total">연간 평균</div><div class="fake-table-cell value total" style="color:#217346">94.0</div>
+                                </div>
+                            </div>
+                            <div class="tg-main">
+                                <!-- Phase: category select -->
+                                <div id="tg-phase-select">
+                                    <div class="tg-title">한컴타자 연습</div>
+                                    <div class="tg-cat-row">
+                                        <button class="tg-cat-btn active" data-category="all">전체</button>
+                                        <button class="tg-cat-btn" data-category="humor">유머</button>
+                                        <button class="tg-cat-btn" data-category="healing">힐링</button>
+                                        <button class="tg-cat-btn" data-category="quote">명언</button>
+                                    </div>
+                                    <button id="tg-start-btn" class="tg-start-btn">시작</button>
+                                    <div id="tg-msg" class="tg-msg"></div>
+                                    <div class="tg-ranking-section">
+                                        <div class="tg-ranking-tabs">
+                                            <button class="tg-rank-tab active" data-period="daily">오늘</button>
+                                            <button class="tg-rank-tab" data-period="weekly">이번 주</button>
+                                        </div>
+                                        <table class="tg-rank-table">
+                                            <thead>
+                                                <tr><th>순위</th><th>닉네임</th><th>점수</th><th>일시</th></tr>
+                                            </thead>
+                                            <tbody id="tg-ranking-body">
+                                                <tr><td colspan="4" class="tg-rank-empty">불러오는 중...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!-- Phase: playing -->
+                                <div id="tg-phase-playing" style="display:none;">
+                                    <div class="tg-status-table">
+                                        <div class="tg-status-cell">
+                                            <div class="tg-status-label">잔여시간</div>
+                                            <div class="tg-status-val" id="tg-time-cell">01:00</div>
+                                        </div>
+                                        <div class="tg-status-cell">
+                                            <div class="tg-status-label">직전획득점수</div>
+                                            <div class="tg-status-val" id="tg-last-score-cell">-</div>
+                                        </div>
+                                        <div class="tg-status-cell">
+                                            <div class="tg-status-label">총계</div>
+                                            <div class="tg-status-val" id="tg-total-score-cell">0점</div>
+                                        </div>
+                                    </div>
+                                    <div class="tg-sentence-box">
+                                        <div class="tg-sentence-label">A1</div>
+                                        <div id="tg-sentence" class="tg-sentence"></div>
+                                    </div>
+                                    <div class="tg-input-row">
+                                        <div class="tg-input-label">B1</div>
+                                        <input id="tg-input" class="tg-input" type="text" autocomplete="off" spellcheck="false" placeholder="여기에 입력하세요...">
+                                        <button id="tg-skip-btn" class="tg-skip-btn">Skip (Esc)</button>
+                                    </div>
+                                </div>
+                                <!-- Phase: result -->
+                                <div id="tg-phase-result" style="display:none;">
+                                    <div class="tg-result-box">
+                                        <div class="tg-result-label">최종 점수</div>
+                                        <div id="tg-final-score" class="tg-final-score">0점</div>
+                                        <div id="tg-eligibility-msg" class="tg-eligibility-msg"></div>
+                                        <div class="tg-result-btns">
+                                            <button id="tg-retry-btn" class="tg-result-btn primary">다시하기</button>
+                                            <button id="tg-back-btn" class="tg-result-btn">유형 선택으로 돌아가기</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fake-dashboard side-right">
+                                <div class="fake-table">
+                                    <div class="fake-table-header">직원 타이핑 역량 지수</div>
+                                    <div class="fake-table-cell label">인사팀</div><div class="fake-table-cell value" style="color:#217346">A</div>
+                                    <div class="fake-table-cell label">영업팀</div><div class="fake-table-cell value" style="color:#217346">A-</div>
+                                    <div class="fake-table-cell label">개발팀</div><div class="fake-table-cell value" style="color:#ed7d31">B+</div>
+                                    <div class="fake-table-cell label">기획팀</div><div class="fake-table-cell value">B</div>
+                                    <div class="fake-table-cell label">재무팀</div><div class="fake-table-cell value" style="color:#217346">A+</div>
+                                    <div class="fake-table-cell label total">전사 평균</div><div class="fake-table-cell value total" style="color:#217346">A-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="review-sheet" class="sheet-view" style="display: none;">
                         <div class="review-sheet-wrap">
                             <div class="review-panel" aria-label="검토 댓글">
@@ -419,6 +520,7 @@
                 <div class="tab" data-sheet="mini-pet">관리시트</div>
                 <div class="tab" data-sheet="game2048">2048</div>
                 <div class="tab" data-sheet="sudoku">SDK</div>
+                <div class="tab" data-sheet="typing">한컴타자</div>
                 <div class="tab tab-locked" data-sheet="newgame" data-unlockable-key="new_game" data-locked="true" data-lock-reason="친구추천 2명 달성 시 이용할 수 있습니다" title="친구추천 2명 달성 시 이용할 수 있습니다"><span class="tab-lock-icon">🔒</span>NewGame</div>
                 <div class="tab add-tab">+</div>
             </div>
