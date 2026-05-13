@@ -1130,12 +1130,6 @@ body.dark-mode .review-nickname-input {
     font-weight: 600;
 }
 
-/* ?ㅽ뀛??愿묎퀬 ?꾩젽 */
-.stealth-ad { position: fixed; bottom: 50px; right: 20px; width: 240px; height: 150px; border: 1px solid #2b6cb0; background: #fff; font-size: 11px; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-.ad-header { background: #dbe5f1; padding: 5px 10px; font-weight: bold; border-bottom: 1px solid #2b6cb0; display: flex; justify-content: space-between; align-items: center; color: #333; }
-.ad-header::after { content: 'i'; display: inline-block; width: 14px; height: 14px; border: 1px solid #2b6cb0; border-radius: 50%; text-align: center; line-height: 12px; font-size: 10px; color: #2b6cb0; cursor: pointer; }
-.ad-content { display: flex; justify-content: center; align-items: center; height: 115px; color: #999; }
-
 /* Dark Mode Overrides for V2 */
 body.dark-mode #loading-screen { background: #1e1e1e; }
 body.dark-mode .progress-container { background: #444; }
@@ -1146,9 +1140,6 @@ body.dark-mode .readme-section { background: #1f4e2f; color: #b7e1c0; border-col
 body.dark-mode .readme-label,
 body.dark-mode .readme-article { background: #333; color: #90cdf4; }
 body.dark-mode .readme-note { background: #4d3b13; color: #ffe699; }
-body.dark-mode .stealth-ad { background: #2d2d2d; border-color: #444; }
-body.dark-mode .ad-header { background: #1a365d; border-color: #444; color: #d4d4d4; }
-body.dark-mode .ad-header::after { border-color: #4CAF50; color: #4CAF50; }
 
 /* =====================================================
    誘몃땲誘?(?援щ━) ?쒖떇吏 ?ㅽ???
