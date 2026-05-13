@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" role="img" aria-label="Spreadsheet-inspired workspace illustration">
+  <rect width="960" height="620" fill="#f7fbf8"/>
+  <rect x="70" y="62" width="820" height="496" rx="18" fill="#ffffff" stroke="#cfded2" stroke-width="3"/>
+  <rect x="70" y="62" width="820" height="58" rx="18" fill="#217346"/>
+  <rect x="70" y="102" width="820" height="18" fill="#217346"/>
+  <g fill="#eaf4ed">
+    <rect x="108" y="82" width="120" height="16" rx="4"/>
+    <rect x="248" y="82" width="78" height="16" rx="4"/>
+    <rect x="346" y="82" width="96" height="16" rx="4"/>
+  </g>
+  <g stroke="#d8e2da" stroke-width="2">
+    <path d="M70 168h820M70 216h820M70 264h820M70 312h820M70 360h820M70 408h820M70 456h820M70 504h820"/>
+    <path d="M152 120v438M260 120v438M368 120v438M476 120v438M584 120v438M692 120v438M800 120v438"/>
+  </g>
+  <g fill="#eef6f1">
+    <rect x="153" y="169" width="106" height="46"/>
+    <rect x="369" y="265" width="106" height="46"/>
+    <rect x="585" y="361" width="106" height="46"/>
+  </g>
+  <g fill="#2f66a1">
+    <rect x="186" y="468" width="44" height="36" rx="5"/>
+    <rect x="294" y="432" width="44" height="72" rx="5"/>
+    <rect x="402" y="390" width="44" height="114" rx="5"/>
+    <rect x="510" y="418" width="44" height="86" rx="5"/>
+    <rect x="618" y="350" width="44" height="154" rx="5"/>
+  </g>
+  <circle cx="762" cy="246" r="54" fill="#f2c46d"/>
+  <path d="M740 248c18 22 43 22 61 0" fill="none" stroke="#6d4b14" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="744" cy="230" r="7" fill="#6d4b14"/>
+  <circle cx="792" cy="230" r="7" fill="#6d4b14"/>
+</svg>

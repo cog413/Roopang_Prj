@@ -28,9 +28,12 @@ export function initExcelLayout() {
     }
 
     // 3. View tab toggles dark mode.
+    const fileMenuTab = document.getElementById('file-menu-tab');
     const homeMenuTab = document.getElementById('home-menu-tab');
     const reviewMenuTab = document.getElementById('review-menu-tab');
     const viewMenuTab = document.getElementById('view-menu-tab');
+    const toolbar = document.querySelector('.toolbar');
+    const fileMenuPanel = document.getElementById('file-menu-panel');
     if (viewMenuTab) {
         viewMenuTab.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
@@ -53,6 +56,9 @@ export function initExcelLayout() {
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             reviewMenuTab?.classList.remove('active');
+            fileMenuTab?.classList.remove('active');
+            if (fileMenuPanel) fileMenuPanel.hidden = true;
+            if (toolbar) toolbar.hidden = false;
             homeMenuTab?.classList.add('active');
             
             const targetSheet = tab.dataset.sheet;
@@ -74,6 +80,8 @@ export function initExcelLayout() {
             document.querySelectorAll('.menu-tabs .menu-tab').forEach(t => {
                 if (t !== viewMenuTab) t.classList.remove('active');
             });
+            if (fileMenuPanel) fileMenuPanel.hidden = true;
+            if (toolbar) toolbar.hidden = false;
             homeMenuTab.classList.add('active');
             const activeTab = document.querySelector('.tab.active:not(.add-tab)');
             const targetSheet = activeTab?.dataset.sheet || 'readme';
@@ -87,11 +95,24 @@ export function initExcelLayout() {
         });
     }
 
+    if (fileMenuTab) {
+        fileMenuTab.addEventListener('click', () => {
+            document.querySelectorAll('.menu-tabs .menu-tab').forEach((tab) => {
+                if (tab !== viewMenuTab) tab.classList.remove('active');
+            });
+            fileMenuTab.classList.add('active');
+            if (fileMenuPanel) fileMenuPanel.hidden = false;
+            if (toolbar) toolbar.hidden = true;
+        });
+    }
+
     if (reviewMenuTab) {
         reviewMenuTab.addEventListener('click', () => {
             document.querySelectorAll('.menu-tabs .menu-tab').forEach((tab) => {
                 if (tab !== viewMenuTab) tab.classList.remove('active');
             });
+            if (fileMenuPanel) fileMenuPanel.hidden = true;
+            if (toolbar) toolbar.hidden = false;
             reviewMenuTab.classList.add('active');
             sheetViews.forEach(sheet => {
                 const isReview = sheet.id === 'review-sheet';

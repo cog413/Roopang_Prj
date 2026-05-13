@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" role="img" aria-label="Micro-break timer and workspace illustration">
+  <rect width="960" height="620" fill="#fbfdfb"/>
+  <circle cx="480" cy="290" r="178" fill="#eef6f1" stroke="#cfded2" stroke-width="4"/>
+  <circle cx="480" cy="290" r="126" fill="#ffffff" stroke="#217346" stroke-width="10"/>
+  <path d="M480 290V202M480 290l74 46" stroke="#217346" stroke-width="12" stroke-linecap="round"/>
+  <rect x="190" y="452" width="580" height="52" rx="10" fill="#ffffff" stroke="#d8e2da" stroke-width="3"/>
+  <rect x="220" y="472" width="118" height="12" rx="6" fill="#2f66a1"/>
+  <rect x="360" y="472" width="192" height="12" rx="6" fill="#c58b2b"/>
+  <rect x="574" y="472" width="164" height="12" rx="6" fill="#217346"/>
+  <g fill="#f2c46d" stroke="#6d4b14" stroke-width="5">
+    <circle cx="706" cy="178" r="38"/>
+    <path d="M684 181c14 13 29 13 44 0" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

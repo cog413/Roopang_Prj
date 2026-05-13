@@ -55,12 +55,14 @@ body {
 
 #view-menu-tab,
 #review-menu-tab,
+#file-menu-tab,
 #home-menu-tab {
     cursor: pointer;
 }
 
 #view-menu-tab:hover,
 #review-menu-tab:hover,
+#file-menu-tab:hover,
 #home-menu-tab:hover {
     background-color: #fff;
     border-color: #d2d0ce;
@@ -83,6 +85,50 @@ body {
     gap: 15px;
     border-bottom: 1px solid #e1dfdd;
     align-items: center;
+}
+
+.file-menu-panel {
+    background: #fff;
+    border-bottom: 1px solid #d2d0ce;
+    padding: 10px 12px;
+}
+
+.file-menu-section {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 960px;
+}
+
+.file-menu-title {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 700;
+    color: #217346;
+    border-right: 1px solid #e1dfdd;
+    padding-right: 14px;
+}
+
+.file-menu-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.file-menu-links a {
+    color: #1f5135;
+    background: #f6fbf7;
+    border: 1px solid #c9ddcf;
+    border-radius: 2px;
+    padding: 5px 8px;
+    font-size: 12px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.file-menu-links a:hover {
+    background: #eaf4ed;
+    border-color: #217346;
 }
 
 .tool-group {
