@@ -90,6 +90,47 @@ For current sprite filenames, see `public/assets/corgi/manifest.json`.
 
 ---
 
+## 파일 탭 / File Guide Sheet
+
+### 구현 목적 (AdSense 심사 대비)
+
+파일 탭(`#file-menu-tab` → `#file-sheet`)은 순수 UX 기능이 아니라 **Google AdSense 심사 통과**를 위한 의도적 설계다.
+
+AdSense 심사에서 요구하는 핵심 조건:
+- **E-E-A-T**: 서비스의 목적·철학·운영 주체를 명시하는 콘텐츠 존재
+- **Helpful Content**: 실제 사용자에게 가치 있는 정보 페이지
+- **Crawlability**: 검색 엔진이 색인할 수 있는 퍼블릭 URL
+
+### 구조
+
+- 파일 탭 클릭 → `#file-sheet`가 `.grid-content` 안에서 일반 sheet-view로 열림 (overlay 아님)
+- 모든 Excel 크롬(툴바·포뮬러바·시트탭) 유지 — "별도 문서 시트" 느낌
+- 카드 6개 각각이 퍼블릭 정적 페이지로 연결:
+
+| 카드 | URL | 목적 |
+|------|-----|------|
+| Refresheet 소개 | `/about` | E-E-A-T: 서비스 배경·핵심 가치 |
+| 마이크로 브레이크 가이드 | `/micro-break` | Helpful Content: 짧은 휴식의 과학적 근거 |
+| 토닥이 가이드 | `/todaki` | Helpful Content: 캐릭터 세계관 |
+| 디자인 철학 | `/design-philosophy` | E-E-A-T: 설계 의도·UX 철학 |
+| 집중 리프레시 | `/focus-refresh` | Helpful Content: 게임 설계 이유 |
+| 자주 묻는 질문 | `/faq` | Trust: 운영 정책·데이터 처리 |
+
+### 정적 페이지 관리 원칙
+
+- 모든 정적 페이지: `public/` 디렉터리, 고유 canonical URL
+- `robots.txt`: `Allow: /`, sitemap 등록 (`sitemap.xml`)
+- 페이지 내 "Microsoft Excel" 등 타사 브랜드 노출 금지 — AdSense Brand Impersonation 위반
+- 서비스 명칭은 항상 **MicroSnack** 또는 **Refresheet** 사용
+
+### 주의
+
+- 파일 탭은 `sheetViews` NodeList에 포함됨 (`querySelectorAll('.sheet-view')`)
+- JS에서 `display: flex`로 열고, 일반 시트 탭 클릭 시 `display: none`으로 자동 닫힘
+- `updateFormulaBarForSheet('file')` → `=GUIDE.INDEX("서비스_안내")`
+
+---
+
 ## Review Tab / Comments
 
 - Top ribbon `검토` is handled by `#review-menu-tab` and opens `#review-sheet` without changing the default sheet on initial load.
