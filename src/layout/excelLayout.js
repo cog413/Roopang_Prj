@@ -32,11 +32,6 @@ export function initExcelLayout() {
     const homeMenuTab = document.getElementById('home-menu-tab');
     const reviewMenuTab = document.getElementById('review-menu-tab');
     const viewMenuTab = document.getElementById('view-menu-tab');
-    const toolbar = document.querySelector('.toolbar');
-    const formulaBar = document.querySelector('.formula-bar');
-    const spreadsheetContainer = document.querySelector('.spreadsheet-container');
-    const sheetTabs = document.querySelector('.sheet-tabs');
-    const fileGuideScreen = document.getElementById('file-guide-screen');
     if (viewMenuTab) {
         viewMenuTab.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
@@ -102,12 +97,12 @@ export function initExcelLayout() {
                 if (tab !== viewMenuTab) tab.classList.remove('active');
             });
             fileMenuTab.classList.add('active');
-            document.body.classList.add('file-guide-mode');
-            if (fileGuideScreen) fileGuideScreen.hidden = false;
-            if (toolbar) toolbar.hidden = true;
-            if (formulaBar) formulaBar.hidden = true;
-            if (spreadsheetContainer) spreadsheetContainer.hidden = true;
-            if (sheetTabs) sheetTabs.hidden = true;
+            sheetViews.forEach(sheet => {
+                const isFile = sheet.id === 'file-sheet';
+                sheet.style.display = isFile ? 'flex' : 'none';
+                sheet.classList.toggle('active', isFile);
+            });
+            updateFormulaBarForSheet('file');
         });
     }
 
@@ -151,16 +146,14 @@ export function initExcelLayout() {
         } else if (sheetId === 'review') {
             formulaInput.value = '=REVIEW.COMMENTS(A1:A100)';
             currentCell.textContent = 'R1';
+        } else if (sheetId === 'file') {
+            formulaInput.value = '=GUIDE.INDEX("서비스_안내")';
+            currentCell.textContent = 'A1';
         }
     }
 
     function showAppWorkspace() {
-        document.body.classList.remove('file-guide-mode');
-        if (fileGuideScreen) fileGuideScreen.hidden = true;
-        if (toolbar) toolbar.hidden = false;
-        if (formulaBar) formulaBar.hidden = false;
-        if (spreadsheetContainer) spreadsheetContainer.hidden = false;
-        if (sheetTabs) sheetTabs.hidden = false;
+        // all chrome elements remain visible at all times — no-op
     }
 
     // Initialize formula bar for first sheet

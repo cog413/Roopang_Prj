@@ -87,35 +87,13 @@ body {
     align-items: center;
 }
 
-.file-guide-screen {
-    flex: 1 1 auto;
-    overflow: auto;
-    background: #f8fbf8;
-    border-top: 1px solid #d2d0ce;
-    padding: 32px;
-}
-
-.file-guide-screen[hidden] {
-    display: none;
-}
-
-body.file-guide-mode .ribbon-top {
-    display: none;
-}
-
-body.file-guide-mode .ribbon {
-    border-bottom: 1px solid #d2d0ce;
-}
-
-body.file-guide-mode .menu-tabs {
-    padding-top: 0;
-}
-
-body.file-guide-mode .file-guide-screen {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+#file-sheet {
     width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    background: #f8fbf8;
+    padding: 32px;
+    flex-direction: column;
 }
 
 .fg-hero {
@@ -2555,7 +2533,7 @@ body.dark-mode .mps-body-b { background:
     .window-controls { gap: 10px; }
     .account-button { padding: 4px 10px; font-size: 13px; }
 
-    .file-guide-screen { padding: 16px; }
+    #file-sheet { height: auto; overflow-y: visible; padding: 16px; }
     .fg-hero,
     .fg-link-grid { grid-template-columns: 1fr; }
     .fg-link-grid { grid-template-rows: none; }
