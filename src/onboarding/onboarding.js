@@ -93,8 +93,26 @@ function buildModalDOM() {
                 </div>
                 <div class="ob-hint">불규칙하다면 일반적인 시간을 적어주세요</div>
                 <div class="modal-buttons">
-                    <button class="modal-btn retry" id="ob-save">저장(S)</button>
+                    <button class="modal-btn retry" id="ob-next2">다음(N)</button>
                     <button class="modal-btn" id="ob-back">이전(P)</button>
+                </div>
+            </div>
+
+            <!-- Step 3: 사원명 -->
+            <div id="ob-step3" class="ob-step" style="display:none;">
+                <div class="ob-step-title">사원명을 설정하세요</div>
+                <div class="ob-field">
+                    <label class="ob-label">사원명</label>
+                    <input id="ob-employee-name" class="ob-input" type="text"
+                           placeholder="게임 랭킹에 표시될 이름" autocomplete="off" maxlength="10">
+                </div>
+                <div class="ob-hint">한글·영문·숫자·공백·!@#$%^&amp;()-_. 허용 / 최대 10자</div>
+                <div class="ob-hint">사원명은 게임 점수·랭킹·실적판에 표시됩니다.</div>
+                <div class="ob-hint">설정하지 않으면 게임 실적이 반영되지 않습니다.</div>
+                <div id="ob-employee-error" class="ob-consent-error" style="display:none;"></div>
+                <div class="modal-buttons">
+                    <button class="modal-btn retry" id="ob-save">저장(S)</button>
+                    <button class="modal-btn" id="ob-back2">이전(P)</button>
                 </div>
             </div>
         </div>`;
@@ -123,6 +141,8 @@ function bindEvents() {
         showStep(2);
     });
     modalEl.querySelector('#ob-back').addEventListener('click', () => showStep(1));
+    modalEl.querySelector('#ob-next2').addEventListener('click', () => showStep(3));
+    modalEl.querySelector('#ob-back2').addEventListener('click', () => showStep(2));
     modalEl.querySelector('#ob-save').addEventListener('click', saveOnboarding);
 
     const input = modalEl.querySelector('#ob-company-input');
@@ -151,6 +171,7 @@ function populateTimePickers() {
 function showStep(n) {
     modalEl.querySelector('#ob-step1').style.display = n === 1 ? '' : 'none';
     modalEl.querySelector('#ob-step2').style.display = n === 2 ? '' : 'none';
+    modalEl.querySelector('#ob-step3').style.display = n === 3 ? '' : 'none';
 }
 
 function onCompanyInput(e) {
@@ -210,6 +231,21 @@ async function saveOnboarding() {
     const commuteStart = modalEl.querySelector('#ob-commute-start').value;
     const commuteEnd = modalEl.querySelector('#ob-commute-end').value;
     const marketingAgreed = modalEl.querySelector('#ob-marketing-check')?.checked ?? false;
+    const employeeNameRaw = modalEl.querySelector('#ob-employee-name')?.value.trim() ?? '';
+    const employeeNameErrEl = modalEl.querySelector('#ob-employee-error');
+
+    // 사원명 유효성 검사 (허용 범위만 통과, 빈칸은 허용 — 나중에 설정 가능)
+    if (employeeNameRaw) {
+        if (employeeNameRaw.length > 10) {
+            if (employeeNameErrEl) { employeeNameErrEl.textContent = '사원명은 최대 10자입니다'; employeeNameErrEl.style.display = 'block'; }
+            return;
+        }
+        if (!/^[가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9 !@#$%^&()\-_.]+$/.test(employeeNameRaw)) {
+            if (employeeNameErrEl) { employeeNameErrEl.textContent = '허용되지 않는 문자입니다'; employeeNameErrEl.style.display = 'block'; }
+            return;
+        }
+    }
+    if (employeeNameErrEl) employeeNameErrEl.style.display = 'none';
 
     try {
         const res = await fetch('/api/onboarding', {
@@ -229,6 +265,15 @@ async function saveOnboarding() {
                 window.refresheetAuth.commute_start = commuteStart;
                 window.refresheetAuth.commute_end = commuteEnd;
                 window.refresheetAuth.onboarding_done = true;
+            }
+            // 사원명이 입력된 경우 별도 저장
+            if (employeeNameRaw) {
+                await fetch('/api/me/employee-name', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ employee_name: employeeNameRaw }),
+                }).then(r => r.ok && (window.refresheetAuth && (window.refresheetAuth.employee_name = employeeNameRaw))).catch(() => {});
             }
             document.dispatchEvent(new CustomEvent('refresheet:onboarding-done'));
         }

@@ -396,6 +396,19 @@ export async function initNewGame() {
                     extra: { difficulty: currentDifficulty, puzzle_id: currentPuzzleId, mistakes: mistakeCount },
                 }),
             }).then(async (res) => {
+                if (res.status === 403) {
+                    const d = await res.json().catch(() => ({}));
+                    if (d.error === 'employee_name_required') {
+                        const { showAlertPopup, showUserSettings } = window.loginPopupModule || {};
+                        if (showAlertPopup) {
+                            showAlertPopup('사원명을 설정해야 실적 및 순위가 반영됩니다.', () => {
+                                if (showUserSettings) showUserSettings();
+                            });
+                        }
+                    }
+                    refreshTicketDisplay();
+                    return;
+                }
                 if (res.status === 429) {
                     const d = await res.json().catch(() => ({}));
                     if (formulaInput) formulaInput.value = `=LIMIT.REACHED("이번 시간 3판 완료 · ${d.resets_at_kst || '다음 정시'} 초기화")`;
@@ -453,7 +466,7 @@ export async function initNewGame() {
             return;
         }
         try {
-            const res = await fetch('/api/scores/today', { credentials: 'include' });
+            const res = await fetch('/api/scores/today?game_type=new_game', { credentials: 'include' });
             const d = await res.json();
             ticketEl.textContent = `티켓 ${d.hourly_plays_remaining ?? 0} / 3 · 매 정시 갱신`;
         } catch { ticketEl.textContent = ''; }

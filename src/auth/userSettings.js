@@ -34,6 +34,13 @@ function ensureModal() {
             </div>
             <div class="ob-step">
                 <div class="ob-field">
+                    <label class="ob-label">사원명</label>
+                    <input id="us-employee-name" class="ob-input" type="text"
+                           placeholder="게임 랭킹에 표시될 이름 (최대 10자)" autocomplete="off" maxlength="10">
+                    <div class="ob-hint" style="font-size:11px;color:#888;">한글·영문·숫자·공백·!@#$%^&amp;()-_. 허용</div>
+                    <div id="us-employee-error" class="ob-consent-error" style="display:none;"></div>
+                </div>
+                <div class="ob-field">
                     <label class="ob-label">회사명</label>
                     <div class="ob-input-wrap">
                         <input id="us-company-input" class="ob-input" type="text"
@@ -109,6 +116,7 @@ function prefillValues() {
     const auth = window.refresheetAuth;
     if (!auth?.authenticated) return;
 
+    modalEl.querySelector('#us-employee-name').value = auth.employee_name || '';
     modalEl.querySelector('#us-company-input').value = auth.company || '';
     modalEl.querySelector('#us-commute-start').value = auth.commute_start || '09:00';
     modalEl.querySelector('#us-commute-end').value = auth.commute_end || '18:00';
@@ -233,27 +241,64 @@ function renderCompanyTags() {
 }
 
 async function saveSettings() {
+    const employeeNameRaw = modalEl.querySelector('#us-employee-name').value.trim();
+    const employeeErrEl = modalEl.querySelector('#us-employee-error');
     const company = modalEl.querySelector('#us-company-input').value.trim();
     const commuteStart = modalEl.querySelector('#us-commute-start').value;
     const commuteEnd = modalEl.querySelector('#us-commute-end').value;
     const marketingAgreed = modalEl.querySelector('#us-marketing-check').checked;
+
+    // 사원명 유효성 검사
+    if (employeeNameRaw) {
+        if (employeeNameRaw.length > 10) {
+            if (employeeErrEl) { employeeErrEl.textContent = '사원명은 최대 10자입니다'; employeeErrEl.style.display = 'block'; }
+            return;
+        }
+        if (!/^[가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9 !@#$%^&()\-_.]+$/.test(employeeNameRaw)) {
+            if (employeeErrEl) { employeeErrEl.textContent = '허용되지 않는 문자입니다 (한글·영문·숫자·공백·!@#$%^&()-_.)'; employeeErrEl.style.display = 'block'; }
+            return;
+        }
+    }
+    if (employeeErrEl) employeeErrEl.style.display = 'none';
 
     const btn = modalEl.querySelector('#us-save');
     btn.disabled = true;
     btn.textContent = '저장 중...';
 
     try {
-        const res = await fetch('/api/onboarding', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                company: company || null,
-                commute_start: commuteStart,
-                commute_end: commuteEnd,
-                marketing_agreed: marketingAgreed,
+        const promises = [
+            fetch('/api/onboarding', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    company: company || null,
+                    commute_start: commuteStart,
+                    commute_end: commuteEnd,
+                    marketing_agreed: marketingAgreed,
+                }),
             }),
-        });
+        ];
+
+        // 사원명이 있으면 별도 API 저장
+        if (employeeNameRaw) {
+            promises.push(
+                fetch('/api/me/employee-name', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ employee_name: employeeNameRaw }),
+                })
+            );
+        }
+
+        const [res, enRes] = await Promise.all(promises);
+
+        if (enRes && !enRes.ok) {
+            const d = await enRes.json().catch(() => ({}));
+            if (employeeErrEl) { employeeErrEl.textContent = d.message || '사원명 저장에 실패했습니다'; employeeErrEl.style.display = 'block'; }
+            return;
+        }
 
         if (res.ok) {
             if (window.refresheetAuth) {
@@ -262,6 +307,7 @@ async function saveSettings() {
                 window.refresheetAuth.commute_end = commuteEnd;
                 window.refresheetAuth.marketing_agreed = marketingAgreed;
                 window.refresheetAuth.onboarding_done = true;
+                if (employeeNameRaw) window.refresheetAuth.employee_name = employeeNameRaw;
             }
             document.dispatchEvent(new CustomEvent('refresheet:auth', { detail: window.refresheetAuth }));
             close();

@@ -29,6 +29,7 @@ export async function fetchAuthState() {
             user_id: data.user.user_id,
             email: data.user.email,
             nickname: data.user.nickname,
+            employee_name: data.user.employee_name || null,
             avatar_url: data.user.avatar_url,
             last_login_at: data.user.last_login_at,
             is_new_user: Boolean(data.user.is_new_user),

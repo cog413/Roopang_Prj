@@ -36,6 +36,9 @@ export default {
             if (url.pathname === '/api/onboarding' && request.method === 'POST') {
                 return handleOnboarding(request, env);
             }
+            if (url.pathname === '/api/me/employee-name' && request.method === 'POST') {
+                return handleSetEmployeeName(request, env);
+            }
             if (url.pathname === '/api/avatar' && request.method === 'GET') {
                 return handleGetAvatar(request, env);
             }
@@ -257,6 +260,7 @@ async function handleMe(request, env) {
             user_id: session.user_id,
             email: session.email,
             nickname: session.nickname,
+            employee_name: session.employee_name || null,
             avatar_url: session.avatar_url,
             last_login_at: session.last_login_at,
             is_new_user: Boolean(session.is_new_user),
@@ -312,6 +316,33 @@ async function handleOnboarding(request, env) {
 
     await db.batch(stmts);
     return withCors(json({ ok: true, company, commute_start: commuteStart, commute_end: commuteEnd }));
+}
+
+async function handleSetEmployeeName(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
+
+    const body = await request.json().catch(() => ({}));
+    const raw = typeof body.employee_name === 'string' ? body.employee_name.trim() : '';
+
+    if (!raw) return withCors(json({ error: 'employee_name_required', message: '사원명을 입력해주세요' }, 400));
+    if (raw.length > 10) return withCors(json({ error: 'employee_name_too_long', message: '사원명은 최대 10자입니다' }, 400));
+    // 허용: 한글(가-힣 ㄱ-ㅎ ㅏ-ㅣ), 영문, 숫자, 공백, !@#$%^&()-_.
+    // 불허: < > " ' ; / \ | ` 및 제어문자 (HTML·SQL 시각적 혼동 방지)
+    if (!/^[가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9 !@#$%^&()\-_.]+$/.test(raw)) {
+        return withCors(json({
+            error: 'employee_name_invalid',
+            message: '허용되지 않는 문자입니다. 한글·영문·숫자·공백·!@#$%^&()-_. 만 사용 가능합니다',
+        }, 400));
+    }
+
+    const db = getDb(env);
+    const now = new Date().toISOString();
+    await db.prepare(
+        `UPDATE users SET employee_name=?, updated_at=? WHERE user_id=?`
+    ).bind(raw, now, session.user_id).run();
+
+    return withCors(json({ ok: true, employee_name: raw }));
 }
 
 async function handleGetAvatar(request, env) {
@@ -468,6 +499,10 @@ async function handleSaveScore(request, env) {
 
     if (!gameType) return withCors(json({ error: 'invalid game_type' }, 400));
 
+    if (!session.employee_name) {
+        return withCors(json({ error: 'employee_name_required', message: '사원명을 설정해야 실적이 반영됩니다' }, 403));
+    }
+
     const db = getDb(env);
     if (gameType === 'new_game') {
         await ensureUnlockSchema(db);
@@ -478,10 +513,11 @@ async function handleSaveScore(request, env) {
     }
 
     const { start, end, nextHourKST } = kstHourBounds();
+    // 게임 타입별 독립 시간당 3회 한도 (cross-game 카운트 방지)
     const hourlyRow = await db.prepare(
         `SELECT COUNT(*) as cnt FROM game_scores
-         WHERE user_id = ? AND played_at >= ? AND played_at < ?`
-    ).bind(session.user_id, start, end).first();
+         WHERE user_id = ? AND game_type = ? AND played_at >= ? AND played_at < ?`
+    ).bind(session.user_id, gameType, start, end).first();
 
     if ((hourlyRow?.cnt ?? 0) >= 3) {
         return withCors(json({
@@ -517,6 +553,22 @@ async function handleTodayScores(request, env) {
     const db = getDb(env);
     const { start: hourStart, end: hourEnd } = kstHourBounds();
 
+    // game_type 파라미터가 있으면 해당 타입만 시간당 카운트 (per-game 티켓 표시)
+    const url = new URL(request.url);
+    const gtParam = url.searchParams.get('game_type');
+    const validGameTypes = ['2048', 'sudoku', 'new_game', 'typing_game'];
+    const filteredGameType = validGameTypes.includes(gtParam) ? gtParam : null;
+
+    const hourlyStmt = filteredGameType
+        ? db.prepare(
+            `SELECT COUNT(*) as cnt FROM game_scores
+             WHERE user_id = ? AND game_type = ? AND played_at >= ? AND played_at < ?`
+          ).bind(session.user_id, filteredGameType, hourStart, hourEnd)
+        : db.prepare(
+            `SELECT COUNT(*) as cnt FROM game_scores
+             WHERE user_id = ? AND played_at >= ? AND played_at < ?`
+          ).bind(session.user_id, hourStart, hourEnd);
+
     const [rows, avatar, hourlyRow] = await Promise.all([
         db.prepare(
             `SELECT game_type, score, played_at, duration_seconds
@@ -526,10 +578,7 @@ async function handleTodayScores(request, env) {
         ).bind(session.user_id, todayStart).all(),
         db.prepare(`SELECT last_minime_at FROM avatars WHERE user_id=?`)
             .bind(session.user_id).first(),
-        db.prepare(
-            `SELECT COUNT(*) as cnt FROM game_scores
-             WHERE user_id = ? AND played_at >= ? AND played_at < ?`
-        ).bind(session.user_id, hourStart, hourEnd).first(),
+        hourlyStmt.first(),
     ]);
 
     const lastMinimeAt = avatar?.last_minime_at || null;
@@ -720,7 +769,7 @@ async function getSessionUser(db, request) {
 
     return db.prepare(
         `SELECT u.user_id, u.email, u.company, u.commute_start, u.commute_end, u.onboarding_done,
-                u.marketing_agreed,
+                u.marketing_agreed, u.employee_name,
                 p.nickname, p.avatar_url, p.last_login_at, s.is_new_user
          FROM auth_sessions s
          JOIN users u ON u.user_id = s.user_id
@@ -753,15 +802,15 @@ async function handleRankings(request, env) {
     const db = getDb(env);
 
     const [personalTop, companyTop, personalTotalRow, companyTotalRow] = await Promise.all([
+        // 사원명 설정 유저만 랭킹에 노출
         db.prepare(`
             SELECT u.user_id,
-                   COALESCE(a.nickname, p.nickname, u.email) AS nickname,
+                   u.employee_name AS nickname,
                    SUM(gs.score) AS total_score
             FROM game_scores gs
             JOIN users u ON u.user_id = gs.user_id
-            LEFT JOIN avatars a ON a.user_id = u.user_id
-            LEFT JOIN user_profiles p ON p.user_id = u.user_id
             WHERE gs.played_at >= ?
+              AND u.employee_name IS NOT NULL
             GROUP BY u.user_id
             ORDER BY total_score DESC
             LIMIT 5`).bind(start).all(),
@@ -772,15 +821,20 @@ async function handleRankings(request, env) {
             FROM game_scores gs
             JOIN users u ON u.user_id = gs.user_id
             WHERE u.company IS NOT NULL AND u.company != ''
+              AND u.employee_name IS NOT NULL
               AND gs.played_at >= ?
             GROUP BY u.company
             ORDER BY total_score DESC
             LIMIT 5`).bind(start).all(),
-        db.prepare(`SELECT COUNT(DISTINCT user_id) AS cnt FROM game_scores WHERE played_at >= ?`)
+        db.prepare(`
+            SELECT COUNT(DISTINCT gs.user_id) AS cnt
+            FROM game_scores gs JOIN users u ON u.user_id = gs.user_id
+            WHERE gs.played_at >= ? AND u.employee_name IS NOT NULL`)
             .bind(start).first(),
         db.prepare(`SELECT COUNT(DISTINCT u.company) AS cnt
             FROM game_scores gs JOIN users u ON u.user_id = gs.user_id
-            WHERE u.company IS NOT NULL AND u.company != '' AND gs.played_at >= ?`)
+            WHERE u.company IS NOT NULL AND u.company != ''
+              AND u.employee_name IS NOT NULL AND gs.played_at >= ?`)
             .bind(start).first(),
     ]);
 
@@ -789,10 +843,13 @@ async function handleRankings(request, env) {
 
     if (session) {
         const [myScoreRow, myCompanyRow] = await Promise.all([
-            db.prepare(`SELECT COALESCE(SUM(score),0) AS s FROM game_scores WHERE user_id=? AND played_at>=?`)
-                .bind(session.user_id, start).first(),
-            session.company
-                ? db.prepare(`SELECT COALESCE(SUM(gs.score),0) AS s FROM game_scores gs JOIN users u ON u.user_id=gs.user_id WHERE u.company=? AND gs.played_at>=?`)
+            // 본인도 사원명 있어야 랭킹 점수 집계
+            session.employee_name
+                ? db.prepare(`SELECT COALESCE(SUM(score),0) AS s FROM game_scores WHERE user_id=? AND played_at>=?`)
+                    .bind(session.user_id, start).first()
+                : Promise.resolve({ s: 0 }),
+            session.company && session.employee_name
+                ? db.prepare(`SELECT COALESCE(SUM(gs.score),0) AS s FROM game_scores gs JOIN users u ON u.user_id=gs.user_id WHERE u.company=? AND gs.played_at>=? AND u.employee_name IS NOT NULL`)
                     .bind(session.company, start).first()
                 : Promise.resolve(null),
         ]);
@@ -802,11 +859,11 @@ async function handleRankings(request, env) {
 
         const [pRankRow, cRankRow] = await Promise.all([
             myPersonalScore > 0
-                ? db.prepare(`SELECT COUNT(*)+1 AS r FROM (SELECT user_id,SUM(score) AS s FROM game_scores WHERE played_at>=? GROUP BY user_id) WHERE s>?`)
+                ? db.prepare(`SELECT COUNT(*)+1 AS r FROM (SELECT u.user_id,SUM(gs.score) AS s FROM game_scores gs JOIN users u ON u.user_id=gs.user_id WHERE gs.played_at>=? AND u.employee_name IS NOT NULL GROUP BY u.user_id) WHERE s>?`)
                     .bind(start, myPersonalScore).first()
                 : Promise.resolve(null),
             myCompanyScore > 0 && session.company
-                ? db.prepare(`SELECT COUNT(*)+1 AS r FROM (SELECT u.company,SUM(gs.score) AS s FROM game_scores gs JOIN users u ON u.user_id=gs.user_id WHERE u.company IS NOT NULL AND gs.played_at>=? GROUP BY u.company) WHERE s>?`)
+                ? db.prepare(`SELECT COUNT(*)+1 AS r FROM (SELECT u.company,SUM(gs.score) AS s FROM game_scores gs JOIN users u ON u.user_id=gs.user_id WHERE u.company IS NOT NULL AND u.employee_name IS NOT NULL AND gs.played_at>=? GROUP BY u.company) WHERE s>?`)
                     .bind(start, myCompanyScore).first()
                 : Promise.resolve(null),
         ]);
@@ -870,12 +927,10 @@ async function handleGameRankings(request, env) {
         SELECT gs.score,
                gs.played_at,
                gs.played_at AS created_at,
-               COALESCE(a.nickname, p.nickname, u.email) AS nickname,
+               u.employee_name,
                u.company
         FROM game_scores gs
         JOIN users u ON u.user_id = gs.user_id
-        LEFT JOIN avatars a ON a.user_id = u.user_id
-        LEFT JOIN user_profiles p ON p.user_id = u.user_id
         WHERE gs.game_type = ?
           AND gs.played_at >= ?
         ORDER BY gs.score DESC, gs.played_at ASC
@@ -1455,6 +1510,10 @@ async function handleTypingFinish(request, env) {
     const session = await getSessionUser(getDb(env), request);
     if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
 
+    if (!session.employee_name) {
+        return withCors(json({ error: 'employee_name_required', message: '사원명을 설정해야 실적이 반영됩니다' }, 403));
+    }
+
     const body = await request.json().catch(() => ({}));
     const score = Number.isInteger(body.score) ? Math.max(0, body.score) : 0;
     const durationSeconds = Number.isInteger(body.duration_seconds) ? body.duration_seconds : 60;
@@ -1462,9 +1521,10 @@ async function handleTypingFinish(request, env) {
     const db = getDb(env);
     const { start, end, nextHourKST } = kstHourBounds();
 
+    // 타자 게임 단독 시간당 3회 한도 (cross-game 카운트 방지)
     const hourlyRow = await db.prepare(
-        `SELECT COUNT(*) as cnt FROM game_scores WHERE user_id=? AND played_at>=? AND played_at<?`
-    ).bind(session.user_id, start, end).first();
+        `SELECT COUNT(*) as cnt FROM game_scores WHERE user_id=? AND game_type=? AND played_at>=? AND played_at<?`
+    ).bind(session.user_id, 'typing_game', start, end).first();
 
     const playsThisHour = hourlyRow?.cnt ?? 0;
     const eligible = playsThisHour < 3;
@@ -1474,7 +1534,6 @@ async function handleTypingFinish(request, env) {
         await db.prepare(
             `INSERT INTO game_scores (id, user_id, game_type, score, played_at, duration_seconds) VALUES (?,?,?,?,?,?)`
         ).bind(makeId('gsc'), session.user_id, 'typing_game', score, now, durationSeconds).run();
-        document.dispatchEvent?.(new CustomEvent('refresheet:score-saved'));
     }
 
     await db.prepare(
@@ -1498,11 +1557,9 @@ async function handleTypingRanking(request, env) {
     const rows = await db.prepare(`
         SELECT grr.score,
                grr.created_at,
-               COALESCE(a.nickname, p.nickname, u.email) AS nickname
+               u.employee_name
         FROM game_round_results grr
         JOIN users u ON u.user_id = grr.user_id
-        LEFT JOIN avatars a ON a.user_id = u.user_id
-        LEFT JOIN user_profiles p ON p.user_id = u.user_id
         WHERE grr.game_key='typing_game'
           AND grr.is_ranking_eligible=1
           AND grr.created_at >= ?

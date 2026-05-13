@@ -9,15 +9,16 @@ import { initMiniPet } from './pet/miniPet.js';
 import { initAuthState } from './auth/authState.js';
 import { maybeShowOnboarding } from './onboarding/onboarding.js';
 import { initMinimeSheet } from './minime/minimeSetup.js';
-import { showLoginPopup, goToLogin } from './ui/loginPopup.js';
+import { showLoginPopup, goToLogin, showAlertPopup } from './ui/loginPopup.js';
+import { showUserSettings } from './auth/userSettings.js';
 import { refreshKpiDisplay, startEnduranceTimer } from './kpi/kpiDisplay.js';
 import { initRankingTabs, refreshRankingDisplay } from './ranking/rankingDisplay.js';
 import { initReview } from './review/review.js';
 import { initTypingGame } from './games/typing/typingGame.js';
 import { initGameRankingTables } from './games/gameRankingTable.js';
 
-// Expose loginPopup module globally for game modules that can't import directly
-window.loginPopupModule = { showLoginPopup, goToLogin };
+// Expose popup/settings modules globally for game modules that can't import directly
+window.loginPopupModule = { showLoginPopup, goToLogin, showAlertPopup, showUserSettings };
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Refresheet Project v1.3.0 Initializing...');

@@ -101,7 +101,7 @@ function buildUI(grid) {
     });
     const rankTable = document.createElement('table');
     rankTable.className = 'tg-rank-table';
-    rankTable.innerHTML = '<thead><tr><th>순위</th><th>닉네임</th><th>점수</th><th>일시</th></tr></thead>';
+    rankTable.innerHTML = '<thead><tr><th>순위</th><th>사원 명</th><th>실적</th><th>일시</th></tr></thead>';
     const tbody = document.createElement('tbody');
     tbody.id = 'tg-ranking-body';
     tbody.innerHTML = '<tr><td colspan="4" class="tg-rank-empty">불러오는 중...</td></tr>';
@@ -351,6 +351,27 @@ async function endRound() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ score: finalScore, duration_seconds: ROUND_SECONDS }),
         });
+
+        // API 오류 처리 (인증/권한 오류 포함)
+        if (!res.ok) {
+            const d = await res.json().catch(() => ({}));
+            if (res.status === 403 && d.error === 'employee_name_required') {
+                eligEl.textContent = '사원명을 설정해야 실적 및 순위가 반영됩니다.';
+                eligEl.className = 'tg-eligibility-msg ineligible';
+                const { showAlertPopup, showUserSettings } = window.loginPopupModule || {};
+                if (showAlertPopup) {
+                    showAlertPopup('사원명을 설정해야 실적 및 순위가 반영됩니다.', () => {
+                        if (showUserSettings) showUserSettings();
+                    });
+                }
+            } else {
+                eligEl.textContent = '결과 저장에 실패했습니다.';
+                eligEl.className = 'tg-eligibility-msg ineligible';
+            }
+            refreshTicketEl();
+            return;
+        }
+
         const data = await res.json().catch(() => ({}));
         if (data.eligible) {
             eligEl.textContent = '포인트와 랭킹에 반영되었습니다.';
@@ -382,7 +403,7 @@ async function loadRanking(period = 'daily') {
         elRankingBody.innerHTML = rows.map((r, i) => `
             <tr>
                 <td>${i + 1}</td>
-                <td>${esc(r.nickname)}</td>
+                <td>${esc(r.employee_name)}</td>
                 <td>${r.score}점</td>
                 <td>${fmtDt(r.created_at)}</td>
             </tr>`).join('');
@@ -428,7 +449,14 @@ function fmtDt(str) {
     if (!str) return '';
     const d = new Date(str);
     if (isNaN(d)) return str;
-    return d.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const y = String(d.getFullYear()).slice(-2);
+    const M = String(d.getMonth() + 1).padStart(2, '0');
+    const D = String(d.getDate()).padStart(2, '0');
+    const h = d.getHours();
+    const ampm = h < 12 ? '오전' : '오후';
+    const h12 = String(h % 12 || 12).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return `${y}.${M}.${D} ${ampm} ${h12}:${m}`;
 }
 
 function showMsg(text) {
@@ -446,7 +474,7 @@ async function refreshTicketEl() {
         return;
     }
     try {
-        const res = await fetch('/api/scores/today', { credentials: 'include' });
+        const res = await fetch('/api/scores/today?game_type=typing_game', { credentials: 'include' });
         const d = await res.json();
         const text = `티켓 ${d.hourly_plays_remaining ?? 0} / 3 · 매 정시 갱신`;
         els.forEach(el => { el.textContent = text; });

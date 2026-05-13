@@ -39,7 +39,7 @@ function setupRanking(root) {
                 </span>
             </div>
             <table class="tg-rank-table">
-                <thead><tr><th>순위</th><th>닉네임</th><th>점수</th><th>일시</th></tr></thead>
+                <thead><tr><th>순위</th><th>사원 명</th><th>실적</th><th>일시</th></tr></thead>
                 <tbody><tr><td colspan="4" class="tg-rank-empty">불러오는 중...</td></tr></tbody>
             </table>
         </div>
@@ -75,7 +75,7 @@ async function loadRanking(root, period = 'daily') {
         body.innerHTML = rows.map((row, index) => `
             <tr>
                 <td>${index + 1}</td>
-                <td>${esc(row.nickname)}</td>
+                <td>${esc(row.employee_name)}</td>
                 <td>${Number(row.score || 0).toLocaleString()}</td>
                 <td>${fmtDate(row.created_at || row.played_at)}</td>
             </tr>
@@ -91,14 +91,16 @@ function getActivePeriod(root) {
 
 function fmtDate(value) {
     if (!value) return '-';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString('ko-KR', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    const y = String(d.getFullYear()).slice(-2);
+    const M = String(d.getMonth() + 1).padStart(2, '0');
+    const D = String(d.getDate()).padStart(2, '0');
+    const h = d.getHours();
+    const ampm = h < 12 ? '오전' : '오후';
+    const h12 = String(h % 12 || 12).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return `${y}.${M}.${D} ${ampm} ${h12}:${m}`;
 }
 
 function esc(value) {
