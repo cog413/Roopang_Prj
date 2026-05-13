@@ -491,7 +491,7 @@ export async function initSudoku() {
             overlay.innerHTML = `
                 <div class="excel-modal">
                     <div class="modal-header">
-                        <span>Microsoft Excel</span>
+                        <span>Refresheet</span>
                         <span class="modal-close" data-action="cancel">✕</span>
                     </div>
                     <div class="modal-content">

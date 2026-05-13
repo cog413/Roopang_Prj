@@ -6,9 +6,9 @@ Read this file first. Then `chat_log.md` for session history, `AGENT_GUIDELINES.
 
 ## Product
 
-**Brand name**: SneakTime  
+**Brand name**: MicroSnack  
 **Service name**: Refresheet  
-**Browser title**: `SneakTime - Refresheet`  
+**Browser title**: `MicroSnack - Refresheet`  
 **Concept**: Excel-disguised browser app with games and an emotional companion (Pattie/Mong).
 
 ---

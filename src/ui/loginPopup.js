@@ -41,7 +41,7 @@ function createPopupDOM() {
     overlay.innerHTML = `
         <div class="excel-modal">
             <div class="modal-header">
-                <span>Microsoft Excel</span>
+                <span>Refresheet</span>
                 <span class="modal-close" id="lp-close">✕</span>
             </div>
             <div class="modal-content">

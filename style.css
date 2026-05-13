@@ -87,48 +87,100 @@ body {
     align-items: center;
 }
 
-.file-menu-panel {
-    background: #fff;
-    border-bottom: 1px solid #d2d0ce;
-    padding: 10px 12px;
+.file-guide-screen {
+    flex: 1 1 auto;
+    overflow: auto;
+    background: #f8fbf8;
+    border-top: 1px solid #d2d0ce;
+    padding: 28px;
 }
 
-.file-menu-section {
-    display: flex;
+.file-guide-screen[hidden] {
+    display: none;
+}
+
+.fg-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
+    gap: 28px;
     align-items: center;
-    gap: 14px;
-    max-width: 960px;
+    max-width: 1040px;
+    margin: 0 auto 24px;
+    background: #fff;
+    border: 1px solid #cfe0d3;
+    border-radius: 8px;
+    padding: 24px;
 }
 
-.file-menu-title {
-    flex: 0 0 auto;
+.fg-eyebrow {
+    color: #217346;
     font-size: 12px;
     font-weight: 700;
-    color: #217346;
-    border-right: 1px solid #e1dfdd;
-    padding-right: 14px;
+    margin-bottom: 8px;
 }
 
-.file-menu-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+.fg-hero h1 {
+    margin: 0 0 12px;
+    color: #1f3328;
+    font-size: 28px;
+    line-height: 1.25;
+    letter-spacing: 0;
 }
 
-.file-menu-links a {
-    color: #1f5135;
-    background: #f6fbf7;
-    border: 1px solid #c9ddcf;
-    border-radius: 2px;
-    padding: 5px 8px;
-    font-size: 12px;
+.fg-hero p {
+    margin: 0;
+    color: #4f6156;
+    line-height: 1.7;
+}
+
+.fg-hero img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #d8e2da;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.fg-link-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    max-width: 1040px;
+    margin: 0 auto;
+}
+
+.fg-link-grid a {
+    display: block;
+    min-height: 126px;
+    color: #1f3328;
+    background: #fff;
+    border: 1px solid #cfe0d3;
+    border-radius: 8px;
+    padding: 18px;
     text-decoration: none;
     cursor: pointer;
 }
 
-.file-menu-links a:hover {
-    background: #eaf4ed;
+.fg-link-grid a:hover {
     border-color: #217346;
+    background: #f2f8f4;
+}
+
+.fg-link-grid span {
+    display: block;
+    color: #217346;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 9px;
+}
+
+.fg-link-grid strong {
+    display: block;
+    color: #506359;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.6;
 }
 
 .tool-group {
@@ -2468,6 +2520,13 @@ body.dark-mode .mps-body-b { background:
     /* Login button stays reachable */
     .window-controls { gap: 10px; }
     .account-button { padding: 4px 10px; font-size: 13px; }
+
+    .file-guide-screen { padding: 16px; }
+    .fg-hero,
+    .fg-link-grid { grid-template-columns: 1fr; }
+    .fg-hero { padding: 18px; gap: 16px; }
+    .fg-hero h1 { font-size: 22px; }
+    .fg-link-grid a { min-height: auto; }
 
     /* P4: typing game input — prevent iOS auto-zoom (requires font-size ≥ 16px) */
     .tg-input {

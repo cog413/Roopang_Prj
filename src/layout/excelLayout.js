@@ -33,7 +33,10 @@ export function initExcelLayout() {
     const reviewMenuTab = document.getElementById('review-menu-tab');
     const viewMenuTab = document.getElementById('view-menu-tab');
     const toolbar = document.querySelector('.toolbar');
-    const fileMenuPanel = document.getElementById('file-menu-panel');
+    const formulaBar = document.querySelector('.formula-bar');
+    const spreadsheetContainer = document.querySelector('.spreadsheet-container');
+    const sheetTabs = document.querySelector('.sheet-tabs');
+    const fileGuideScreen = document.getElementById('file-guide-screen');
     if (viewMenuTab) {
         viewMenuTab.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
@@ -57,8 +60,7 @@ export function initExcelLayout() {
             tab.classList.add('active');
             reviewMenuTab?.classList.remove('active');
             fileMenuTab?.classList.remove('active');
-            if (fileMenuPanel) fileMenuPanel.hidden = true;
-            if (toolbar) toolbar.hidden = false;
+            showAppWorkspace();
             homeMenuTab?.classList.add('active');
             
             const targetSheet = tab.dataset.sheet;
@@ -80,8 +82,7 @@ export function initExcelLayout() {
             document.querySelectorAll('.menu-tabs .menu-tab').forEach(t => {
                 if (t !== viewMenuTab) t.classList.remove('active');
             });
-            if (fileMenuPanel) fileMenuPanel.hidden = true;
-            if (toolbar) toolbar.hidden = false;
+            showAppWorkspace();
             homeMenuTab.classList.add('active');
             const activeTab = document.querySelector('.tab.active:not(.add-tab)');
             const targetSheet = activeTab?.dataset.sheet || 'readme';
@@ -101,8 +102,11 @@ export function initExcelLayout() {
                 if (tab !== viewMenuTab) tab.classList.remove('active');
             });
             fileMenuTab.classList.add('active');
-            if (fileMenuPanel) fileMenuPanel.hidden = false;
+            if (fileGuideScreen) fileGuideScreen.hidden = false;
             if (toolbar) toolbar.hidden = true;
+            if (formulaBar) formulaBar.hidden = true;
+            if (spreadsheetContainer) spreadsheetContainer.hidden = true;
+            if (sheetTabs) sheetTabs.hidden = true;
         });
     }
 
@@ -111,8 +115,7 @@ export function initExcelLayout() {
             document.querySelectorAll('.menu-tabs .menu-tab').forEach((tab) => {
                 if (tab !== viewMenuTab) tab.classList.remove('active');
             });
-            if (fileMenuPanel) fileMenuPanel.hidden = true;
-            if (toolbar) toolbar.hidden = false;
+            showAppWorkspace();
             reviewMenuTab.classList.add('active');
             sheetViews.forEach(sheet => {
                 const isReview = sheet.id === 'review-sheet';
@@ -148,6 +151,14 @@ export function initExcelLayout() {
             formulaInput.value = '=REVIEW.COMMENTS(A1:A100)';
             currentCell.textContent = 'R1';
         }
+    }
+
+    function showAppWorkspace() {
+        if (fileGuideScreen) fileGuideScreen.hidden = true;
+        if (toolbar) toolbar.hidden = false;
+        if (formulaBar) formulaBar.hidden = false;
+        if (spreadsheetContainer) spreadsheetContainer.hidden = false;
+        if (sheetTabs) sheetTabs.hidden = false;
     }
 
     // Initialize formula bar for first sheet
