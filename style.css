@@ -114,7 +114,6 @@ body.file-guide-mode .menu-tabs {
 body.file-guide-mode .file-guide-screen {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 28px);
     min-height: 0;
     width: 100%;
 }
@@ -179,7 +178,7 @@ body.file-guide-mode .file-guide-screen {
 
 .fg-link-grid a {
     display: block;
-    min-height: 0;
+    min-height: 100px;
     color: #1f3328;
     background: #fff;
     border: 1px solid #cfe0d3;
@@ -2506,6 +2505,14 @@ body.dark-mode .mps-body-b { background:
 /* =====================================================
    Mobile responsive — max 768px
    ===================================================== */
+@media (max-width: 1100px) and (min-width: 769px) {
+    .fg-link-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(3, minmax(0, 1fr));
+    }
+    .fg-hero { grid-template-columns: 1fr; min-height: auto; }
+}
+
 @media (max-width: 768px) {
     /* Unlock page scroll */
     body {
@@ -2548,7 +2555,6 @@ body.dark-mode .mps-body-b { background:
     .window-controls { gap: 10px; }
     .account-button { padding: 4px 10px; font-size: 13px; }
 
-    body.file-guide-mode .file-guide-screen { height: calc(100svh - 32px); }
     .file-guide-screen { padding: 16px; }
     .fg-hero,
     .fg-link-grid { grid-template-columns: 1fr; }
