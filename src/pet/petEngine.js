@@ -1,3 +1,5 @@
+import { changeHappiness } from '../patties/pattieEconomy.js';
+
 const BUTTON_TYPES = {
     'btn-pet-stress': 'STRESS',
     'btn-pet-manager': 'MANAGER',
@@ -100,6 +102,8 @@ export const petEngine = {
                 if (window.refresheetAuth?.authenticated) {
                     fetch('/api/minime/interact', { method: 'POST', credentials: 'include' }).catch(() => {});
                     document.dispatchEvent(new CustomEvent('refresheet:score-saved'));
+                    // 말걸기 행복점수 증가 (일일 제한 적용)
+                    changeHappiness('TALK').catch(() => {});
                 }
             }
         });

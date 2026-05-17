@@ -1,4 +1,4 @@
-// Main Entry Point - v1.3.0
+// Main Entry Point - v1.4.0
 import { initExcelLayout } from './layout/excelLayout.js';
 import { initBossKey } from './stealth/bossKey.js';
 import { petEngine } from './pet/petEngine.js';
@@ -21,7 +21,7 @@ import { initGameRankingTables } from './games/gameRankingTable.js';
 window.loginPopupModule = { showLoginPopup, goToLogin, showAlertPopup, showUserSettings };
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Refresheet Project v1.3.0 Initializing...');
+    console.log('Refresheet Project v1.4.0 Initializing...');
 
     // 0. Loading Screen Logic
     setTimeout(() => {

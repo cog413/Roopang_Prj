@@ -3075,3 +3075,312 @@ body.dark-mode .tg-input { background: #2a2a2a; color: #e0e0e0; }
 body.dark-mode .tg-skip-btn { background: #2a2a2a; border-color: #444; color: #aaa; }
 body.dark-mode .tg-rank-table th { background: #2a2a2a; border-color: #444; color: #ccc; }
 body.dark-mode .tg-rank-table td { border-color: #333; color: #ccc; }
+
+/* ── 토닥이 관리박스 (mp-manage-box) ──────────────────────────────────── */
+/* 위치: 토닥이 맵(mp-chart) 왼쪽, 같은 top 기준 */
+.mp-manage-box {
+    position: absolute;
+    left: 0;
+    top: 360px;
+    width: 388px;
+    min-height: 230px;
+    border: 1px solid #c9d7e3;
+    background: #ffffff;
+    padding: 12px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(31,78,121,0.10);
+    font-size: 11px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.mp-manage-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* 포인트 행 */
+.mp-manage-points {
+    background: #f0f7ee;
+    border: 1px solid #c6e0b4;
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-weight: bold;
+}
+.mp-coin-icon { font-size: 14px; line-height: 1; }
+.mp-manage-label { color: #1f3864; font-size: 11px; }
+.mp-points-value { color: #217346; font-weight: bold; font-size: 13px; margin-left: auto; }
+
+/* 행복점수 행 */
+.mp-manage-happy {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+}
+.mp-happy-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.mp-happy-score { color: #e67e22; font-weight: bold; font-size: 12px; }
+.mp-happy-bar-wrap {
+    position: relative;
+    height: 8px;
+    background: #e8f0e8;
+    border-radius: 4px;
+    overflow: visible;
+}
+.mp-happy-bar {
+    position: absolute;
+    left: 0; top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #70ad47, #a9d18e);
+    border-radius: 4px;
+    transition: width 0.5s ease-out;
+}
+.mp-happy-marker {
+    position: absolute;
+    top: -3px;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border: 2px solid #70ad47;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    transition: left 0.5s ease-out;
+    pointer-events: none;
+}
+
+/* 설명문 행 */
+.mp-manage-desc {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+.mp-desc-text {
+    margin: 0;
+    line-height: 1.5;
+    color: #44546a;
+    font-size: 10.5px;
+}
+.mp-desc-text strong { color: #1f3864; }
+
+/* 먹이 구매 버튼 */
+.mp-buy-btn {
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid #70ad47;
+    border-radius: 3px;
+    background: #f0f7ee;
+    color: #217346;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s;
+}
+.mp-buy-btn:hover { background: #d9ead3; }
+
+/* 말걸기 nested box */
+.mp-talk-box {
+    border: 1px solid #d8e6f0;
+    border-radius: 4px;
+    background: #f5f9fd;
+    padding: 8px 10px;
+    margin-top: 2px;
+}
+.mp-talk-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.mp-talk-btn {
+    font-size: 10px;
+    padding: 4px 8px;
+    border: 1px solid #5b9bd5;
+    border-radius: 3px;
+    background: #fff;
+    color: #1f3864;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s, color 0.12s;
+}
+.mp-talk-btn:hover { background: #dce8f5; border-color: #2e75b6; }
+.mp-talk-btn:active { background: #bdd7ee; }
+
+/* 토닥이 맵 우상단 액션 버튼 영역 */
+.mp-map-actions {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 10;
+}
+.mp-apple-hud {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    color: #44546a;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid #d0dce8;
+    border-radius: 10px;
+    padding: 2px 6px;
+}
+.mp-apple-hud-icon { display: block; }
+.mp-apple-hud-count { font-weight: bold; }
+
+.mp-feed-btn {
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid #e67e22;
+    border-radius: 10px;
+    background: #fef9f0;
+    color: #e67e22;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s;
+}
+.mp-feed-btn:hover:not(:disabled) { background: #fde8c8; }
+.mp-feed-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.mp-feed-btn--active { background: #fde8c8; border-color: #c0392b; color: #c0392b; }
+
+/* mp-chart-title: 우상단 버튼 공간 확보 */
+.mp-chart-title { padding-right: 140px !important; }
+
+/* Apple 커서 (간식주기 모드) */
+.pattie-apple-cursor {
+    position: absolute;
+    pointer-events: none;
+    z-index: 20;
+    image-rendering: pixelated;
+}
+.pattie-apple-landed {
+    position: absolute;
+    z-index: 15;
+    image-rendering: pixelated;
+    transition: top 0.35s cubic-bezier(0.55, 0, 1, 0.45);
+}
+.pattie-apple-landed--settled {
+    /* 착지 완료 상태 */
+}
+.pattie-apple-pop {
+    position: absolute;
+    z-index: 16;
+    width: 24px;
+    height: 24px;
+    background: url('/public/assets/apple/apple_pop.png') no-repeat center / contain;
+    animation: apple-pop-play 0.6s steps(1) forwards;
+}
+@keyframes apple-pop-play {
+    0%   { opacity: 1; transform: scale(1); }
+    50%  { opacity: 1; transform: scale(1.4); }
+    100% { opacity: 0; transform: scale(0.8); }
+}
+
+/* 구매 모달 */
+.mp-purchase-modal {
+    position: fixed;
+    z-index: 9900;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.25);
+}
+.mp-purchase-inner {
+    position: relative;
+    background: #fff;
+    border: 1px solid #c9d7e3;
+    border-radius: 8px;
+    padding: 20px 24px;
+    min-width: 220px;
+    max-width: 280px;
+    box-shadow: 0 8px 32px rgba(31,78,121,0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.mp-purchase-close {
+    position: absolute;
+    top: 8px; right: 10px;
+    background: none; border: none;
+    font-size: 14px; cursor: pointer; color: #888;
+}
+.mp-purchase-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.mp-purchase-icon { image-rendering: pixelated; }
+.mp-purchase-title { font-weight: bold; font-size: 13px; color: #1f3864; flex: 1; }
+.mp-purchase-price { font-size: 11px; color: #e67e22; }
+.mp-purchase-qty-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+.mp-qty-btn {
+    width: 28px; height: 28px;
+    border: 1px solid #c9d7e3;
+    border-radius: 4px;
+    background: #f5f9fd;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+.mp-qty-btn:hover { background: #dce8f5; }
+.mp-qty-val { font-size: 18px; font-weight: bold; min-width: 28px; text-align: center; }
+.mp-purchase-total { font-size: 12px; color: #1f3864; text-align: center; }
+.mp-purchase-balance { font-size: 11px; color: #888; text-align: center; }
+.mp-purchase-confirm {
+    padding: 7px 0;
+    background: #217346;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.mp-purchase-confirm:hover:not(:disabled) { background: #185c37; }
+.mp-purchase-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+.mp-purchase-msg { font-size: 11px; text-align: center; min-height: 16px; }
+
+/* Dark mode overrides */
+body.dark-mode .mp-manage-box { background: #2d2d2d; border-color: #444; }
+body.dark-mode .mp-manage-points { background: #1a2f1a; border-color: #2f6f44; }
+body.dark-mode .mp-manage-label { color: #90cdf4; }
+body.dark-mode .mp-points-value { color: #6dba8a; }
+body.dark-mode .mp-happy-bar-wrap { background: #3a3a3a; }
+body.dark-mode .mp-happy-marker { background: #2d2d2d; border-color: #6dba8a; }
+body.dark-mode .mp-desc-text { color: #aaa; }
+body.dark-mode .mp-desc-text strong { color: #90cdf4; }
+body.dark-mode .mp-buy-btn { background: #1a2f1a; border-color: #2f6f44; color: #6dba8a; }
+body.dark-mode .mp-buy-btn:hover { background: #1e4020; }
+body.dark-mode .mp-talk-box { background: #1e2a38; border-color: #2a4060; }
+body.dark-mode .mp-talk-btn { background: #2d3e50; border-color: #2e75b6; color: #90cdf4; }
+body.dark-mode .mp-talk-btn:hover { background: #1a365d; }
+body.dark-mode .mp-purchase-inner { background: #2d2d2d; border-color: #444; }
+body.dark-mode .mp-purchase-title { color: #90cdf4; }
+body.dark-mode .mp-qty-btn { background: #3a3a3a; border-color: #555; color: #d4d4d4; }
+body.dark-mode .mp-qty-val { color: #d4d4d4; }
+body.dark-mode .mp-purchase-total { color: #90cdf4; }
+body.dark-mode .mp-apple-hud { background: rgba(45,45,45,0.85); border-color: #555; color: #aaa; }
+body.dark-mode .mp-feed-btn { background: #2a1a0a; border-color: #e67e22; }
+
+/* 반응형: 관리박스도 mp-chart처럼 static으로 전환 */
+@media (max-width: 900px) {
+    .mp-manage-box {
+        position: relative;
+        left: auto;
+        top: auto;
+        width: 100%;
+    }
+}

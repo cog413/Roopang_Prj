@@ -25,6 +25,9 @@ export function getPattieWorld() {
     return controller;
 }
 
+// 액션 우선순위: FEEDING > CLICK_HAPPY > JUMP > RUN/WALK > IDLE
+const ACTION_PRIORITY = { FEEDING: 4, CLICK_HAPPY: 3, JUMP: 2, MOVE: 1, IDLE: 0 };
+
 export class PattieRoamingController {
     constructor({ root, loader, config }) {
         this.root = root;
@@ -50,6 +53,19 @@ export class PattieRoamingController {
         this.speechTimer = null;
         this.boundTick = this.tick.bind(this);
         this.boundSpeech = this.handleSpeech.bind(this);
+
+        // 액션 락 (FEEDING 중 AI 이동 차단)
+        this.actionLock = false;
+        // 클릭 후 점프 착지 대기 (점프 중 클릭 시)
+        this.pendingHappy = false;
+        // 감속 정지 중
+        this.decelerating = false;
+        this.decelerateStartedAt = 0;
+        this.decelerateDurationMs = 320;
+        // 간식 먹기 목표 (goEat)
+        this.eatTarget = null;
+        this.eatMotion = null;
+        this.hasPlaced = false;
     }
 
     async init() {
@@ -80,17 +96,61 @@ export class PattieRoamingController {
     }
 
     bindEvents() {
-        this.sprite.el.addEventListener('click', () => this.happy());
+        this.sprite.el.addEventListener('click', () => this.handleClick());
         this.sprite.el.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
-                this.happy();
+                this.handleClick();
             }
         });
         document.addEventListener('refresheet:pet-say', this.boundSpeech);
         document.addEventListener('refresheet:pattie-profile-updated', (event) => {
             this.applyProfile(event.detail || DEFAULT_PROFILE);
         });
+    }
+
+    // 클릭 우선순위 처리
+    // - FEEDING 중: 무시
+    // - 점프 중: pendingHappy 세트, 착지 후 happy
+    // - 걷기/달리기 중: 감속 정지 후 happy
+    // - 그 외: 즉시 happy
+    handleClick() {
+        if (this.actionLock) return;
+
+        if (this.jumpMotion) {
+            this.pendingHappy = true;
+            return;
+        }
+
+        if ((this.mode === 'walk' || this.mode === 'run') && !this.decelerating) {
+            this.decelerating = true;
+            this.decelerateStartedAt = performance.now();
+            this.terrainMotion = null;
+            this.pendingHappy = true;
+            return;
+        }
+
+        this.pendingHappy = false;
+        this.happy();
+    }
+
+    // 외부에서 액션락 설정 (FEEDING 용)
+    setActionLock(lock) {
+        this.actionLock = lock;
+        if (!lock) {
+            this.pendingHappy = false;
+            this.decelerating = false;
+        }
+    }
+
+    // 단일 재생 애니메이션 (PattieApple 등에서 호출)
+    playOnce(animName, { durationMs = 1000 } = {}) {
+        if (!this.sprite) return;
+        try {
+            this.sprite.play(animName, { restart: true, once: true, next: 'idle' });
+        } catch {
+            // 애니메이션이 없으면 idle 유지
+        }
     }
 
     async fetchProfile() {
@@ -139,6 +199,7 @@ export class PattieRoamingController {
     }
 
     decide() {
+        if (this.actionLock || this.decelerating || this.pendingHappy) return;
         if (this.terrainMotion || this.jumpMotion) return;
         // Sleep remains locked for two decision cycles before any re-pick.
         if (this.sleepLockCycles > 0) {
@@ -166,6 +227,30 @@ export class PattieRoamingController {
     }
 
     move() {
+        // 감속 정지 처리
+        if (this.decelerating) {
+            const elapsed = performance.now() - this.decelerateStartedAt;
+            const t = Math.min(1, elapsed / this.decelerateDurationMs);
+            const step = this.config.movement.stepPx * (1 - t);
+            this.x += step * this.direction;
+            if (t >= 1) {
+                this.decelerating = false;
+                if (this.pendingHappy) {
+                    this.pendingHappy = false;
+                    this.happy();
+                } else {
+                    this.setMode('idle');
+                }
+            }
+            return;
+        }
+
+        // 간식 먹기 이동 처리
+        if (this.eatMotion) {
+            this.updateEatMotion();
+            return;
+        }
+
         const zone = this.zone || this.pickNearestZone();
         if (!zone) return;
         if (this.terrainMotion) {
@@ -181,12 +266,11 @@ export class PattieRoamingController {
         if (this.mode === 'walk') this.x += step * this.direction;
 
         const size = this.config.movement.spriteSize;
-        const root = this.rootRect();
         const bounds = zone.bounds;
-        const minX = Math.max(0, bounds.left - root.left + 3);
-        const maxX = Math.max(minX, bounds.right - root.left - size);
-        const minY = Math.max(0, bounds.top - root.top + 4);
-        const maxY = Math.max(minY, bounds.bottom - root.top - size);
+        const minX = Math.max(0, bounds.left + 3);
+        const maxX = Math.max(minX, bounds.right - size);
+        const minY = Math.max(0, bounds.top + 4);
+        const maxY = Math.max(minY, bounds.bottom - size);
 
         if (this.x <= minX || this.x >= maxX) this.direction *= -1;
         this.x = clamp(this.x, minX, maxX);
@@ -336,6 +420,7 @@ export class PattieRoamingController {
 
     startJump(target = null) {
         const size = this.config.movement.spriteSize;
+        const bounds = this.getLocalChartBounds();
         const fallback = {
             x: this.x + this.direction * 34,
             y: this.y,
@@ -347,8 +432,8 @@ export class PattieRoamingController {
         this.jumpMotion = {
             startX: this.x,
             startY: this.y,
-            endX: clamp(end.x, 0, Math.max(0, this.root.scrollWidth - size)),
-            endY: clamp(end.y, 0, Math.max(0, this.root.scrollHeight - size)),
+            endX: clamp(end.x, bounds.left, Math.max(bounds.left, bounds.right - size)),
+            endY: clamp(end.y, bounds.top, Math.max(bounds.top, bounds.bottom - size)),
             startedAt: performance.now(),
             duration: this.config.movement.jumpDurationMs,
         };
@@ -366,12 +451,24 @@ export class PattieRoamingController {
             this.x = m.endX;
             this.y = m.endY;
             this.jumpMotion = null;
-            this.setMode(this.zone?.id === 'chart-zone' ? 'idle' : 'walk');
+            if (this.pendingHappy) {
+                this.pendingHappy = false;
+                this.happy();
+            } else {
+                this.setMode(this.zone?.id === 'chart-zone' ? 'idle' : 'walk');
+            }
         }
     }
 
     async happy() {
+        if (this.actionLock) return;
+
         this.lastInteractionAt = Date.now();
+        this.terrainMotion = null;
+        this.eatMotion = null;
+        this.decelerating = false;
+        this.pendingHappy = false;
+
         await this.sprite.play('happy', { restart: true, once: true, next: this.zone?.id === 'chart-zone' ? 'idle' : 'walk' });
         this.mode = 'happy';
         const frameCount = this.sprite.animation?.frameCount || 1;
@@ -381,6 +478,63 @@ export class PattieRoamingController {
         setTimeout(() => {
             if (this.mode === 'happy') this.setMode(this.zone?.id === 'chart-zone' ? 'idle' : 'walk');
         }, frameCount * frameDuration + 50);
+    }
+
+    // 간식 먹기: apple 위치로 이동 후 onReach 콜백
+    goEat({ x: targetX, y: targetY, size = 24, onReach }) {
+        if (this.actionLock) return;
+        this.actionLock = true;
+        this.terrainMotion = null;
+        this.jumpMotion = null;
+        this.decelerating = false;
+        this.pendingHappy = false;
+
+        const spriteSize = this.config.movement.spriteSize;
+        const destX = targetX; // apple 좌측 기준 (apple 왼쪽에 토닥이 얼굴이 닿도록)
+        const destY = targetY;
+        const dx = destX - this.x;
+        const distance = Math.abs(dx);
+        this.direction = dx >= 0 ? 1 : -1;
+
+        const speed = distance > 80 ? 'run' : 'walk';
+        const durationPerPx = speed === 'run'
+            ? this.config.movement.runDurationPerPx
+            : this.config.movement.walkDurationPerPx;
+        const duration = clamp(distance * durationPerPx, 500, 8000);
+
+        this.mode = speed;
+        this.sprite.play(speed, {
+            restart: true,
+            frameDurationMs: speed === 'run'
+                ? this.config.movement.runFrameDurationMs
+                : this.config.movement.walkFrameDurationMs,
+        });
+
+        this.eatMotion = {
+            startX: this.x, startY: this.y,
+            endX: destX, endY: destY,
+            startedAt: performance.now(),
+            duration,
+            onReach,
+        };
+    }
+
+    updateEatMotion() {
+        const m = this.eatMotion;
+        if (!m) return;
+
+        const elapsed = performance.now() - m.startedAt;
+        const t = Math.min(1, elapsed / m.duration);
+        this.x = m.startX + (m.endX - m.startX) * t;
+        this.y = m.startY + (m.endY - m.startY) * t;
+
+        if (t >= 1) {
+            this.x = m.endX;
+            this.y = m.endY;
+            this.eatMotion = null;
+            this.setMode('idle');
+            m.onReach?.();
+        }
     }
 
     handleSpeech(event) {
@@ -401,13 +555,17 @@ export class PattieRoamingController {
     }
 
     placeAtFirstZone() {
+        if (this.hasPlaced) {
+            this.sprite?.setPosition(this.x, this.y, this.direction);
+            this.updateNameplate();
+            return;
+        }
         if (this.root.matches?.("[data-pattie-zone='chart']")) {
             this.placeOnChartFloor();
             return;
         }
         const zone = this.pickNearestZone();
         if (!zone) return;
-        const root = this.rootRect();
         this.zone = zone;
         const floor = this.getChartSurfaces().find((surface) => surface.kind === 'floor');
         if (zone.id === 'chart-zone' && floor) {
@@ -415,9 +573,10 @@ export class PattieRoamingController {
             this.y = floor.y;
             this.setMode('idle');
         } else {
-            this.x = zone.bounds.left - root.left + 40;
-            this.y = zone.bounds.top - root.top + 40;
+            this.x = zone.bounds.left + 40;
+            this.y = zone.bounds.top + 40;
         }
+        this.hasPlaced = true;
         this.sprite?.setPosition(this.x, this.y, this.direction);
         this.updateNameplate();
     }
@@ -434,16 +593,16 @@ export class PattieRoamingController {
         this.terrainMotion = null;
         this.jumpMotion = null;
         this.setMode('idle');
+        this.hasPlaced = true;
         this.sprite?.setPosition(this.x, this.y, this.direction);
         this.updateNameplate();
         this.lastDecisionAt = performance.now() + this.config.movement.initialIdleMs;
     }
 
     findCurrentZone() {
-        const root = this.rootRect();
         const size = this.config.movement.spriteSize;
-        const px = root.left + this.x + size / 2;
-        const py = root.top + this.y + size / 2;
+        const px = this.x + size / 2;
+        const py = this.y + size / 2;
         return this.getZones().find((zone) => {
             const b = zone.bounds;
             return zone.type !== 'blocked' && px >= b.left && px <= b.right && py >= b.top && py <= b.bottom;
@@ -462,7 +621,7 @@ export class PattieRoamingController {
             return elements.map((el) => ({
                 ...zone,
                 el,
-                bounds: el.getBoundingClientRect(),
+                bounds: this.getLocalRect(el),
             }));
         });
     }

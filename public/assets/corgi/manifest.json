@@ -45,6 +45,10 @@
         "jump": {
           "src": "/public/assets/corgi/mong_jump.png",
           "frameDurationMs": 140
+        },
+        "surprise": {
+          "src": "/public/assets/corgi/mong_surprise.png",
+          "frameDurationMs": 400
         }
       }
     },

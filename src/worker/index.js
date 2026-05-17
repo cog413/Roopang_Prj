@@ -117,6 +117,20 @@ export default {
                 return handleDevLogin(request, env);
             }
 
+            // ── Pet Economy API ────────────────────────────────────────────
+            if (url.pathname === '/api/pet/economy' && request.method === 'GET') {
+                return handleGetPetEconomy(request, env);
+            }
+            if (url.pathname === '/api/pet/items/purchase' && request.method === 'POST') {
+                return handlePurchaseItem(request, env);
+            }
+            if (url.pathname === '/api/pet/happiness/change' && request.method === 'POST') {
+                return handleHappinessChange(request, env);
+            }
+            if (url.pathname === '/api/pet/happiness/daily-close' && request.method === 'POST') {
+                return handleHappinessDailyClose(request, env);
+            }
+
             return withCors(json({ error: 'not_found' }, 404));
         } catch (error) {
             return withCors(json({
@@ -537,11 +551,12 @@ async function handleSaveScore(request, env) {
     }
 
     const now = new Date().toISOString();
+    const scoreId = makeId('gsc');
     await db.prepare(
         `INSERT INTO game_scores (id, user_id, game_type, score, played_at, duration_seconds, extra_json)
          VALUES (?, ?, ?, ?, ?, ?, ?)`
     ).bind(
-        makeId('gsc'),
+        scoreId,
         session.user_id,
         gameType,
         score,
@@ -550,7 +565,13 @@ async function handleSaveScore(request, env) {
         body.extra ? JSON.stringify(body.extra) : null
     ).run();
 
-    return withCors(json({ ok: true }));
+    // score 1/10 포인트 적립 (중복 방지: source_id = score row id)
+    const earnedPoints = Math.floor(score / 10);
+    if (earnedPoints > 0) {
+        await earnPoints(db, session.user_id, earnedPoints, scoreId, now);
+    }
+
+    return withCors(json({ ok: true, earned_points: earnedPoints }));
 }
 
 async function handleTodayScores(request, env) {
@@ -1516,6 +1537,397 @@ function parseCookies(cookieHeader) {
     }).filter(Boolean));
 }
 
+// ── Pet Economy: shared helpers ──────────────────────────────────────────────
+
+const PET_ID = 'primary';
+const HAPPINESS_MIN = 40;
+const HAPPINESS_MAX = 100;
+const HAPPINESS_INITIAL = 40;
+const PET_DAILY_SCORE_LIMIT = 3;    // 토닥여주기 / 말걸기 점수 증가 일일 최대
+const APPLE_PRICE = 300;
+const VALID_ITEM_IDS = ['apple'];
+
+// 캐릭터별 행복 증가량 config
+const HAPPINESS_CONFIG = {
+    mong:   { pet: [5, 8],   feed: [10, 15], talk: [3, 5] },
+    corgi:  { pet: [5, 8],   feed: [10, 15], talk: [3, 5] },
+    cabul:  { pet: [2, 5],   feed: [15, 20], talk: [1, 3] },
+    kitty:  { pet: [2, 5],   feed: [15, 20], talk: [1, 3] },
+    rabbit: { pet: [5, 8],   feed: [10, 15], talk: [3, 5] },
+    dog:    { pet: [5, 8],   feed: [10, 15], talk: [3, 5] },
+    cat:    { pet: [2, 5],   feed: [15, 20], talk: [1, 3] },
+};
+
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function kstDateString() {
+    const kstOffsetMs = 9 * 3_600_000;
+    return new Date(Date.now() + kstOffsetMs).toISOString().slice(0, 10);
+}
+
+// 포인트 적립 (중복 방지: source_id 고유 인덱스)
+async function earnPoints(db, userId, amount, sourceId, now) {
+    try {
+        const cur = await db.prepare(
+            `SELECT current_points, total_earned_points FROM user_points WHERE user_id=?`
+        ).bind(userId).first();
+
+        const prev = cur?.current_points ?? 0;
+        const totalEarned = (cur?.total_earned_points ?? 0) + amount;
+        const after = prev + amount;
+
+        const stmts = [
+            db.prepare(
+                `INSERT INTO user_points (user_id, current_points, total_earned_points, total_spent_points, created_at, updated_at)
+                 VALUES (?, ?, ?, 0, ?, ?)
+                 ON CONFLICT(user_id) DO UPDATE SET
+                   current_points=excluded.current_points,
+                   total_earned_points=excluded.total_earned_points,
+                   updated_at=excluded.updated_at`
+            ).bind(userId, after, totalEarned, now, now),
+            db.prepare(
+                `INSERT INTO point_transactions (user_id, type, amount, source_type, source_id, balance_after, created_at)
+                 VALUES (?, 'EARN', ?, 'GAME_SCORE', ?, ?, ?)`
+            ).bind(userId, amount, sourceId, after, now),
+        ];
+        await db.batch(stmts);
+        return { ok: true, balance_after: after };
+    } catch (err) {
+        // UNIQUE 위반 = 이미 적립된 source_id → 중복 무시
+        if (String(err?.message || err).toLowerCase().includes('unique')) {
+            return { ok: false, reason: 'duplicate' };
+        }
+        throw err;
+    }
+}
+
+// 행복점수 조회 (없으면 초기 row 생성)
+async function getOrInitHappiness(db, userId, now) {
+    const row = await db.prepare(
+        `SELECT current_score, last_daily_close_date FROM pet_happiness_state WHERE user_id=? AND pet_id=?`
+    ).bind(userId, PET_ID).first();
+    if (row) return row;
+
+    await db.prepare(
+        `INSERT INTO pet_happiness_state (user_id, pet_id, current_score, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+    ).bind(userId, PET_ID, HAPPINESS_INITIAL, now, now).run();
+    return { current_score: HAPPINESS_INITIAL, last_daily_close_date: null };
+}
+
+// 일일 제한 row 조회 (없으면 초기화)
+async function getOrInitDailyLimits(db, userId, actionDate, now) {
+    const row = await db.prepare(
+        `SELECT pet_count_for_score, talk_count_for_score, feed_count_for_score
+         FROM pet_daily_interaction_limits
+         WHERE user_id=? AND pet_id=? AND action_date=?`
+    ).bind(userId, PET_ID, actionDate).first();
+    if (row) return row;
+
+    await db.prepare(
+        `INSERT INTO pet_daily_interaction_limits (user_id, pet_id, action_date, pet_count_for_score, talk_count_for_score, created_at, updated_at)
+         VALUES (?, ?, ?, 0, 0, ?, ?)`
+    ).bind(userId, PET_ID, actionDate, now, now).run();
+    return { pet_count_for_score: 0, talk_count_for_score: 0, feed_count_for_score: null };
+}
+
+// ── Pet Economy: API handlers ────────────────────────────────────────────────
+
+async function handleGetPetEconomy(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ authenticated: false }));
+
+    const db = getDb(env);
+    const now = new Date().toISOString();
+    const todayKst = kstDateString();
+
+    const [points, inventory, happiness, dailyLimits] = await Promise.all([
+        db.prepare(`SELECT current_points, total_earned_points, total_spent_points FROM user_points WHERE user_id=?`)
+            .bind(session.user_id).first(),
+        db.prepare(`SELECT item_id, quantity FROM user_item_inventory WHERE user_id=?`)
+            .bind(session.user_id).all(),
+        getOrInitHappiness(db, session.user_id, now),
+        getOrInitDailyLimits(db, session.user_id, todayKst, now),
+    ]);
+
+    return withCors(json({
+        authenticated: true,
+        points: {
+            current: points?.current_points ?? 0,
+            total_earned: points?.total_earned_points ?? 0,
+            total_spent: points?.total_spent_points ?? 0,
+        },
+        inventory: (inventory.results || []).reduce((acc, row) => {
+            acc[row.item_id] = row.quantity;
+            return acc;
+        }, {}),
+        happiness: {
+            current_score: happiness.current_score,
+            last_daily_close_date: happiness.last_daily_close_date || null,
+            min: HAPPINESS_MIN,
+            max: HAPPINESS_MAX,
+        },
+        daily_limits: {
+            pet_count_for_score: dailyLimits.pet_count_for_score,
+            talk_count_for_score: dailyLimits.talk_count_for_score,
+            feed_count_for_score: dailyLimits.feed_count_for_score ?? 0,
+            score_limit_per_day: PET_DAILY_SCORE_LIMIT,
+            today: todayKst,
+        },
+    }));
+}
+
+async function handlePurchaseItem(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
+
+    const body = await request.json().catch(() => ({}));
+    const itemId = typeof body.item_id === 'string' ? body.item_id.trim() : '';
+    const quantity = Number.isInteger(body.quantity) && body.quantity >= 1 ? body.quantity : 1;
+
+    if (!VALID_ITEM_IDS.includes(itemId)) {
+        return withCors(json({ error: 'invalid_item', message: '잘못된 아이템입니다' }, 400));
+    }
+
+    const unitPrice = itemId === 'apple' ? APPLE_PRICE : 0;
+    const totalPrice = unitPrice * quantity;
+
+    const db = getDb(env);
+    const pointRow = await db.prepare(
+        `SELECT current_points, total_spent_points FROM user_points WHERE user_id=?`
+    ).bind(session.user_id).first();
+    const currentPoints = pointRow?.current_points ?? 0;
+
+    if (currentPoints < totalPrice) {
+        return withCors(json({
+            error: 'insufficient_points',
+            message: `포인트가 부족합니다. 현재 ${currentPoints}p, 필요 ${totalPrice}p`,
+            current_points: currentPoints,
+            required: totalPrice,
+        }, 402));
+    }
+
+    const now = new Date().toISOString();
+    const afterPoints = currentPoints - totalPrice;
+    const totalSpent = (pointRow?.total_spent_points ?? 0) + totalPrice;
+
+    // 원자적 처리: 포인트 차감 + 트랜잭션 기록 + 인벤토리 증가 + 구매이력
+    const stmts = [
+        db.prepare(
+            `UPDATE user_points SET current_points=?, total_spent_points=?, updated_at=? WHERE user_id=?`
+        ).bind(afterPoints, totalSpent, now, session.user_id),
+        db.prepare(
+            `INSERT INTO point_transactions (user_id, type, amount, source_type, balance_after, metadata_json, created_at)
+             VALUES (?, 'SPEND', ?, 'ITEM_PURCHASE', ?, ?, ?)`
+        ).bind(session.user_id, totalPrice, afterPoints, JSON.stringify({ item_id: itemId, quantity }), now),
+        db.prepare(
+            `INSERT INTO user_item_inventory (user_id, item_id, quantity, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(user_id, item_id) DO UPDATE SET
+               quantity=quantity + excluded.quantity,
+               updated_at=excluded.updated_at`
+        ).bind(session.user_id, itemId, quantity, now, now),
+    ];
+    const results = await db.batch(stmts);
+
+    // 구매이력 (트랜잭션 id는 lastRowId로 추출)
+    const txId = results[1]?.meta?.last_row_id ?? null;
+    await db.prepare(
+        `INSERT INTO item_purchase_history (user_id, item_id, quantity, unit_price, total_price, point_transaction_id, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(session.user_id, itemId, quantity, unitPrice, totalPrice, txId, now).run();
+
+    return withCors(json({
+        ok: true,
+        item_id: itemId,
+        quantity_purchased: quantity,
+        total_price: totalPrice,
+        points_after: afterPoints,
+        apple_quantity: await db.prepare(
+            `SELECT quantity FROM user_item_inventory WHERE user_id=? AND item_id='apple'`
+        ).bind(session.user_id).first().then(r => r?.quantity ?? quantity),
+    }));
+}
+
+async function handleHappinessChange(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
+
+    const body = await request.json().catch(() => ({}));
+    const actionType = ['PET', 'FEED', 'TALK', 'SYSTEM'].includes(body.action_type) ? body.action_type : null;
+    if (!actionType) return withCors(json({ error: 'invalid_action_type' }, 400));
+
+    const db = getDb(env);
+    const now = new Date().toISOString();
+    const todayKst = kstDateString();
+
+    // 캐릭터 key 조회
+    const avatar = await db.prepare(`SELECT character_key FROM avatars WHERE user_id=?`)
+        .bind(session.user_id).first();
+    const charKey = avatar?.character_key || 'mong';
+    const cfg = HAPPINESS_CONFIG[charKey] || HAPPINESS_CONFIG['mong'];
+
+    const happiness = await getOrInitHappiness(db, session.user_id, now);
+    const limits = await getOrInitDailyLimits(db, session.user_id, todayKst, now);
+
+    let delta = 0;
+    let scored = false;
+
+    if (actionType === 'PET') {
+        const canScore = limits.pet_count_for_score < PET_DAILY_SCORE_LIMIT;
+        if (canScore) {
+            delta = randomInt(cfg.pet[0], cfg.pet[1]);
+            scored = true;
+        }
+    } else if (actionType === 'TALK') {
+        const canScore = limits.talk_count_for_score < PET_DAILY_SCORE_LIMIT;
+        if (canScore) {
+            delta = randomInt(cfg.talk[0], cfg.talk[1]);
+            scored = true;
+        }
+    } else if (actionType === 'FEED') {
+        // 간식: 보유 수량 차감 + 행복 증가 (수량 체크는 클라이언트에서 선행, 여기서도 방어)
+        const invRow = await db.prepare(
+            `SELECT quantity FROM user_item_inventory WHERE user_id=? AND item_id='apple'`
+        ).bind(session.user_id).first();
+        if (!invRow || invRow.quantity < 1) {
+            return withCors(json({ error: 'no_apple', message: '사과가 없습니다' }, 400));
+        }
+        delta = randomInt(cfg.feed[0], cfg.feed[1]);
+        scored = true;
+
+        // 인벤토리 차감
+        await db.prepare(
+            `UPDATE user_item_inventory SET quantity=quantity-1, updated_at=? WHERE user_id=? AND item_id='apple'`
+        ).bind(now, session.user_id).run();
+    } else if (actionType === 'SYSTEM') {
+        delta = typeof body.delta === 'number' ? Math.round(body.delta) : 0;
+        scored = true;
+    }
+
+    const before = happiness.current_score;
+    const after = Math.min(HAPPINESS_MAX, Math.max(HAPPINESS_MIN, before + delta));
+
+    if (delta !== 0 || scored) {
+        const stmts = [
+            db.prepare(
+                `INSERT INTO pet_happiness_state (user_id, pet_id, current_score, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?)
+                 ON CONFLICT(user_id, pet_id) DO UPDATE SET
+                   current_score=excluded.current_score, updated_at=excluded.updated_at`
+            ).bind(session.user_id, PET_ID, after, now, now),
+            db.prepare(
+                `INSERT INTO pet_happiness_history (user_id, pet_id, action_type, delta, score_before, score_after, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`
+            ).bind(session.user_id, PET_ID, actionType, delta, before, after, now),
+        ];
+
+        // 일일 카운터 갱신
+        if (actionType === 'PET' && scored) {
+            stmts.push(db.prepare(
+                `INSERT INTO pet_daily_interaction_limits (user_id, pet_id, action_date, pet_count_for_score, talk_count_for_score, created_at, updated_at)
+                 VALUES (?, ?, ?, 1, 0, ?, ?)
+                 ON CONFLICT(user_id, pet_id, action_date) DO UPDATE SET
+                   pet_count_for_score=pet_count_for_score+1, updated_at=excluded.updated_at`
+            ).bind(session.user_id, PET_ID, todayKst, now, now));
+        } else if (actionType === 'TALK' && scored) {
+            stmts.push(db.prepare(
+                `INSERT INTO pet_daily_interaction_limits (user_id, pet_id, action_date, pet_count_for_score, talk_count_for_score, created_at, updated_at)
+                 VALUES (?, ?, ?, 0, 1, ?, ?)
+                 ON CONFLICT(user_id, pet_id, action_date) DO UPDATE SET
+                   talk_count_for_score=talk_count_for_score+1, updated_at=excluded.updated_at`
+            ).bind(session.user_id, PET_ID, todayKst, now, now));
+        } else if (actionType === 'FEED' && scored) {
+            stmts.push(db.prepare(
+                `INSERT INTO pet_daily_interaction_limits (user_id, pet_id, action_date, pet_count_for_score, talk_count_for_score, feed_count_for_score, created_at, updated_at)
+                 VALUES (?, ?, ?, 0, 0, 1, ?, ?)
+                 ON CONFLICT(user_id, pet_id, action_date) DO UPDATE SET
+                   feed_count_for_score=COALESCE(feed_count_for_score,0)+1, updated_at=excluded.updated_at`
+            ).bind(session.user_id, PET_ID, todayKst, now, now));
+        }
+
+        await db.batch(stmts);
+    }
+
+    // 잔여 인벤토리 반환 (FEED 시 차감 후 값)
+    let appleQuantity = null;
+    if (actionType === 'FEED') {
+        const inv = await db.prepare(
+            `SELECT quantity FROM user_item_inventory WHERE user_id=? AND item_id='apple'`
+        ).bind(session.user_id).first();
+        appleQuantity = inv?.quantity ?? 0;
+    }
+
+    return withCors(json({
+        ok: true,
+        scored,
+        delta,
+        score_before: before,
+        score_after: after,
+        apple_quantity_after: appleQuantity,
+        daily_limits: {
+            pet_count_for_score: actionType === 'PET' && scored
+                ? limits.pet_count_for_score + 1
+                : limits.pet_count_for_score,
+            talk_count_for_score: actionType === 'TALK' && scored
+                ? limits.talk_count_for_score + 1
+                : limits.talk_count_for_score,
+        },
+    }));
+}
+
+async function handleHappinessDailyClose(request, env) {
+    const session = await getSessionUser(getDb(env), request);
+    if (!session) return withCors(json({ error: 'unauthenticated' }, 401));
+
+    const db = getDb(env);
+    const now = new Date().toISOString();
+    const todayKst = kstDateString();
+
+    const happiness = await getOrInitHappiness(db, session.user_id, now);
+
+    // 이미 오늘 마감했으면 스킵
+    if (happiness.last_daily_close_date === todayKst) {
+        return withCors(json({ ok: true, skipped: true, reason: 'already_closed_today' }));
+    }
+
+    const before = happiness.current_score;
+    const factor = 0.8 + Math.random() * 0.1; // 0.80~0.90
+    const next = Math.max(HAPPINESS_MIN, Math.floor(before * factor));
+    const achieved = before >= 80;
+
+    await db.batch([
+        db.prepare(
+            `INSERT INTO pet_happiness_state (user_id, pet_id, current_score, last_daily_close_date, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT(user_id, pet_id) DO UPDATE SET
+               current_score=excluded.current_score,
+               last_daily_close_date=excluded.last_daily_close_date,
+               updated_at=excluded.updated_at`
+        ).bind(session.user_id, PET_ID, next, todayKst, now, now),
+        db.prepare(
+            `INSERT INTO pet_happiness_history (user_id, pet_id, action_type, delta, score_before, score_after, metadata_json, created_at)
+             VALUES (?, ?, 'DAILY_CLOSE', ?, ?, ?, ?, ?)`
+        ).bind(
+            session.user_id, PET_ID,
+            next - before, before, next,
+            JSON.stringify({ close_date: todayKst, factor: factor.toFixed(3), achieved }),
+            now
+        ),
+    ]);
+
+    return withCors(json({
+        ok: true,
+        close_date: todayKst,
+        score_before: before,
+        score_after: next,
+        achieved_daily_goal: achieved,
+        message: achieved ? '토닥이 아껴주기 달성!' : '내일도 토닥이와 함께해요',
+    }));
+}
+
 // ── Typing game handlers ────────────────────────────────────────────────────
 
 async function handleTypingSentences(request, env) {
@@ -1556,19 +1968,31 @@ async function handleTypingFinish(request, env) {
     const eligible = playsThisHour < GLOBAL_HOURLY_PLAY_LIMIT;
     const now = new Date().toISOString();
 
+    let typingScoreId = null;
     if (eligible) {
+        typingScoreId = makeId('gsc');
         await db.prepare(
             `INSERT INTO game_scores (id, user_id, game_type, score, played_at, duration_seconds) VALUES (?,?,?,?,?,?)`
-        ).bind(makeId('gsc'), session.user_id, 'typing_game', score, now, durationSeconds).run();
+        ).bind(typingScoreId, session.user_id, 'typing_game', score, now, durationSeconds).run();
     }
 
     await db.prepare(
         `INSERT INTO game_round_results (user_id, game_key, score, duration_seconds, is_point_eligible, is_ranking_eligible, created_at) VALUES (?,?,?,?,?,?,?)`
     ).bind(session.user_id, 'typing_game', score, durationSeconds, eligible ? 1 : 0, eligible ? 1 : 0, now).run();
 
+    // 랭킹 등록된 경우에만 포인트 적립
+    let earnedPoints = 0;
+    if (eligible && typingScoreId) {
+        earnedPoints = Math.floor(score / 10);
+        if (earnedPoints > 0) {
+            await earnPoints(db, session.user_id, earnedPoints, typingScoreId, now);
+        }
+    }
+
     return withCors(json({
         ok: true,
         eligible,
+        earned_points: earnedPoints,
         plays_this_hour: playsThisHour + (eligible ? 1 : 0),
         resets_at_kst: nextHourKST,
     }));

@@ -1,4 +1,8 @@
 import { getPattieWorld, initPattieWorld } from '../patties/PattieRoamingController.js';
+import { PattieApple } from '../patties/PattieApple.js';
+import {
+    loadEconomy, getEconomyState, changeHappiness, purchaseItem, ECONOMY_EVENT,
+} from '../patties/pattieEconomy.js';
 
 const SALES_ROWS = [
     ['Strategy', '12,400', '11,200', '14,800', '13,900'],
@@ -37,10 +41,12 @@ const TREND_ACTUAL = [68, 71, 73, 82, 79, 85];
 let active = false;
 let domBuilt = false;
 let externalSpeechBound = false;
+let appleController = null; // PattieApple 인스턴스
 
 export function initMiniPet() {
     buildDOM();
     bindExternalSpeech();
+    bindEconomyEvents();
 
     const sheet = document.getElementById('mini-pet-sheet');
     if (!sheet) return;
@@ -53,6 +59,9 @@ export function initMiniPet() {
 
     checkDisplay();
     new MutationObserver(checkDisplay).observe(sheet, { attributes: true, attributeFilter: ['style'] });
+
+    // 관리시트 진입 시 economy 로드
+    loadEconomy();
 }
 
 async function startScene() {
@@ -74,9 +83,17 @@ async function startScene() {
     }
     await waitForVisibleChart(chart);
     updateChartTitle(world.profile.nickname);
-    // The chart is visible here, so floor/platform dimensions are non-zero.
     world.placeAtFirstZone();
     world.start();
+
+    // PattieApple 초기화 (토닥이 맵 기준)
+    if (!appleController) {
+        appleController = new PattieApple({
+            mapEl: chart,
+            roamingController: world,
+            onFed: handleAppleFed,
+        });
+    }
 }
 
 function waitForVisibleChart(chart) {
@@ -112,6 +129,12 @@ function bindExternalSpeech() {
     document.addEventListener('refresheet:pattie-profile-updated', event => {
         updateChartTitle(event.detail?.nickname);
     });
+    // 토닥여주기: happy 이벤트 → 행복점수 증가 (일일 3회 제한은 서버에서 처리)
+    document.addEventListener('refresheet:pattie-happy', () => {
+        if (window.refresheetAuth?.authenticated) {
+            changeHappiness('PET').catch(() => {});
+        }
+    });
 }
 
 function updateChartTitle(nickname) {
@@ -143,12 +166,202 @@ function buildDOM() {
     const analysis = buildAnalysisCard();
     analysis.dataset.pattieZone = 'card';
     const chart = buildWeeklySalesChart();
+    // 토닥이 관리박스 (좌측 하단)
+    const manageBox = buildManageBox();
 
     analysisRow.append(trend, analysis);
     dashboardMain.append(projectTable, analysisRow);
-    habitat.append(table, dashboardMain, chart);
+    habitat.append(table, dashboardMain, manageBox, chart);
     requestAnimationFrame(renderRealtimeAnalysis);
     observeRealtimeAnalysis();
+}
+
+// ── 토닥이 관리박스 (좌측 하단) ──────────────────────────────────────────────
+
+function buildManageBox() {
+    const box = el('div', 'mp-manage-box');
+    box.id = 'mp-manage-box';
+
+    // 1) 현재 보유 포인트
+    const pointsRow = el('div', 'mp-manage-row mp-manage-points');
+    pointsRow.innerHTML = `
+        <span class="mp-coin-icon" aria-hidden="true">🪙</span>
+        <span class="mp-manage-label">현재 보유 포인트</span>
+        <span class="mp-points-value" id="mp-points-value">0p</span>`;
+
+    // 2) 행복점수
+    const happySection = el('div', 'mp-manage-row mp-manage-happy');
+    happySection.innerHTML = `
+        <div class="mp-happy-header">
+            <span class="mp-manage-label">토닥이 행복점수</span>
+            <span class="mp-happy-score" id="mp-happy-score">40점</span>
+        </div>
+        <div class="mp-happy-bar-wrap">
+            <div class="mp-happy-bar" id="mp-happy-bar" style="width:40%"></div>
+            <div class="mp-happy-marker" id="mp-happy-marker" style="left:40%"></div>
+        </div>`;
+
+    // 3) 토닥여주기 설명
+    const petDesc = el('div', 'mp-manage-row mp-manage-desc');
+    petDesc.innerHTML = `<p class="mp-desc-text"><strong>토닥여주기</strong> : 토닥이를 마우스로 클릭해보세요. 토닥이가 행복해져요. 단, 행복점수가 오르는 것은 1일 3회</p>`;
+
+    // 4) 간식주기 설명 + 구매 버튼
+    const feedDesc = el('div', 'mp-manage-row mp-manage-desc');
+    feedDesc.innerHTML = `
+        <p class="mp-desc-text"><strong>간식주기</strong> : 토닥이 맵에는 토닥이 간식주기 옵션이 있어요. 간식주기를 누르고 맵 원하는 곳에 떨어뜨려보세요. 토닥이는 간식을 먹으면 행복점수가 많이 올라요.</p>
+        <button class="mp-buy-btn" id="mp-buy-apple-btn">먹이 구매하기</button>`;
+
+    // 5) 말걸기 설명
+    const talkDesc = el('div', 'mp-manage-row mp-manage-desc');
+    talkDesc.innerHTML = `<p class="mp-desc-text"><strong>말 걸기</strong> : 토닥이에게 말을 걸어보세요. 선택한 기분에 맞춰 토닥이가 반응해요.</p>`;
+
+    // 6) 말걸기 nested box (기존 버튼 6개)
+    const talkBox = buildTalkBox();
+
+    box.append(pointsRow, happySection, petDesc, feedDesc, talkDesc, talkBox);
+
+    // 구매 팝업 연결
+    box.addEventListener('click', e => {
+        if (e.target.id === 'mp-buy-apple-btn') openPurchaseModal();
+    });
+
+    return box;
+}
+
+function buildTalkBox() {
+    const box = el('div', 'mp-talk-box');
+    box.innerHTML = `
+        <div class="mp-talk-buttons">
+            <button class="mp-talk-btn" id="btn-pet-stress">스트레스</button>
+            <button class="mp-talk-btn" id="btn-pet-manager">팀장</button>
+            <button class="mp-talk-btn" id="btn-pet-tired">피곤함</button>
+            <button class="mp-talk-btn" id="btn-pet-hard">힘든 날</button>
+            <button class="mp-talk-btn" id="btn-pet-encourage">응원</button>
+            <button class="mp-talk-btn" id="btn-pet-secret">비밀작전</button>
+        </div>`;
+    return box;
+}
+
+// ── 구매 모달 ─────────────────────────────────────────────────────────────────
+
+function openPurchaseModal() {
+    const existing = document.getElementById('mp-purchase-modal');
+    if (existing) { existing.remove(); return; }
+
+    const state = getEconomyState();
+    const modal = el('div', 'mp-purchase-modal');
+    modal.id = 'mp-purchase-modal';
+    modal.innerHTML = `
+        <div class="mp-purchase-inner">
+            <button class="mp-purchase-close" id="mp-purchase-close" aria-label="닫기">✕</button>
+            <div class="mp-purchase-header">
+                <img src="/public/assets/apple/apple_idle..png" class="mp-purchase-icon" width="32" height="32" alt="사과">
+                <span class="mp-purchase-title">사과 구매</span>
+                <span class="mp-purchase-price">300p / 개</span>
+            </div>
+            <div class="mp-purchase-qty-row">
+                <button class="mp-qty-btn" id="mp-qty-minus">-</button>
+                <span class="mp-qty-val" id="mp-qty-val">1</span>
+                <button class="mp-qty-btn" id="mp-qty-plus">+</button>
+            </div>
+            <div class="mp-purchase-total">합계: <span id="mp-purchase-total-val">300p</span></div>
+            <div class="mp-purchase-balance">보유: ${state.points.current}p</div>
+            <button class="mp-purchase-confirm" id="mp-purchase-confirm">구매하기</button>
+            <div class="mp-purchase-msg" id="mp-purchase-msg"></div>
+        </div>`;
+
+    document.body.appendChild(modal);
+
+    let qty = 1;
+    const updateDisplay = () => {
+        document.getElementById('mp-qty-val').textContent = qty;
+        document.getElementById('mp-purchase-total-val').textContent = `${300 * qty}p`;
+    };
+
+    modal.addEventListener('click', async e => {
+        if (e.target.id === 'mp-purchase-close') { modal.remove(); return; }
+        if (e.target.id === 'mp-qty-minus') { qty = Math.max(1, qty - 1); updateDisplay(); return; }
+        if (e.target.id === 'mp-qty-plus') { qty = Math.min(99, qty + 1); updateDisplay(); return; }
+        if (e.target.id === 'mp-purchase-confirm') {
+            const btn = e.target;
+            btn.disabled = true;
+            const msgEl = document.getElementById('mp-purchase-msg');
+            const result = await purchaseItem('apple', qty);
+            if (result.ok) {
+                msgEl.textContent = `구매 완료! 사과 ${qty}개 추가`;
+                msgEl.style.color = '#217346';
+                updateAppleHUD();
+                updatePointsDisplay();
+                setTimeout(() => modal.remove(), 1200);
+            } else {
+                const msg = result.data?.message || '구매에 실패했습니다';
+                msgEl.textContent = msg;
+                msgEl.style.color = '#c0392b';
+                btn.disabled = false;
+            }
+        }
+    });
+
+    // 모달 바깥 클릭 시 닫기
+    setTimeout(() => {
+        document.addEventListener('click', function outsideClose(e) {
+            if (!modal.contains(e.target) && e.target.id !== 'mp-buy-apple-btn') {
+                modal.remove();
+                document.removeEventListener('click', outsideClose);
+            }
+        });
+    }, 50);
+}
+
+// ── Economy UI 갱신 함수들 ───────────────────────────────────────────────────
+
+function updatePointsDisplay() {
+    const state = getEconomyState();
+    const el = document.getElementById('mp-points-value');
+    if (el) el.textContent = `${state.points.current}p`;
+}
+
+function updateHappinessDisplay() {
+    const state = getEconomyState();
+    const score = state.happiness.current_score;
+    const scoreEl = document.getElementById('mp-happy-score');
+    const barEl   = document.getElementById('mp-happy-bar');
+    const markerEl = document.getElementById('mp-happy-marker');
+    if (scoreEl) scoreEl.textContent = `${score}점`;
+    const pct = Math.round(score); // 0~100 기준
+    if (barEl) barEl.style.width = `${pct}%`;
+    if (markerEl) markerEl.style.left = `${pct}%`;
+}
+
+function updateAppleHUD() {
+    const state = getEconomyState();
+    const qty = state.inventory.apple || 0;
+    const el = document.getElementById('mp-apple-hud-count');
+    if (el) el.textContent = `× ${qty}`;
+    // 간식주기 버튼 활성/비활성
+    const feedBtn = document.getElementById('mp-feed-btn');
+    if (feedBtn) feedBtn.disabled = qty <= 0;
+}
+
+function bindEconomyEvents() {
+    document.addEventListener(ECONOMY_EVENT, () => {
+        updatePointsDisplay();
+        updateHappinessDisplay();
+        updateAppleHUD();
+    });
+}
+
+// ── 간식 먹기 완료 콜백 ──────────────────────────────────────────────────────
+
+async function handleAppleFed() {
+    const result = await changeHappiness('FEED');
+    if (result.ok) {
+        updateHappinessDisplay();
+        updateAppleHUD();
+    } else {
+        // no_apple 에러 등 UI에 안내
+        console.warn('[MiniPet] FEED 행복 변경 실패:', result.error);
+    }
 }
 
 function buildSalesTable() {
@@ -206,7 +419,35 @@ function buildWeeklySalesChart() {
         bars.append(column);
     });
 
-    chart.append(title, legend, bars);
+    // 토닥이 맵 우상단 버튼 영역
+    const mapActions = el('div', 'mp-map-actions');
+    mapActions.innerHTML = `
+        <div class="mp-apple-hud">
+            <img src="/public/assets/apple/apple_idle..png" class="mp-apple-hud-icon" width="18" height="18" alt="사과">
+            <span class="mp-apple-hud-count" id="mp-apple-hud-count">× 0</span>
+        </div>
+        <button class="mp-feed-btn" id="mp-feed-btn" disabled>간식주기</button>`;
+
+    mapActions.addEventListener('click', e => {
+        if (e.target.id === 'mp-feed-btn' || e.target.closest('#mp-feed-btn')) {
+            const state = getEconomyState();
+            if ((state.inventory.apple || 0) <= 0) {
+                alert('사과가 없어요. 먼저 간식을 구매해주세요!');
+                return;
+            }
+            if (appleController && !appleController.processing) {
+                appleController.startFeedMode();
+                const btn = document.getElementById('mp-feed-btn');
+                if (btn) { btn.textContent = '취소'; btn.classList.add('mp-feed-btn--active'); }
+            } else if (appleController?.feedMode) {
+                appleController.stopFeedMode();
+                const btn = document.getElementById('mp-feed-btn');
+                if (btn) { btn.textContent = '간식주기'; btn.classList.remove('mp-feed-btn--active'); }
+            }
+        }
+    });
+
+    chart.append(title, legend, mapActions, bars);
     return chart;
 }
 

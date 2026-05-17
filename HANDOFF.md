@@ -77,16 +77,89 @@ For current sprite filenames, see `public/assets/corgi/manifest.json`.
 
 ---
 
+## 용어 정의 (v1.4.0 확립)
+
+| 용어 | 정의 | 위치 |
+|------|------|------|
+| **토닥이 맵** | 토닥이 캐릭터가 실제로 이동하는 영역. 차트, 막대그래프, 바닥 위에서 걷고 점프한다. | `#mp-chart` (우측 하단) |
+| **토닥이 관리박스** | 포인트·행복점수·토닥여주기·간식주기·말걸기 설명과 버튼이 들어간 박스 | `#mp-manage-box` (좌측 하단) |
+
+- 코드/주석/문서에서 위 용어를 일관 사용할 것
+- 코드 내 zone 명칭(`sheet-zone`, `chart-zone` 등)은 `pattieWorldConfig.js` 기준 유지
+
+---
+
+## 토닥이 경제 시스템 (v1.4.0 신규)
+
+### 핵심 개념
+
+| 개념 | 설명 |
+|------|------|
+| **게임 포인트** | 게임 score 획득 시 1/10이 적립되는 관리시트 소비재. 랭킹 score와 완전히 별개. |
+| **행복점수** | 토닥여주기/간식주기/말걸기로 증가. min:40 max:100 초기:40. |
+| **apple** | 유일한 아이템. 300p/개. 간식주기에 사용. |
+
+### DB 테이블 (migration 012)
+
+- `user_points` — 보유 포인트 (current, total_earned, total_spent)
+- `point_transactions` — EARN/SPEND/ADJUST 거래 내역 (source_id로 중복 방지)
+- `user_item_inventory` — 아이템 수량 (user_id + item_id PK)
+- `item_purchase_history` — 구매 이력
+- `pet_happiness_state` — 현재 행복점수 + 마지막 마감일
+- `pet_happiness_history` — PET/FEED/TALK/DAILY_CLOSE/SYSTEM 히스토리
+- `pet_daily_interaction_limits` — 일일 점수 증가 횟수 (pet: 3회, talk: 3회)
+
+### API 엔드포인트 (신규)
+
+| Method | Path | 설명 |
+|--------|------|------|
+| GET | `/api/pet/economy` | 포인트+인벤토리+행복+일일제한 한번에 조회 |
+| POST | `/api/pet/items/purchase` | 아이템 구매 (포인트 차감, 인벤 증가, 이력 기록) |
+| POST | `/api/pet/happiness/change` | 행복점수 변경 (PET/FEED/TALK/SYSTEM) |
+| POST | `/api/pet/happiness/daily-close` | 자정 마감 처리 (×0.8~0.9, min 40) |
+
+- POST `/api/scores` 및 `/api/games/typing/finish` → 이제 `earned_points` 필드 반환
+- 포인트 중복 적립 방지: `point_transactions(source_type, source_id)` UNIQUE 인덱스
+
+### 프론트엔드 모듈
+
+- `src/patties/pattieEconomy.js` — 상태 관리 (loadEconomy, changeHappiness, purchaseItem)
+- `src/patties/PattieApple.js` — 간식주기 메커니즘 (마우스 추적, 낙하, 먹기 연출)
+- Economy 이벤트: `refresheet:economy-updated` → 포인트/행복바/apple HUD 갱신
+
+### 캐릭터별 행복 증가량
+
+| 캐릭터 | 토닥여주기 | 간식주기 | 말걸기 |
+|--------|-----------|---------|--------|
+| mong / corgi / rabbit / dog | +5~8 | +10~15 | +3~5 |
+| cabul / kitty / cat | +2~5 | +15~20 | +1~3 |
+
+- 설정 위치: `HAPPINESS_CONFIG` 상수 (worker/index.js)
+- 새 캐릭터 추가 시 해당 config에 key 추가
+
+### 일일 마감
+
+- 자정 지나면 `loadEconomy()` → `_checkDailyClose()` → `POST /api/pet/happiness/daily-close` 자동 실행
+- 마감 점수: 전일 × 0.8~0.9, min 40
+- 80점 이상 마감 시 `achieved_daily_goal: true` (히스토리 metadata에 기록)
+- **TODO**: readme 시트 KPI에 "토닥이 아껴주기 달성" 기준 반영 예정 (DAILY_CLOSE history 기준)
+
+---
+
 ## Management Sheet / Current Cautions
 
 - Bar landing correction applies only to bar surfaces: `bar.top - size + 6`; floor surface math must stay unchanged.
 - Sleep is locked for two decision cycles after entering sleep; do not re-pick state until the lock expires.
 - Sheet/card sleep and idle weights are intentionally increased; keep totals normalized by reducing walk, not terrain jump/climb behavior.
-- `src/pet/miniPet.js` builds the management dashboard DOM: sales table on the left; `mp-dashboard-main-section` on the right; project table first; `mp-analysis-row` below it with monthly trend and realtime analysis.
+- `src/pet/miniPet.js` builds the management dashboard DOM: sales table on the left; `mp-dashboard-main-section` on the right; project table first; `mp-analysis-row` below it with monthly trend and realtime analysis. **After v1.4.0**: `#mp-manage-box`(관리박스) is inserted between `mp-dashboard-main-section` and `#mp-chart`.
 - Do not move monthly trend/realtime analysis back beside the project table; that caused overlap.
 - Project-name cells use first-column ellipsis inside `.proj-table`; do not widen the whole table to solve long text.
 - Realtime analysis uses the actual `#mp-map-canvas` with DPR-aware sizing in `renderRealtimeAnalysis()`. Do not replace it with a pseudo-element placeholder.
 - Pattie settings button belongs inside `#mp-chart` top-right. If the chart is not built yet, it may temporarily attach to `#mini-pet-habitat` and then move.
+- 토닥이 맵(`#mp-chart`)에는 `.mp-map-actions` (간식주기 버튼 + apple HUD)가 추가됨. 절대위치 top:6px right:6px로 배치.
+- **Action lock 우선순위** (PattieRoamingController v1.4.0): FEEDING(4) > CLICK_HAPPY(3) > JUMP(2) > MOVE(1) > IDLE(0). `actionLock=true`인 동안 일반 AI decide/move가 차단됨.
+- `mong_surprise.png` 스프라이트가 corgi manifest에 추가됨 (`surprise` 애니메이션). 간식 먹기 연출에 사용.
+- `apple_idle..png` — 파일명에 점 두 개(`..`) 주의. 기존 `mong_walk..png`와 동일 패턴.
 
 ---
 
