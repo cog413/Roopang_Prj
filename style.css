@@ -1282,10 +1282,6 @@ body.dark-mode .readme-note { background: #4d3b13; color: #ffe699; }
     outline-offset: 2px;
 }
 .pattie-settings-button {
-    position: absolute;
-    right: 16px;
-    top: 12px;
-    z-index: 140;
     height: 24px;
     padding: 0 8px;
     border: 1px solid #c8c6c4;
@@ -1294,6 +1290,17 @@ body.dark-mode .readme-note { background: #4d3b13; color: #ffe699; }
     font-size: 11px;
     cursor: pointer;
     transition: opacity 0.15s, transform 0.15s;
+    white-space: nowrap;
+}
+.pattie-world > .pattie-settings-button {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    z-index: 140;
+}
+.mp-map-actions .pattie-settings-button {
+    position: static;
+    z-index: auto;
 }
 .pattie-settings-button:hover {
     background: #e2f0d9;
@@ -3163,7 +3170,7 @@ body.dark-mode .tg-rank-table td { border-color: #333; color: #ccc; }
     display: flex;
     align-items: center;
     gap: 6px;
-    z-index: 10;
+    z-index: 145;
 }
 .mp-apple-hud {
     display: flex;
@@ -3195,7 +3202,7 @@ body.dark-mode .tg-rank-table td { border-color: #333; color: #ccc; }
 .mp-feed-btn--active { background: #fde8c8; border-color: #c0392b; color: #c0392b; }
 
 /* mp-chart-title: 우상단 버튼 공간 확보 */
-.mp-chart-title { padding-right: 140px !important; }
+.mp-chart-title { padding-right: 220px !important; }
 
 /* Apple 커서 (간식주기 모드) */
 .pattie-apple-cursor {
