@@ -250,14 +250,8 @@ body {
     border-radius: 2px;
 }
 
-.pet-buttons .tool-btn,
 .modal-btn {
     cursor: pointer;
-}
-
-.pet-buttons .tool-btn:hover {
-    background-color: #f3f2f1;
-    border-color: #c8c6c4;
 }
 
 /* Formula Bar */
@@ -481,36 +475,6 @@ body {
 .val-1024 { background-color: #e2efda; } /* Light green */
 .val-2048 { background-color: #c6e0b4; font-weight: bold;}
 
-
-/* Mini Pet UI Overlay */
-.mini-pet-ui-overlay {
-    position: absolute;
-    top: 400px;
-    left: 40px;
-    z-index: 100;
-    pointer-events: none; /* Let clicks pass through if not on a button */
-}
-
-.pet-interaction-panel {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #d2d0ce;
-    border-radius: 4px;
-    padding: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    pointer-events: auto; /* Buttons are clickable */
-}
-
-.pet-buttons {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    max-width: 300px;
-}
-
-body.dark-mode .pet-interaction-panel {
-    background: rgba(45, 45, 45, 0.9);
-    border-color: #444;
-}
 
 .sheet-tabs {
     display: flex;
@@ -1760,24 +1724,6 @@ body.dark-mode .mps-foot {
     outline-offset: 2px;
 }
 
-/* ?? 留먰뭾????????????????????????????????????????? */
-.mp-bubble {
-    position: absolute;
-    background: #fffbf0;
-    border: 1px solid #c8c6c4;
-    border-radius: 6px 6px 6px 0;
-    padding: 3px 7px;
-    font-size: 10px; color: #333;
-    white-space: nowrap;
-    z-index: 101;
-    opacity: 0;
-    transform: scale(0.9);
-    transition: opacity 0.18s, transform 0.18s;
-    pointer-events: none;
-    box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
-}
-.mp-bubble.visible { opacity: 1; transform: scale(1); }
-
 /* ?? ?ㅽ봽?덉엫 ?????????????????????????????????????? */
 @keyframes mps-wiggle {
     0%, 100% { transform: translateY(0); }
@@ -1807,7 +1753,6 @@ body.dark-mode .mp-minimap-col-hd { border-color: #444; }
 body.dark-mode .mp-mk-label { color: #aaa; }
 body.dark-mode .mp-minimap-pts li { color: #ccc; }
 body.dark-mode .mp-minimap-pts li::before { color: #4CAF50; }
-body.dark-mode .mp-bubble  { background: #2d2d2d; border-color: #555; color: #d4d4d4; }
 body.dark-mode #mp-map-canvas { border-color: #444; }
 body.dark-mode .pattie-settings-button,
 body.dark-mode .pattie-nameplate,
