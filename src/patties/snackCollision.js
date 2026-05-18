@@ -36,7 +36,7 @@ export function getSnackApproachTarget(petState, appleState) {
     const direction = approachFromLeft ? 1 : -1;
     const bodyLeftPad = size * 0.2;
     const bodyRightPad = size * 0.82;
-    const gap = 2;
+    const gap = 0;
     const x = approachFromLeft
         ? apple.left - gap - bodyRightPad
         : apple.right + gap - bodyLeftPad;

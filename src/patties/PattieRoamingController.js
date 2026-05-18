@@ -668,7 +668,14 @@ export class PattieRoamingController {
     }
 
     async holdSnackAnimation(animationName, durationMs, { direction = this.direction } = {}) {
-        this.freezeForSnack(direction);
+        // freezeForSnack()을 쓰면 내부 setMode('idle') → sprite.play('idle')이 비동기로 실행되어
+        // sprite.play(animationName)과 경쟁 상태가 발생, idle이 surprise를 덮어쓸 수 있음
+        this.actionLock = true;
+        this.terrainMotion = null;
+        this.snackMotion = null;
+        this.decelerating = false;
+        this.pendingHappy = false;
+        this.direction = direction;
         this.mode = animationName;
         await this.sprite.play(animationName, { restart: true, once: false, next: animationName });
         await waitMs(durationMs);
