@@ -48,7 +48,8 @@
         },
         "surprise": {
           "src": "/public/assets/kitty/cabul_surprise.png",
-          "frameDurationMs": 400
+          "frameDurationMs": 400,
+          "showBubble": true
         }
       }
     }
