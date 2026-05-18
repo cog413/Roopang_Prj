@@ -3165,8 +3165,8 @@ body.dark-mode .tg-rank-table td { border-color: #333; color: #ccc; }
 /* 토닥이 맵 우상단 액션 버튼 영역 */
 .mp-map-actions {
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 8px;
+    right: 8px;
     display: flex;
     align-items: center;
     gap: 6px;
