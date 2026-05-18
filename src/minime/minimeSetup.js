@@ -46,9 +46,10 @@ async function onMinimeSheetShown() {
 }
 
 function ensureSettingsButton() {
+    const mapActions = document.querySelector('#mp-chart .mp-map-actions');
     const chart = document.getElementById('mp-chart');
     const habitat = document.getElementById('mini-pet-habitat');
-    const parent = chart || habitat;
+    const parent = mapActions || chart || habitat;
     if (!parent) return;
     if (settingsButton) {
         if (!parent.contains(settingsButton)) parent.appendChild(settingsButton);
