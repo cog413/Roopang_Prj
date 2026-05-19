@@ -609,8 +609,8 @@ export class PattieRoamingController {
         const duration = isJump
             ? clamp(distance * 34, 900, 1800)
             : mode === 'run'
-                ? clamp(Math.abs(dx) * this.config.movement.runDurationPerPx, 1400, 6000)
-                : clamp(Math.abs(dx) * this.config.movement.walkDurationPerPx, 1800, 7000);
+                ? clamp(Math.abs(dx) * this.config.movement.runDurationPerPx * 0.75, 1050, 4500)
+                : clamp(Math.abs(dx) * this.config.movement.walkDurationPerPx * 0.75, 1350, 5250);
 
         this.direction = dx >= 0 ? 1 : -1;
         this.mode = mode;
