@@ -7,12 +7,27 @@ export let currentAvatar = null;
 const KITTY_LOCK_MESSAGE = '친구 추천 2회 이상 필요';
 
 const CHARACTER_LABELS = {
-    mong: 'Mong 테스트',
+    mong: 'Corgi',
     rabbit: '토끼 Pattie',
     dog: '강아지 토닥이',
     cat: '고양이 Pattie',
     cabul: '고양이 카불',
 };
+
+const CHARACTER_TOOLTIPS = {
+    mong: '늘 해맑은 웰시코기에요.\n토닥여주기, 간식주기, 말걸기 모두 좋아하는 행복 사랑꾼이죠',
+    cabul: '매사 무심한 뚱냥이에요.\n토닥여주기, 말걸기도 좋지만 간식을 특히 좋아해요',
+};
+
+const CHARACTER_DEFAULT_NAMES = { mong: '몽이', cabul: '까불이' };
+
+const PATTIE_NAME_KEY = key => `rs_pattie_name_${key}`;
+function getPattieNameFromStorage(charKey) {
+    try { return localStorage.getItem(PATTIE_NAME_KEY(charKey)) || null; } catch { return null; }
+}
+function setPattieNameToStorage(charKey, name) {
+    try { localStorage.setItem(PATTIE_NAME_KEY(charKey), name); } catch {}
+}
 
 export async function initMinimeSheet() {
     const sheet = document.getElementById('mini-pet-sheet');
@@ -98,6 +113,13 @@ async function ensureSetupModal() {
     if (setupEl) return;
     setupEl = buildSetupDOM();
     document.body.appendChild(setupEl);
+    if (!document.getElementById('ms-char-tooltip-popup')) {
+        const tt = document.createElement('div');
+        tt.id = 'ms-char-tooltip-popup';
+        tt.className = 'ms-char-tooltip-popup';
+        tt.style.display = 'none';
+        document.body.appendChild(tt);
+    }
     bindSetupEvents();
 }
 
@@ -126,7 +148,7 @@ function buildSetupDOM() {
                     <label class="ob-label">아이템</label>
                     <div class="pattie-item-choice-row" id="ms-item-list"></div>
                 </div>
-                <div class="ob-hint">아이템은 꾸미기용이며 점수와 랭킹에는 영향을 주지 않습니다.</div>
+                <div class="ob-hint">아이템은 꾸미기 용이며 점수와 랭킹에는 영향을 주지 않습니다.<br>(아이템 준비중)</div>
                 <div class="modal-buttons">
                     <button class="modal-btn retry" id="ms-save">저장(S)</button>
                     <button class="modal-btn" id="ms-cancel">취소</button>
@@ -194,12 +216,9 @@ async function renderChoices() {
 }
 
 function bindSetupEvents() {
-    setupEl.querySelector('#ms-close').addEventListener('click', () => {
-        setupEl.style.display = 'none';
-    });
-    setupEl.querySelector('#ms-cancel').addEventListener('click', () => {
-        setupEl.style.display = 'none';
-    });
+    const closeModal = () => { hideCharTooltip(); setupEl.style.display = 'none'; };
+    setupEl.querySelector('#ms-close').addEventListener('click', closeModal);
+    setupEl.querySelector('#ms-cancel').addEventListener('click', closeModal);
     setupEl.querySelector('#ms-save').addEventListener('click', saveAvatar);
     bindCharacterChoiceEvents();
 }
@@ -215,13 +234,53 @@ function bindCharacterChoiceEvents() {
             }
             setupEl.querySelectorAll('.ms-char-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
+            const key = card.dataset.type;
+            const nicknameInput = setupEl.querySelector('#ms-nickname');
+            if (nicknameInput) {
+                nicknameInput.value = getPattieNameFromStorage(key) || CHARACTER_DEFAULT_NAMES[key] || '';
+            }
         });
+        card.addEventListener('mouseenter', () => showCharTooltip(card));
+        card.addEventListener('mouseleave', hideCharTooltip);
     });
 }
 
+function showCharTooltip(card) {
+    const key = card.dataset.type;
+    const text = CHARACTER_TOOLTIPS[key];
+    if (!text) return;
+    const tt = document.getElementById('ms-char-tooltip-popup');
+    if (!tt) return;
+    tt.innerHTML = '';
+    text.split('\n').forEach((line, i) => {
+        if (i > 0) tt.appendChild(document.createElement('br'));
+        tt.appendChild(document.createTextNode(line));
+    });
+    tt.style.display = 'block';
+    const cardRect = card.getBoundingClientRect();
+    const ttRect = tt.getBoundingClientRect();
+    let left = cardRect.left + cardRect.width / 2 - ttRect.width / 2;
+    let top = cardRect.top - ttRect.height - 10;
+    left = Math.max(8, Math.min(window.innerWidth - ttRect.width - 8, left));
+    if (top < 8) top = cardRect.bottom + 10;
+    tt.style.left = `${Math.round(left)}px`;
+    tt.style.top = `${Math.round(top)}px`;
+}
+
+function hideCharTooltip() {
+    const tt = document.getElementById('ms-char-tooltip-popup');
+    if (tt) tt.style.display = 'none';
+}
+
 function fillForm(avatar) {
-    setupEl.querySelector('#ms-nickname').value = avatar?.nickname || '토닥이';
-    const characterKey = avatar?.character_key || mapLegacyCharacter(avatar?.character_type);
+    const characterKey = avatar?.character_key || mapLegacyCharacter(avatar?.character_type) || 'mong';
+    // 서버에 저장된 이름을 localStorage에 없을 때 bootstrap
+    if (avatar?.nickname && !getPattieNameFromStorage(characterKey)) {
+        setPattieNameToStorage(characterKey, avatar.nickname);
+    }
+    const nameToShow = getPattieNameFromStorage(characterKey) || CHARACTER_DEFAULT_NAMES[characterKey] || '몽이';
+    setupEl.querySelector('#ms-nickname').value = nameToShow;
+
     setupEl.querySelectorAll('.ms-char-card').forEach(card => {
         card.classList.toggle('selected', card.dataset.type === characterKey);
     });
@@ -244,6 +303,9 @@ async function saveAvatar() {
         setupEl.querySelector('#ms-nickname').focus();
         return;
     }
+
+    // 캐릭터별 이름 localStorage에 저장
+    setPattieNameToStorage(characterKey, nickname);
 
     const res = await fetch('/api/pattie', {
         method: 'POST',

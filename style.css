@@ -2441,6 +2441,27 @@ body.dark-mode .ms-char-name { color: #d4d4d4; }
 body.dark-mode .ms-char-lock-hint { color: #f88; }
 body.dark-mode .ms-foot { background: #aaa; }
 
+/* 캐릭터 카드 hover 툴팁 */
+.ms-char-tooltip-popup {
+    position: fixed;
+    background: rgba(34, 34, 34, 0.92);
+    color: #fff;
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 8px 12px;
+    border-radius: 6px;
+    pointer-events: none;
+    z-index: 9999;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    word-break: keep-all;
+    max-width: 220px;
+}
+body.dark-mode .ms-char-tooltip-popup {
+    background: rgba(80, 80, 80, 0.96);
+    color: #eee;
+}
+
 /* =====================================================
    Minime sprite: character type variants
    ===================================================== */
