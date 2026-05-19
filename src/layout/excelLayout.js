@@ -16,10 +16,11 @@ export function initExcelLayout() {
         }
     }
 
-    // 2. Generate Row Headers (1 to 100)
+    // 2. Generate Row Headers — enough to fill viewport, not a fixed 100
     const rowHeaders = document.getElementById('row-headers');
     if (rowHeaders) {
-        for (let i = 1; i <= 100; i++) {
+        const rowCount = Math.ceil(window.innerHeight / 22) + 4;
+        for (let i = 1; i <= rowCount; i++) {
             const header = document.createElement('div');
             header.className = 'row-header';
             header.textContent = i;

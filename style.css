@@ -344,6 +344,11 @@ body {
     flex-grow: 1;
     overflow: auto;
     position: relative;
+    background-image:
+        linear-gradient(to right, #e9e7e4 1px, transparent 1px),
+        linear-gradient(to bottom, #e9e7e4 1px, transparent 1px);
+    background-size: 80px 22px;
+    background-attachment: local;
 }
 
 .row-headers {
@@ -808,19 +813,9 @@ body.dark-mode .newgame-locked-notice {
     line-height: 1.5;
 }
 
-/* In normal mode, dummy grid is a background */
+/* dummy-grid kept for safe-mode markup compat but grid is now on grid-content background */
 .dummy-grid {
-    position: absolute;
-    top: 0;
-    left: 0; /* Offset removed since row-headers are outside */
-    z-index: 0;
-    width: 2000px;
-    height: 900px;
-    pointer-events: none;
-    background-image:
-        linear-gradient(to right, #e9e7e4 1px, transparent 1px),
-        linear-gradient(to bottom, #e9e7e4 1px, transparent 1px);
-    background-size: 80px 22px; /* Matches col/row size */
+    display: none;
 }
 
 /* Fake Dashboard & Account Button */
@@ -1104,8 +1099,8 @@ body.dark-mode .tab.active {
     background-color: #1e1e1e;
     color: #4CAF50;
 }
-body.dark-mode .dummy-grid {
-    background-image: 
+body.dark-mode .grid-content {
+    background-image:
         linear-gradient(to right, #3e3e3e 1px, transparent 1px),
         linear-gradient(to bottom, #3e3e3e 1px, transparent 1px);
 }
