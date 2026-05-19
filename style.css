@@ -852,19 +852,19 @@ body.dark-mode .newgame-locked-notice {
 }
 .sheet-layout {
     display: flex;
-    gap: 80px; /* Aligns to exactly 1 column width */
-    padding: 50px 80px; /* Aligns to exactly 2 rows down, 1 column right */
+    gap: 80px; /* 1 col × 80px */
+    padding: 44px 80px; /* 2 rows × 22px = 44px top, 1 col × 80px sides */
 }
 .fake-dashboard {
     display: flex;
     flex-direction: column;
-    gap: 25px; /* Aligns to exactly 1 row height */
-    width: 320px; /* Aligns to exactly 4 columns (80px * 4) */
+    gap: 22px; /* 1 row × 22px — tables stack on exact grid rows */
+    width: 320px; /* 4 cols × 80px */
     font-family: 'Segoe UI', sans-serif;
 }
 .fake-table {
     display: grid;
-    grid-template-columns: 1fr max-content; /* label fills, value sizes to widest content */
+    grid-template-columns: 240px 80px; /* 3 cols (label) + 1 col (value) = 4 cols × 80px */
     background-color: transparent;
     font-size: 12px;
     border-top: 1px solid #c0bebe;
@@ -872,34 +872,32 @@ body.dark-mode .newgame-locked-notice {
 }
 .fake-table-header {
     background-color: #dbe5f1;
-    padding: 2px 6px;
+    padding: 0 6px;
     font-weight: bold;
     grid-column: span 2;
-    min-height: 22px;
-    height: auto;
+    height: 22px; /* exactly 1 grid row */
     display: flex;
     align-items: center;
     border-right: 1px solid #c0bebe;
     border-bottom: 1px solid #c0bebe;
     color: #1f3864;
     font-size: 11px;
-    white-space: normal;
-    word-break: keep-all;
-    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .fake-table-cell {
-    min-height: 22px;
-    height: auto;
+    height: 22px; /* exactly 1 grid row */
     display: flex;
     align-items: center;
-    padding: 3px 6px;
+    padding: 0 6px;
     background-color: #fff;
     border-right: 1px solid #c0bebe;
     border-bottom: 1px solid #c0bebe;
     color: #333;
-    white-space: normal;
-    word-break: keep-all;
-    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: 12px;
 }
 .fake-table-cell.label {
@@ -907,7 +905,6 @@ body.dark-mode .newgame-locked-notice {
 }
 .fake-table-cell.value {
     justify-content: flex-end;
-    white-space: nowrap; /* 값(숫자/날짜/상태)은 줄바꿈 없이 */
     padding-left: 10px;
 }
 .fake-table-cell.total {
@@ -917,12 +914,14 @@ body.dark-mode .newgame-locked-notice {
 }
 .fake-table-cell.note {
     grid-column: span 2;
-    min-height: 22px;
     height: auto;
+    min-height: 22px;
+    line-height: 22px; /* each wrapped line = exactly 1 grid row */
+    padding: 0 6px;
     align-items: flex-start;
     white-space: normal;
     word-break: keep-all;
-    line-height: 1.4;
+    overflow: hidden;
     font-size: 11px;
     color: #666;
     background-color: #fffef2;
