@@ -864,46 +864,51 @@ body.dark-mode .newgame-locked-notice {
 }
 .fake-table {
     display: grid;
-    grid-template-columns: 200px 120px; /* label 200 + value 120 = 320px (4 grid cols) */
+    grid-template-columns: 1fr max-content; /* label fills, value sizes to widest content */
     background-color: transparent;
     font-size: 12px;
     border-top: 1px solid #c0bebe;
     border-left: 1px solid #c0bebe;
 }
 .fake-table-header {
-    background-color: #dbe5f1; /* Pivot table blue */
-    padding: 0 6px;
+    background-color: #dbe5f1;
+    padding: 2px 6px;
     font-weight: bold;
     grid-column: span 2;
-    height: 22px;
+    min-height: 22px;
+    height: auto;
     display: flex;
     align-items: center;
     border-right: 1px solid #c0bebe;
     border-bottom: 1px solid #c0bebe;
     color: #1f3864;
     font-size: 11px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: keep-all;
+    line-height: 1.4;
 }
 .fake-table-cell {
-    height: 22px;
+    min-height: 22px;
+    height: auto;
     display: flex;
     align-items: center;
-    padding: 0 6px;
+    padding: 3px 6px;
     background-color: #fff;
     border-right: 1px solid #c0bebe;
     border-bottom: 1px solid #c0bebe;
     color: #333;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: keep-all;
+    line-height: 1.4;
+    font-size: 12px;
 }
 .fake-table-cell.label {
     background-color: #f2f2f2;
 }
 .fake-table-cell.value {
-    justify-content: flex-end; /* Right-aligned numbers/values like Excel */
+    justify-content: flex-end;
+    white-space: nowrap; /* 값(숫자/날짜/상태)은 줄바꿈 없이 */
+    padding-left: 10px;
 }
 .fake-table-cell.total {
     font-weight: bold;
@@ -912,12 +917,11 @@ body.dark-mode .newgame-locked-notice {
 }
 .fake-table-cell.note {
     grid-column: span 2;
-    height: auto;
     min-height: 22px;
+    height: auto;
     align-items: flex-start;
     white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
+    word-break: keep-all;
     line-height: 1.4;
     font-size: 11px;
     color: #666;
